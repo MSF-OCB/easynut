@@ -1,0 +1,42 @@
+{% load staticfiles %}
+
+<html>
+	<link rel="stylesheet" type="text/css" href="{% static 'emr/style.css' %}" />
+	
+	<html xmlns="http://www.w3.org/1999/xhtml">
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+		<title></title>
+		<meta name="keywords" content="" />
+		<meta name="description" content="" />
+	</head>
+	<body>
+		<div id="header-wrapper">
+			<div id="header" class="container">
+				<div id="logo">
+					<h1><a href="{% url 'emr:index' %}">EasyNut</a></h1>
+				</div>
+				<div id="menu">
+					<ul>
+						<li><a href="#" accesskey="3" title="">Export</a></li>
+					</ul>
+				</div>
+			</div>
+		</div>
+		<div id="welcome-wrapper">
+			<div id="welcome" class="container" align="center">
+				<div class="title">
+					<h2>Fori - Nutrition System</h2>
+				</div>
+				<br/>
+				<div align="left">
+		            {% block content %}
+		            {% endblock %}
+	            </div>
+	        </div>
+	    </div>		
+	</body>	
+	<div id="copyright" class="container">
+		<p>MSF - Nigeria - Fori | Support: <a href="mailto:msfocb-blantyre-ehealth@brussels.msf.org">msfocb-blantyre-ehealth@brussels.msf.org</a> | OCB eHealth</a>.</p>
+	</div>
+</html>
