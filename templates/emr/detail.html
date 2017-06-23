@@ -2,6 +2,23 @@
 
 {% block content %}	
 
-{{ record_id }}
-
+	<h1>View {{ record.0 }} record</h1><br/>
+	<table class="table" id="hor-minimalist-b">
+		{% for field in record.1 %}
+			<tr>
+				<td><b>{{ field.3 }}</b></td>
+				<td>{{ field.4 }}</td>
+			</tr>
+		{% endfor %}
+	</table>
+	<br/>
+	<table>
+		<tr>
+			<td><input type="submit" href="#" name="edit" value="Edit" class="button"/></td>
+			<td width="70%">&nbsp;</td>
+			<td><input type="submit" href="#" name="delete" value="Delete" class="button"/></td>			
+		</tr>
+	</table>
+	
+	
 {% endblock %}

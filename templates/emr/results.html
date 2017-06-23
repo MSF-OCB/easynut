@@ -9,26 +9,30 @@
 		<table class="table" id="hor-minimalist-b">
 			<thead>
 				<tr>
-					{% for columnname in tableresults.1 %}
+					{% for columnname in tableresults.2 %}
 						<th scope="col">{{ columnname }}</td>
 					{% endfor %}
 					<th  scope="col" width="15%">Action</td>
 				</tr>
 			</thead>
 			<tbody>
-				{% if not tableresults.2 %}
+				{% if not tableresults.3 %}
 					<tr>
-						<td colspan="{{ tableresults.1|length|add:'+1' }}">No results found for this search</td>
+						<td colspan="{{ tableresults.2|length|add:'+1' }}">No results found for this search</td>
 					</tr>
 				{% else %}
-					{% for records in tableresults.2 %}
+					{% for records in tableresults.3 %}
 						<tr>
 							{% for record in records %}
 								{% if forloop.counter != 1 %}
-									<td><a href="{% url 'emr:detail' %}">{{ record }}</a></td>
+									{% with record_id=records.0 table_id=tableresults.1 %}
+										<td><a href="{% url 'emr:detail' table_id record_id %}">{{ record }}</a></td>
+									{% endwith %}
 								{% endif %}
 							{% endfor %}
-							<td width="15%"><a href="#">Edit</a> ||| <a href="#">Delete</a></td>
+							{% with record_id=records.0 table_id=tableresults.1 %}
+								<td width="15%"><a href="{% url 'emr:edit' table_id record_id %}">Edit</a> |||||| <a href="#">Delete</a></td>
+							{% endwith %}
 						</tr>
 					{% endfor %}			
 				{% endif %}

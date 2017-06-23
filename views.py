@@ -9,21 +9,14 @@ from django.urls import reverse
 from django.views import generic
 from django.utils import timezone
 from sqlite3.dbapi2 import paramstyle
-from django.views.decorators.csrf import csrf_exempt
+from operator import itemgetter
 
-@csrf_exempt
 def index(request):
     template_name = 'emr/index.html'
     daoobject = DAO()
     daoobject.set_tables_config()
     return render(request, template_name, {'edbtables': daoobject.tables_config_lite})
 
-@csrf_exempt
-def detail(request, record_id):
-    template_name = 'emr/detail.html'
-    return render(request, template_name, {'record_id': record_id})
-
-@csrf_exempt
 def results(request):
     search_query = request.GET.get('searchstring')
     tablesearch = request.GET.get('tablesearch')
@@ -31,6 +24,18 @@ def results(request):
     daoobject = DAO()
     daoobject.set_tables_config()
     return render(request, template_name, {'searchresults': daoobject.search(search_query, tablesearch)})
+
+def detail(request, table_id, record_id):
+    template_name = 'emr/detail.html'
+    daoobject = DAO()
+    daoobject.set_tables_config()    
+    return render(request, template_name, {'record': daoobject.get_record_with_type(table_id, record_id)})
+
+def edit(request, table_id, record_id):
+    template_name = 'emr/edit.html'
+    daoobject = DAO()
+    daoobject.set_tables_config()    
+    return render(request, template_name, {'record': daoobject.get_record_with_type(table_id, record_id)})
 
 class DAO(object):
     easydb_sqlitepath = '/home/doudou/Documents/www/test.sqlite'
@@ -72,7 +77,7 @@ class DAO(object):
                 del fieldc
             self.tables_config.append(tablec)
             del tablec
-        conn.commit()
+        c.close()
         conn.close()
         return
     
@@ -89,13 +94,12 @@ class DAO(object):
                     filtered_tables = [tablec,]
         else:
             filtered_tables = self.tables_config
-
         for tablec in filtered_tables:
             sql_search_select = "select {}"
             params = ['_id']
             paramswhere = []
             sql_search_where = ' from {} where '
-            results = [tablec.name]
+            results = [tablec.name, tablec.id]
             columns = []
             for fieldc in tablec.fields:
                 if fieldc.list == True:
@@ -119,8 +123,37 @@ class DAO(object):
             results.append(c.execute(sql_search.format(*params)).fetchall())
             all_results.append(results)
         returnList.append(all_results)
+        c.close()
+        conn.close()
         return returnList
-
+                
+    def get_record_with_type(self, table_id, record_id):
+        conn = sqlite3.connect(self.easydb_sqlitepath)
+        conn.row_factory = sqlite3.Row
+        c = conn.cursor()
+        record = []
+        recorddetails = []
+        for tablec in self.tables_config:
+            if tablec.id == table_id:
+                record.append(tablec.name)
+                for fieldc in tablec.fields:
+                    if fieldc.type == fieldc.field_type_date:
+                        sqlquery = "select strftime('%m/%d/%Y', datetime({}, 'unixepoch')) from {} where _id = {}"
+                    else:
+                        sqlquery = 'select {} from {} where _id = {}'
+                    params = [fieldc.field, tablec.sql_table_config_name, record_id]
+                    recorddetails.append([
+                        fieldc.field_id, 
+                        fieldc.type,
+                        fieldc.pos,
+                        fieldc.name, 
+                        c.execute(sqlquery.format(*params)).fetchone()[0],
+                        ])
+        record.append(sorted(recorddetails, key=itemgetter(2)))
+        c.close()
+        conn.close()
+        return record
+                    
 class TableConfig(object):
     
     def __init__(self):
@@ -195,7 +228,7 @@ class FieldConfig(object):
         self.color = 'Blanco'
         self.find = True
         self.new_line = True
-        self.selfeditable = True
+        self.editable = True
         self.pos = 0
         self.use = True
         self.relationship = False

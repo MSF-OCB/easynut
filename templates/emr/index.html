@@ -2,19 +2,21 @@
 
 {% block content %}
 	<div align="center">
-		<form action="{% url 'emr:results' %}" method="post">
-				<p><br/></p>
-				<input type="text" id="searchstring" name="searchstring" value=""  size="50" class="button"/><br/>
-				<select name="tablesearch" class="dropdown">
-					<option value="0">All tables</option>
-					{% for k,v in edbtables %}
-					<option value="{{ k }}">{{ v }}</option>
-					{% endfor %}				
-				</select>				
-				<input type="submit" name="search" value="Search" class="button"/>
+		<form action="{% url 'emr:results' %}" type="get">
+			{% csrf_token %}
+			<p><br/></p>
+			<input type="text" id="searchstring" name="searchstring" value=""  size="50" class="button"/><br/>
+			<select name="tablesearch" class="dropdown">
+				<option value="0">All tables</option>
+				{% for k,v in edbtables %}
+				<option value="{{ k }}">{{ v }}</option>
+				{% endfor %}				
+			</select>				
+			<input type="submit" name="search" value="Search" class="button"/>
 		</form>
 	</div>
 	<form action="." type="get">
+		{% csrf_token %}
 		<div class="container" align="center">
 			<br/>
 			<h3>OR</h3>

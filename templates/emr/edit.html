@@ -1,0 +1,41 @@
+{% extends "emr/base.html" %}
+{% load staticfiles %}
+
+<script type="text/javascript" src="{% static 'js/jquery-3.2.1.min.js' %}"></script> 
+
+<script>
+	$(function() {
+	    $( ".datepicker" ).datepicker();
+	}); 
+</script>
+
+{% block content %}	
+<input type="date" class="datepicker" name="defasdas" id="asdwve">
+	<h1>Edit {{ record.0 }} record</h1><br/>
+	<table class="table" id="hor-minimalist-b">
+		{% for field in record.1 %}
+			<tr>
+				<td><b>{{ field.3 }}</b></td>
+				<td>
+					{% if field.1 == 0 %}
+						<input type="date" > (mm/dd/yyyy)
+					{% elif field.1 == 1%}
+						<input type="number" > (number only)
+					{% elif field.1 == 2%}
+						<input type="text" >
+					{% endif %}
+				</td>
+			</tr>
+		{% endfor %}
+	</table>
+	<br/>
+	<table>
+		<tr>
+			<td><input type="submit" href="#" name="edit" value="Edit" class="button"/></td>
+			<td width="70%">&nbsp;</td>
+			<td><input type="submit" href="#" name="delete" value="Delete" class="button"/></td>			
+		</tr>
+	</table>
+	
+	
+{% endblock %}
