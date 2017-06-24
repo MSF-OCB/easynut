@@ -1,7 +1,7 @@
 {% extends "emr/base.html" %}
 
 {% block content %}	
-	<h1>Search results for "{{ searchresults.0 }}":</h1>
+	<h1>Search results for "{{ searchresults.0.0 }}" in {{ searchresults.0.1 }}:</h1>
 	<br/><br/><br/>
 	{% for tableresults in searchresults.1 %}
 		<h2>{{ tableresults.0 }}</h2>

@@ -3,13 +3,14 @@ from __future__ import unicode_literals
 import sqlite3
 from django.shortcuts import get_object_or_404, render
 from django.http import HttpResponseRedirect, HttpResponse, Http404
-from .models import Choice, Question
 from django.template import loader
 from django.urls import reverse
 from django.views import generic
 from django.utils import timezone
 from sqlite3.dbapi2 import paramstyle
 from operator import itemgetter
+import datetime
+import time
 
 def index(request):
     template_name = 'emr/index.html'
@@ -37,11 +38,36 @@ def edit(request, table_id, record_id):
     daoobject.set_tables_config()    
     return render(request, template_name, {'record': daoobject.get_record_with_type(table_id, record_id)})
 
+def save(request):
+    record_id = request.GET.get('record_id')
+    table_id = request.GET.get('table_id')
+    daoobject = DAO()
+    daoobject.set_tables_config()
+    fieldstochange = []
+    for tablec in daoobject.tables_config:
+        if tablec.id == table_id:
+            for fieldc in tablec.fields:
+               fieldstochange.append([fieldc.field_id, request.GET.get(fieldc.field_id), fieldc.type])
+    if record_id != 0:
+        daoobject.editrecord(table_id, record_id, fieldstochange)
+    else:
+        daoobject.insertrecord(table_id, fieldstochange)
+    return detail(request, table_id, record_id)
+
+def add(request):
+    template_name = 'emr/add.html'
+    search_query = request.GET.get('searchstring')
+    daoobject = DAO()
+    daoobject.set_tables_config()
+    for tablec in daoobject.tables_config:
+        if tablec.id == table_id:
+            return render(request, template_name, {'table': tablec})
+    return index(request)
+
 class DAO(object):
     easydb_sqlitepath = '/home/doudou/Documents/www/test.sqlite'
     
     def __init__(self):
-        #object_sqlitepath = object_sqlitepath
         self.tables_config = []
         self.tables_config_lite = {}
         self.search_results = []
@@ -71,6 +97,11 @@ class DAO(object):
                         setattr(fieldc, attributev, fieldc.hasmapft[sqlresult])
                     elif sqlresult in fieldc.field_types.keys():
                         setattr(fieldc, attributev, fieldc.field_types[sqlresult])
+                    elif attributev == 'select':
+                        selectlist = []
+                        for tostrip in sqlresult.split(','):
+                            selectlist.append(tostrip.strip())
+                        setattr(fieldc, attributev, selectlist)
                     else:
                         setattr(fieldc, attributev, sqlresult)
                 tablec.add_field(fieldc)
@@ -85,15 +116,19 @@ class DAO(object):
         conn = sqlite3.connect(self.easydb_sqlitepath)
         conn.row_factory = sqlite3.Row
         c = conn.cursor()
-        returnList = [entry,]
+        usersearch = [entry,]
+        returnList = []
         all_results = []
         filtered_tables = []
         if tablesearch != '0':
             for tablec in self.tables_config:
                 if tablec.id == tablesearch:
                     filtered_tables = [tablec,]
+                    usersearch.append(tablec.name)
         else:
             filtered_tables = self.tables_config
+            usersearch.append('all tables')
+        returnList.append(usersearch)
         for tablec in filtered_tables:
             sql_search_select = "select {}"
             params = ['_id']
@@ -131,7 +166,7 @@ class DAO(object):
         conn = sqlite3.connect(self.easydb_sqlitepath)
         conn.row_factory = sqlite3.Row
         c = conn.cursor()
-        record = []
+        record = [table_id, record_id,]
         recorddetails = []
         for tablec in self.tables_config:
             if tablec.id == table_id:
@@ -148,11 +183,72 @@ class DAO(object):
                         fieldc.pos,
                         fieldc.name, 
                         c.execute(sqlquery.format(*params)).fetchone()[0],
+                        fieldc.select,
                         ])
         record.append(sorted(recorddetails, key=itemgetter(2)))
         c.close()
         conn.close()
         return record
+    
+    def insertrecord(self, table_id, fieldstoadd):
+        conn = sqlite3.connect(self.easydb_sqlitepath)
+        conn.row_factory = sqlite3.Row
+        c = conn.cursor()
+        sqlquery = 'INSERT INTO {}'
+        sqlvalues = ' VALUES'
+        params = []
+        paramsvalues = []
+        for tablec in self.tables_config:
+            if tablec.id == table_id:
+                params = [tablec.sql_table_config_name, ]
+        for counter, field in enumerate(fieldstoadd):
+            if counter == 0:
+                sqlquery = sqlquery + ' ({}'
+                sqlvalues = sqlvalues + ' ({}'
+            elif counter == (len(fieldstoadd) -1):
+                sqlquery = sqlquery + ' , {})'
+                sqlvalues = sqlvalues + ', {})'
+            else:
+                sqlquery = sqlquery + ', {}'
+                sqlvalues = sqlvalues + ', {}'  
+            params.append(field[0])            
+            if field[2] == 0:
+                paramsvalues.append(time.mktime(datetime.datetime.strptime(field[1], "%m/%d/%Y").timetuple()))
+            else:
+                paramsvalues.append(field[1])
+        sqlcomplete = sqlquery + sqlvalues
+        paramstotal = params + paramsvalues  
+        c.execute(sqlcomplete.format(*paramstotal))
+        conn.commit()
+        c.close()
+        conn.close()
+        return
+    
+    def editrecord(self, table_id, record_id, fieldstochange):
+        conn = sqlite3.connect(self.easydb_sqlitepath)
+        conn.row_factory = sqlite3.Row
+        c = conn.cursor()
+        sqlquery = 'UPDATE {} SET'
+        for tablec in self.tables_config:
+            if tablec.id == table_id:
+                params = [tablec.sql_table_config_name, ]
+        for counter, field in enumerate(fieldstochange):
+            if counter == 0:
+                sqlquery = sqlquery + ' {} = "{}"'
+            else:
+                sqlquery = sqlquery + ', {} = "{}"'
+            params.append(field[0])
+            if field[2] == 0:
+                params.append(time.mktime(datetime.datetime.strptime(field[1], "%m/%d/%Y").timetuple()))
+            else:
+                params.append(field[1])            
+        sqlquery = sqlquery + ' WHERE _id = {}'
+        params.append(record_id)
+        c.execute(sqlquery.format(*params))
+        conn.commit()
+        c.close()
+        conn.close()
+        return
                     
 class TableConfig(object):
     
@@ -186,10 +282,12 @@ class FieldConfig(object):
     field_type_date = 0
     field_type_int = 1
     field_type_str = 2
+    field_type_sel = 3
     field_types = {
         'fecha' : field_type_date,
         'entero' : field_type_int,
         'texto' : field_type_str,
+        'select' : field_type_sel,        
         }
     
     # hash map false / true
@@ -206,6 +304,7 @@ class FieldConfig(object):
         'campo_id' : 'field_id',
         'presentador' : 'name',
         'tipo' : 'type',
+        'varios' : 'select',        
         'listado' : 'list',
         'detalle' : 'detail',
         'color' : 'color',
@@ -224,6 +323,7 @@ class FieldConfig(object):
         self.name = ''
         self.type = self.field_types['texto']
         self.list = False
+        self.select = []
         self.detail = False
         self.color = 'Blanco'
         self.find = True

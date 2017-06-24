@@ -15,7 +15,7 @@
 			<input type="submit" name="search" value="Search" class="button"/>
 		</form>
 	</div>
-	<form action="." type="get">
+	<form action="{% url 'emr:add' %}" type="get">
 		{% csrf_token %}
 		<div class="container" align="center">
 			<br/>
