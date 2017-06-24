@@ -12,13 +12,15 @@
 		{% endfor %}
 	</table>
 	<br/>
-	<table>
-		<tr>
-			<td><input type="submit" href="#" name="edit" value="Edit" class="button"/></td>
-			<td width="70%">&nbsp;</td>
-			<td><input type="submit" href="#" name="delete" value="Delete" class="button"/></td>			
-		</tr>
-	</table>
-	
-	
+	{% with record_id=record.1 table_id=record.0 %}	
+		<form action="{% url 'emr:edit' table_id record_id %}">
+			<table>
+				<tr>
+					<td><input type="submit" class="button" value="Edit"/></td>
+					<td width="70%">&nbsp;</td>
+					<td><input type="submit" href="#" name="delete" value="Delete" class="button"/></td>
+				</tr>
+			</table>
+		</form>
+	{% endwith %}
 {% endblock %}

@@ -48,20 +48,19 @@ def save(request):
         if tablec.id == table_id:
             for fieldc in tablec.fields:
                fieldstochange.append([fieldc.field_id, request.GET.get(fieldc.field_id), fieldc.type])
-    if record_id != 0:
+    if record_id != "0":
         daoobject.editrecord(table_id, record_id, fieldstochange)
     else:
-        daoobject.insertrecord(table_id, fieldstochange)
+        record_id = daoobject.insertrecord(table_id, fieldstochange)
     return detail(request, table_id, record_id)
 
-def add(request):
-    template_name = 'emr/add.html'
-    search_query = request.GET.get('searchstring')
+def addrecord(request):
+    template_name = 'emr/addrecord.html'
+    table_id = request.GET.get('recordtable')
     daoobject = DAO()
     daoobject.set_tables_config()
-    for tablec in daoobject.tables_config:
-        if tablec.id == table_id:
-            return render(request, template_name, {'table': tablec})
+    if table_id != "0":
+        return render(request, template_name, {'recordform': daoobject.getrecordform(table_id)})
     return index(request)
 
 class DAO(object):
@@ -204,13 +203,13 @@ class DAO(object):
         for counter, field in enumerate(fieldstoadd):
             if counter == 0:
                 sqlquery = sqlquery + ' ({}'
-                sqlvalues = sqlvalues + ' ({}'
+                sqlvalues = sqlvalues + ' ("{}"'
             elif counter == (len(fieldstoadd) -1):
-                sqlquery = sqlquery + ' , {})'
-                sqlvalues = sqlvalues + ', {})'
+                sqlquery = sqlquery + ', {})'
+                sqlvalues = sqlvalues + ', "{}")'
             else:
                 sqlquery = sqlquery + ', {}'
-                sqlvalues = sqlvalues + ', {}'  
+                sqlvalues = sqlvalues + ', "{}"'  
             params.append(field[0])            
             if field[2] == 0:
                 paramsvalues.append(time.mktime(datetime.datetime.strptime(field[1], "%m/%d/%Y").timetuple()))
@@ -220,9 +219,10 @@ class DAO(object):
         paramstotal = params + paramsvalues  
         c.execute(sqlcomplete.format(*paramstotal))
         conn.commit()
+        record_id = c.lastrowid
         c.close()
         conn.close()
-        return
+        return record_id
     
     def editrecord(self, table_id, record_id, fieldstochange):
         conn = sqlite3.connect(self.easydb_sqlitepath)
@@ -249,6 +249,24 @@ class DAO(object):
         c.close()
         conn.close()
         return
+               
+    def getrecordform(self, table_id):
+        recordform = []
+        for tablec in self.tables_config:
+            if tablec.id == table_id:
+                recordform = [tablec.id, tablec.name,]
+                fields = []
+                for fieldc in tablec.fields:
+                    fields.append([
+                        fieldc.field_id, 
+                        fieldc.type,
+                        fieldc.pos,
+                        fieldc.name, 
+                        fieldc.select,                    
+                        ])
+        recordform.append(sorted(fields, key=itemgetter(2)))
+        return recordform
+               
                     
 class TableConfig(object):
     

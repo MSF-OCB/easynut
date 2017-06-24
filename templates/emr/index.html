@@ -15,14 +15,14 @@
 			<input type="submit" name="search" value="Search" class="button"/>
 		</form>
 	</div>
-	<form action="{% url 'emr:add' %}" type="get">
+	<form action="{% url 'emr:addrecord' %}" type="get">
 		{% csrf_token %}
 		<div class="container" align="center">
 			<br/>
 			<h3>OR</h3>
 			<br/><br/>
 			<select name="recordtable" class="dropdown">
-				<option value="">Select a type</option>
+				<option value="0">Select a type</option>
 				{% for k,v in edbtables %}
 				<option value="{{ k }}">{{ v }}</option>
 				{% endfor %}				
