@@ -1,7 +1,6 @@
 {% extends "emr/base.html" %}
 
 {% block content %}	
-
 	<h1>View {{ record.2 }} record</h1><br/>
 	<table class="table" id="hor-minimalist-b">
 		{% for field in record.3 %}
@@ -13,14 +12,76 @@
 	</table>
 	<br/>
 	{% with record_id=record.1 table_id=record.0 %}	
-		<form action="{% url 'emr:edit' table_id record_id %}">
-			<table>
-				<tr>
-					<td><input type="submit" class="button" value="Edit"/></td>
-					<td width="70%">&nbsp;</td>
-					<td><input type="submit" href="#" name="delete" value="Delete" class="button"/></td>
-				</tr>
-			</table>
-		</form>
+		<table>
+			<tr>
+				<td>
+					<form action="{% url 'emr:edit' table_id record_id %}">
+						{% csrf_token %}
+						<input type="submit" class="button" value="Edit"/>
+					</form>
+				</td>
+				<td width="70%">&nbsp;</td>
+				<td>
+					<form action="{% url 'emr:deleterecord' table_id record_id %}" onclick="return confirm('Are you sure you want to delete this record?')">
+						{% csrf_token %}
+						<input type="submit" value="Delete" class="button"/>
+					</form>
+				</td>
+			</tr>
+		</table>
 	{% endwith %}
+	{% if relatedrecords %}
+		<br/>
+		<h1>Related records:</h1>
+		<br/>
+		{% for relatedrecord in relatedrecords %}
+			{% for tableresults in relatedrecord.1.1 %}
+				<h2>{{ tableresults.0 }}</h2>
+				<br/>
+				<table class="table" id="hor-minimalist-b">
+					<thead>
+						<tr>
+							{% for columnname in tableresults.2 %}
+								<th scope="col">{{ columnname }}</td>
+							{% endfor %}
+							<th  scope="col" width="15%">Action</td>
+						</tr>
+					</thead>
+					<tbody>
+						{% if not tableresults.3 %}
+							<tr>
+								<td colspan="{{ tableresults.2|length|add:'+1' }}">No related records found</td>
+							</tr>
+						{% else %}
+							{% for records in tableresults.3 %}
+								<tr>
+									{% for record in records %}
+										{% if forloop.counter != 1 %}
+											{% with record_id=records.0 table_id=tableresults.1 %}
+												<td><a href="{% url 'emr:detail' table_id record_id %}">{{ record }}</a></td>
+											{% endwith %}
+										{% endif %}
+									{% endfor %}
+									{% with record_id=records.0 table_id=tableresults.1 %}
+										<td width="15%"><a href="{% url 'emr:edit' table_id record_id %}">Edit</a> |||||| 
+										<a href="{% url 'emr:deleterecord' table_id record_id %}" onclick="return confirm('Are you sure you want to delete this record?')">Delete</a></td>
+									{% endwith %}
+								</tr>
+							{% endfor %}			
+						{% endif %}
+					</tbody>
+				</table>
+				<form action="{% url 'emr:addrecord' %}" type="get">
+					{% csrf_token %}
+					{% with table_id=tableresults.1 related_record_entry=relatedrecord.1.0.0 related_record_field=relatedrecord.0 %}
+						<input type="hidden" name="recordtable" value="{{ table_id }}">
+						<input type="hidden" name="related_record_entry" value="{{ related_record_entry }}">
+						<input type="hidden" name="related_record_field" value="{{ related_record_field }}">				
+						<input type="submit" value="Add related {{ tableresults.0 }}" class="button"/>
+					{% endwith %}
+				</form>
+				<br/><br/><br/>
+			{% endfor %}		
+		{% endfor %}
+	{% endif %}
 {% endblock %}

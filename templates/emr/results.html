@@ -31,7 +31,8 @@
 								{% endif %}
 							{% endfor %}
 							{% with record_id=records.0 table_id=tableresults.1 %}
-								<td width="15%"><a href="{% url 'emr:edit' table_id record_id %}">Edit</a> |||||| <a href="#">Delete</a></td>
+								<td width="15%"><a href="{% url 'emr:edit' table_id record_id %}">Edit</a> |||||| 
+								<a href="{% url 'emr:deleterecord' table_id record_id %}" onclick="return confirm('Are you sure you want to delete this record?')">Delete</a></td>
 							{% endwith %}
 						</tr>
 					{% endfor %}			

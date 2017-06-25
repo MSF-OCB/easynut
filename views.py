@@ -29,8 +29,12 @@ def results(request):
 def detail(request, table_id, record_id):
     template_name = 'emr/detail.html'
     daoobject = DAO()
-    daoobject.set_tables_config()    
-    return render(request, template_name, {'record': daoobject.get_record_with_type(table_id, record_id)})
+    daoobject.set_tables_config()
+    daoobject.set_tables_relationships()
+    return render(request, template_name, {
+        'record': daoobject.get_record_with_type(table_id, record_id), 
+        'relatedrecords' : daoobject.get_related_records(table_id, record_id),
+        })
 
 def edit(request, table_id, record_id):
     template_name = 'emr/edit.html'
@@ -57,10 +61,23 @@ def save(request):
 def addrecord(request):
     template_name = 'emr/addrecord.html'
     table_id = request.GET.get('recordtable')
+    related_record_entry = request.GET.get('related_record_entry')
+    related_record_field = request.GET.get('related_record_field')
     daoobject = DAO()
     daoobject.set_tables_config()
+    daoobject.set_tables_relationships()  
     if table_id != "0":
-        return render(request, template_name, {'recordform': daoobject.getrecordform(table_id)})
+        return render(request, template_name, {
+            'recordform': daoobject.getrecordform(table_id),
+            'related_record_entry' : related_record_entry,
+            'related_record_field' : related_record_field
+            })
+    return index(request)
+
+def deleterecord(request, table_id, record_id):
+    daoobject = DAO()
+    daoobject.set_tables_config()
+    daoobject.delete(table_id, record_id)
     return index(request)
 
 class DAO(object):
@@ -69,6 +86,7 @@ class DAO(object):
     def __init__(self):
         self.tables_config = []
         self.tables_config_lite = {}
+        self.tables_relationships = []
         self.search_results = []
         
     def set_tables_config(self):
@@ -110,6 +128,13 @@ class DAO(object):
         c.close()
         conn.close()
         return
+    
+    def set_tables_relationships(self):
+        conn = sqlite3.connect(self.easydb_sqlitepath)
+        conn.row_factory = sqlite3.Row
+        c = conn.cursor()
+        sqlquery = 'select tabla1_id, campo1_id, tabla2_id, campo2_id from tablas_relaciones'
+        self.tables_relationships = c.execute(sqlquery).fetchall()
     
     def search(self, entry, tablesearch):
         conn = sqlite3.connect(self.easydb_sqlitepath)
@@ -252,10 +277,10 @@ class DAO(object):
                
     def getrecordform(self, table_id):
         recordform = []
+        fields = []
         for tablec in self.tables_config:
             if tablec.id == table_id:
                 recordform = [tablec.id, tablec.name,]
-                fields = []
                 for fieldc in tablec.fields:
                     fields.append([
                         fieldc.field_id, 
@@ -266,7 +291,46 @@ class DAO(object):
                         ])
         recordform.append(sorted(fields, key=itemgetter(2)))
         return recordform
-               
+
+    def delete(self, table_id, record_id):
+        conn = sqlite3.connect(self.easydb_sqlitepath)
+        conn.row_factory = sqlite3.Row
+        c = conn.cursor()
+        sqlquery = 'DELETE FROM {} WHERE _id = {}'
+        for tablec in self.tables_config:
+            if tablec.id == table_id:
+                params = [tablec.sql_table_config_name, record_id]
+        c.execute(sqlquery.format(*params))
+        conn.commit()
+        c.close()
+        conn.close()
+        return
+    
+    def get_related_records(self, table_id, record_id):
+        conn = sqlite3.connect(self.easydb_sqlitepath)
+        conn.row_factory = sqlite3.Row
+        c = conn.cursor()        
+        relatedrecords = []
+        for relationship in self.tables_relationships:
+            if (relationship[0] == table_id) or (relationship[2] == table_id):
+                sqlquery = 'SELECT {} FROM {} WHERE _id = {}'
+                if relationship[0] == table_id:
+                    fieldtosearch = relationship[1]
+                    relatedtable = relationship[2]
+                    relatedfield = relationship[3]
+                elif relationship[2] == table_id:       
+                    fieldtosearch = relationship[3]
+                    relatedtable = relationship[0]
+                    relatedfield = relationship[1]                    
+                for tablec in self.tables_config:
+                    if tablec.id == table_id:
+                        tabletosearch = tablec.sql_table_config_name
+                params = [fieldtosearch, tabletosearch, record_id]
+                relatedrecords.append((relatedfield, self.search(c.execute(sqlquery.format(*params)).fetchone()[0], relatedtable)))
+        c.close()
+        conn.close()
+        return relatedrecords
+                
                     
 class TableConfig(object):
     
