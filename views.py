@@ -16,7 +16,7 @@ def index(request):
     template_name = 'emr/index.html'
     daoobject = DAO()
     daoobject.set_tables_config()
-    return render(request, template_name, {'edbtables': daoobject.tables_config_lite})
+    return render(request, template_name, {'edbtables': daoobject.tables_config_lite, 'nextId' : daoobject.getNextId('tabla_1', 'campo_1')})
 
 def results(request):
     search_query = request.GET.get('searchstring')
@@ -24,7 +24,7 @@ def results(request):
     template_name = 'emr/results.html'
     daoobject = DAO()
     daoobject.set_tables_config()
-    return render(request, template_name, {'searchresults': daoobject.search(search_query, tablesearch)})
+    return render(request, template_name, {'searchresults': daoobject.search(search_query, tablesearch), 'nextId' : daoobject.getNextId('tabla_1', 'campo_1')})
 
 def detail(request, table_id, record_id):
     template_name = 'emr/detail.html'
@@ -34,13 +34,14 @@ def detail(request, table_id, record_id):
     return render(request, template_name, {
         'record': daoobject.get_record_with_type(table_id, record_id), 
         'relatedrecords' : daoobject.get_related_records(table_id, record_id),
+        'nextId' : daoobject.getNextId('tabla_1', 'campo_1')
         })
 
 def edit(request, table_id, record_id):
     template_name = 'emr/edit.html'
     daoobject = DAO()
     daoobject.set_tables_config()    
-    return render(request, template_name, {'record': daoobject.get_record_with_type(table_id, record_id)})
+    return render(request, template_name, {'record': daoobject.get_record_with_type(table_id, record_id), 'nextId' : daoobject.getNextId('tabla_1', 'campo_1')})
 
 def save(request):
     record_id = request.GET.get('record_id')
@@ -70,7 +71,8 @@ def addrecord(request):
         return render(request, template_name, {
             'recordform': daoobject.getrecordform(table_id),
             'related_record_entry' : related_record_entry,
-            'related_record_field' : related_record_field
+            'related_record_field' : related_record_field,
+            'nextId' : daoobject.getNextId('tabla_1', 'campo_1')
             })
     return index(request)
 
@@ -330,7 +332,17 @@ class DAO(object):
         c.close()
         conn.close()
         return relatedrecords
-                
+        
+    def getNextId(self, table_id, column_name):
+        conn = sqlite3.connect(self.easydb_sqlitepath)
+        conn.row_factory = sqlite3.Row
+        c = conn.cursor()
+        sqlquery = 'SELECT MAX({}) FROM {}'
+        params = [column_name, table_id]
+        highestId = c.execute(sqlquery.format(*params)).fetchone()[0]
+        c.close()
+        conn.close()             
+        return int(highestId) +1
                     
 class TableConfig(object):
     
