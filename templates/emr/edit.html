@@ -26,7 +26,7 @@
 					<td><b>{{ field.3 }}</b></td>
 					<td>
 						{% if field.1 == 0 %}
-							<input type="date" class="datepicker" value="{{ field.4 }}" name="{{ field.0 }}"> (yyyy-mm-dd)
+							<input type="date" class="datepicker" value="{{ field.4 }}" name="{{ field.0 }}">
 						{% elif field.1 == 1 %}
 							<input type="text" class="numbersOnly" {% if field.4 != None %}value="{{ field.4 }}"{% endif %} name="{{ field.0 }}"> (number only)
 						{% elif field.1 == 2 %}

@@ -94,12 +94,8 @@ class DAO(object):
             columns = []
             for fieldc in tablec.fields:
                 if fieldc.list == True:
-                    if fieldc.type == fieldc.field_type_date:
-                        columns.append(fieldc.name + ' (yyyy-mm-dd)')
-                        sql_search_select = sql_search_select + ", {}"
-                    else:
-                        columns.append(fieldc.name)
-                        sql_search_select = sql_search_select + ", {}"
+                    columns.append(fieldc.name)
+                    sql_search_select = sql_search_select + ", {}"
                     params.append(fieldc.field)
                 if sql_search_where == ' from {} where ':
                     sql_search_where = sql_search_where + '({} like {})'
