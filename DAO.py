@@ -11,10 +11,11 @@ import csv
 import os, re
 import sqlite3
 import shutil
+from django.conf import settings
+
 
 class DAO(object):
-    easydb_sqlitepath = os.getcwd() + '/easydb.sqlite'
-    
+
     def __init__(self):
         self.tables_config = []
         self.tables_config_lite = {}
@@ -22,10 +23,11 @@ class DAO(object):
         self.search_results = []
         
     def set_tables_config(self):
-        conn = sqlite3.connect(self.easydb_sqlitepath)
-        conn.row_factory = sqlite3.Row
-        conn.text_factory = str
-        c = conn.cursor()
+        db = MySQLdb.connect(settings.DATABASES['data']['HOST'],
+                             settings.DATABASES['data']['USER'],
+                             settings.DATABASES['data']['PASSWORD'],
+                             settings.DATABASES['data']['NAME']) 
+        c = db.cursor()
         sql_tables = 'select tabla_id, presentador from tablas'
         self.tables_config_lite = c.execute(sql_tables).fetchall()
         for k,v in self.tables_config_lite:
@@ -58,20 +60,27 @@ class DAO(object):
             self.tables_config.append(tablec)
             del tablec
         c.close()
-        conn.close()
+        db.close()
         return
     
     def set_tables_relationships(self):
-        conn = sqlite3.connect(self.easydb_sqlitepath)
-        conn.row_factory = sqlite3.Row
-        c = conn.cursor()
+        db = MySQLdb.connect(settings.DATABASES['data']['HOST'],
+                             settings.DATABASES['data']['USER'],
+                             settings.DATABASES['data']['PASSWORD'],
+                             settings.DATABASES['data']['NAME']) 
+        c = self.db.cursor()
         sqlquery = 'select tabla1_id, campo1_id, tabla2_id, campo2_id from tablas_relaciones'
         self.tables_relationships = c.execute(sqlquery).fetchall()
+        c.close()
+        db.close()
+        return
     
     def search(self, entry, tablesearch):
-        conn = sqlite3.connect(self.easydb_sqlitepath)
-        conn.row_factory = sqlite3.Row
-        c = conn.cursor()
+        db = MySQLdb.connect(settings.DATABASES['data']['HOST'],
+                             settings.DATABASES['data']['USER'],
+                             settings.DATABASES['data']['PASSWORD'],
+                             settings.DATABASES['data']['NAME']) 
+        c = self.db.cursor()
         usersearch = [entry,]
         returnList = []
         all_results = []
@@ -115,13 +124,15 @@ class DAO(object):
             all_results.append(results)
         returnList.append(all_results)
         c.close()
-        conn.close()
+        db.close()
         return returnList
                 
     def get_record_with_type(self, table_id, record_id):
-        conn = sqlite3.connect(self.easydb_sqlitepath)
-        conn.row_factory = sqlite3.Row
-        c = conn.cursor()
+        db = MySQLdb.connect(settings.DATABASES['data']['HOST'],
+                             settings.DATABASES['data']['USER'],
+                             settings.DATABASES['data']['PASSWORD'],
+                             settings.DATABASES['data']['NAME']) 
+        c = self.db.cursor()
         record = [table_id, record_id,]
         recorddetails = []
         for tablec in self.tables_config:
@@ -143,13 +154,15 @@ class DAO(object):
                         ])
         record.append(sorted(recorddetails, key=itemgetter(2)))
         c.close()
-        conn.close()
+        db.close()
         return record
     
     def insertrecord(self, table_id, fieldstoadd):
-        conn = sqlite3.connect(self.easydb_sqlitepath)
-        conn.row_factory = sqlite3.Row
-        c = conn.cursor()
+        db = MySQLdb.connect(settings.DATABASES['data']['HOST'],
+                             settings.DATABASES['data']['USER'],
+                             settings.DATABASES['data']['PASSWORD'],
+                             settings.DATABASES['data']['NAME']) 
+        c = self.db.cursor()
         sqlquery = 'INSERT INTO {}'
         sqlvalues = ' VALUES'
         params = []
@@ -178,13 +191,15 @@ class DAO(object):
         conn.commit()
         record_id = c.lastrowid
         c.close()
-        conn.close()
+        db.close()
         return record_id
     
     def editrecord(self, table_id, record_id, fieldstochange):
-        conn = sqlite3.connect(self.easydb_sqlitepath)
-        conn.row_factory = sqlite3.Row
-        c = conn.cursor()
+        db = MySQLdb.connect(settings.DATABASES['data']['HOST'],
+                             settings.DATABASES['data']['USER'],
+                             settings.DATABASES['data']['PASSWORD'],
+                             settings.DATABASES['data']['NAME']) 
+        c = self.db.cursor()        
         sqlquery = 'UPDATE {} SET'
         for tablec in self.tables_config:
             if tablec.id == table_id:
@@ -202,9 +217,9 @@ class DAO(object):
         sqlquery = sqlquery + ' WHERE _id = {}'
         params.append(record_id)
         c.execute(sqlquery.format(*params))
-        conn.commit()
+        db.commit()
         c.close()
-        conn.close()
+        db.close()
         return
                
     def getrecordform(self, table_id):
@@ -225,23 +240,27 @@ class DAO(object):
         return recordform
 
     def delete(self, table_id, record_id):
-        conn = sqlite3.connect(self.easydb_sqlitepath)
-        conn.row_factory = sqlite3.Row
-        c = conn.cursor()
+        db = MySQLdb.connect(settings.DATABASES['data']['HOST'],
+                             settings.DATABASES['data']['USER'],
+                             settings.DATABASES['data']['PASSWORD'],
+                             settings.DATABASES['data']['NAME']) 
+        c = self.db.cursor()        
         sqlquery = 'DELETE FROM {} WHERE _id = {}'
         for tablec in self.tables_config:
             if tablec.id == table_id:
                 params = [tablec.sql_table_config_name, record_id]
         c.execute(sqlquery.format(*params))
-        conn.commit()
+        db.commit()
         c.close()
-        conn.close()
+        db.close()
         return
     
     def get_related_records(self, table_id, record_id):
-        conn = sqlite3.connect(self.easydb_sqlitepath)
-        conn.row_factory = sqlite3.Row
-        c = conn.cursor()        
+        db = MySQLdb.connect(settings.DATABASES['data']['HOST'],
+                             settings.DATABASES['data']['USER'],
+                             settings.DATABASES['data']['PASSWORD'],
+                             settings.DATABASES['data']['NAME'])     
+        c = self.db.cursor()   
         relatedrecords = []
         for relationship in self.tables_relationships:
             if (relationship[0] == table_id) or (relationship[2] == table_id):
@@ -260,24 +279,28 @@ class DAO(object):
                 params = [fieldtosearch, tabletosearch, record_id]
                 relatedrecords.append((relatedfield, self.search(c.execute(sqlquery.format(*params)).fetchone()[0], relatedtable)))
         c.close()
-        conn.close()
+        db.close()
         return relatedrecords
         
     def getNextId(self, table_id, column_name):
-        conn = sqlite3.connect(self.easydb_sqlitepath)
-        conn.row_factory = sqlite3.Row
-        c = conn.cursor()
+        db = MySQLdb.connect(settings.DATABASES['data']['HOST'],
+                             settings.DATABASES['data']['USER'],
+                             settings.DATABASES['data']['PASSWORD'],
+                             settings.DATABASES['data']['NAME']) 
+        c = self.db.cursor()
         sqlquery = 'SELECT MAX({}) FROM {}'
         params = [column_name, table_id]
         highestId = c.execute(sqlquery.format(*params)).fetchone()[0]
         c.close()
-        conn.close()             
+        db.close()             
         return int(highestId) +1
     
     def generateExport(self):
-        conn = sqlite3.connect(self.easydb_sqlitepath)
-        conn.row_factory = sqlite3.Row
-        c = conn.cursor()
+        db = MySQLdb.connect(settings.DATABASES['data']['HOST'],
+                             settings.DATABASES['data']['USER'],
+                             settings.DATABASES['data']['PASSWORD'],
+                             settings.DATABASES['data']['NAME']) 
+        c = self.db.cursor()
         for tablec in self.tables_config:
             with open(os.getcwd()+'/export/CSVFiles/'+tablec.name+'.csv', 'wb') as mycsv:
                 wr = csv.writer(mycsv, quoting=csv.QUOTE_ALL)                
@@ -310,5 +333,5 @@ class DAO(object):
                 os.remove(os.path.join(os.getcwd()+'/export/', f))
         shutil.make_archive(zipPath + filename, 'zip', toZip)
         c.close()
-        conn.close()   
+        db.close()   
         return zipPath + filename 

@@ -58,7 +58,6 @@ class FieldConfig(object):
         'varios' : 'select',        
         'listado' : 'list',
         'detalle' : 'detail',
-        'color' : 'color',
         'buscar' : 'find',
         'nuevaLinea' : 'new_line',
         'editable' : 'editable',
