@@ -16,7 +16,7 @@ def index(request):
     template_name = 'emr/index.html'
     daoobject = DAO()
     daoobject.set_tables_config()
-    return render(request, template_name, {'edbtables': daoobject.tables_config_lite, 'nextId' : daoobject.getNextId('tabla_1', 'campo_1')})
+    return render(request, template_name, {'edbtables': daoobject.tables_config_lite, 'lastId' : daoobject.getLastId('tabla_1', 'campo_1')})
 
 def results(request):
     search_query = request.GET.get('searchstring')
@@ -24,7 +24,7 @@ def results(request):
     template_name = 'emr/results.html'
     daoobject = DAO()
     daoobject.set_tables_config()
-    return render(request, template_name, {'searchresults': daoobject.search(search_query, tablesearch), 'nextId' : daoobject.getNextId('tabla_1', 'campo_1')})
+    return render(request, template_name, {'searchresults': daoobject.search(search_query, tablesearch), 'lastId' : daoobject.getLastId('tabla_1', 'campo_1')})
 
 def detail(request, table_id, record_id):
     template_name = 'emr/detail.html'
@@ -34,14 +34,14 @@ def detail(request, table_id, record_id):
     return render(request, template_name, {
         'record': daoobject.get_record_with_type(table_id, record_id), 
         'relatedrecords' : daoobject.get_related_records(table_id, record_id),
-        'nextId' : daoobject.getNextId('tabla_1', 'campo_1')
+        'lastId' : daoobject.getLastId('tabla_1', 'campo_1')
         })
 
 def edit(request, table_id, record_id):
     template_name = 'emr/edit.html'
     daoobject = DAO()
     daoobject.set_tables_config()    
-    return render(request, template_name, {'record': daoobject.get_record_with_type(table_id, record_id), 'nextId' : daoobject.getNextId('tabla_1', 'campo_1')})
+    return render(request, template_name, {'record': daoobject.get_record_with_type(table_id, record_id), 'lastId' : daoobject.getLastId('tabla_1', 'campo_1')})
 
 def save(request):
     record_id = request.GET.get('record_id')
@@ -72,7 +72,7 @@ def addrecord(request):
             'recordform': daoobject.getrecordform(table_id),
             'related_record_entry' : related_record_entry,
             'related_record_field' : related_record_field,
-            'nextId' : daoobject.getNextId('tabla_1', 'campo_1')
+            'lastId' : daoobject.getLastId('tabla_1', 'campo_1')
             })
     return index(request)
 

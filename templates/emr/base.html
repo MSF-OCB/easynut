@@ -8,7 +8,7 @@
 	<script type="text/javascript">
 		$(document).ready( function() {
 			$("#nextId").click(function () {
-				alert("Next ID to use: {{ nextId }}");
+				alert("Last ID used: {{ lastId }}");
 			});
 		});
 	 </script>
@@ -27,7 +27,7 @@
 				</div>
 				<div id="menu">
 					<ul>
-						<li><a href="#" accesskey="1" id="nextId">Get new ID</a></li>
+						<li><a href="#" accesskey="1" id="nextId">Get last ID</a></li>
 						<li>&nbsp;</li>						
 						<li><a href="{% url 'emr:downloadexport' %}" accesskey="2">Export</a></li>
 					</ul>

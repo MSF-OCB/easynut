@@ -1,18 +1,16 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 from django.utils import timezone
-from sqlite3.dbapi2 import paramstyle
 from operator import itemgetter
 from EasyDBObjects import *
 from datetime import date
+from django.conf import settings
+import MySQLdb
 import datetime
 import time
 import csv
 import os, re
-import sqlite3
 import shutil
-from django.conf import settings
-
 
 class DAO(object):
 
@@ -21,29 +19,31 @@ class DAO(object):
         self.tables_config_lite = {}
         self.tables_relationships = []
         self.search_results = []
-        
-    def set_tables_config(self):
-        db = MySQLdb.connect(settings.DATABASES['data']['HOST'],
+        self.db = MySQLdb.connect(settings.DATABASES['data']['HOST'],
                              settings.DATABASES['data']['USER'],
                              settings.DATABASES['data']['PASSWORD'],
-                             settings.DATABASES['data']['NAME']) 
-        c = db.cursor()
+                             settings.DATABASES['data']['NAME'])
+        
+    def set_tables_config(self):
+        c = self.db.cursor()
         sql_tables = 'select tabla_id, presentador from tablas'
-        self.tables_config_lite = c.execute(sql_tables).fetchall()
+        c.execute(sql_tables)
+        self.tables_config_lite = c.fetchall()
         for k,v in self.tables_config_lite:
             tablec = TableConfig()
             tablec.set_id(k)
             tablec.set_name(v)
             tablec.set_sql_names()
-            sql_fields = 'SELECT _id FROM %s'
+            sql_fields = 'SELECT _id FROM {}'
             params = (tablec.sql_table_field_config_name,)
-            fields = c.execute(sql_fields % params)
-            for field_id in fields.fetchall():
+            c.execute(sql_fields.format(*params))
+            for field_id in c.fetchall():
                 fieldc = FieldConfig()
                 for attributek, attributev in fieldc.attributes.items():
-                    sql_field_config = 'select %s from %s where _id = %s'
+                    sql_field_config = 'select {} from {} where _id = {}'
                     params = (attributek, tablec.sql_table_field_config_name, field_id[0],)
-                    sqlresult = c.execute(sql_field_config % params).fetchone()[0]
+                    c.execute(sql_field_config.format(*params))
+                    sqlresult = c.fetchone()[0]
                     if sqlresult in fieldc.hasmapft.keys():
                         setattr(fieldc, attributev, fieldc.hasmapft[sqlresult])
                     elif sqlresult in fieldc.field_types.keys():
@@ -60,26 +60,17 @@ class DAO(object):
             self.tables_config.append(tablec)
             del tablec
         c.close()
-        db.close()
         return
     
     def set_tables_relationships(self):
-        db = MySQLdb.connect(settings.DATABASES['data']['HOST'],
-                             settings.DATABASES['data']['USER'],
-                             settings.DATABASES['data']['PASSWORD'],
-                             settings.DATABASES['data']['NAME']) 
         c = self.db.cursor()
-        sqlquery = 'select tabla1_id, campo1_id, tabla2_id, campo2_id from tablas_relaciones'
-        self.tables_relationships = c.execute(sqlquery).fetchall()
+        sqlquery = 'select tabla1_id, campo1_id, tabla2_id, campo2_id from tablas_relaciones' 
+        c.execute(sqlquery)
+        self.tables_relationships = c.fetchall()
         c.close()
-        db.close()
         return
     
     def search(self, entry, tablesearch):
-        db = MySQLdb.connect(settings.DATABASES['data']['HOST'],
-                             settings.DATABASES['data']['USER'],
-                             settings.DATABASES['data']['PASSWORD'],
-                             settings.DATABASES['data']['NAME']) 
         c = self.db.cursor()
         usersearch = [entry,]
         returnList = []
@@ -120,18 +111,14 @@ class DAO(object):
             params.extend(paramswhere)
             sql_search = sql_search_select + sql_search_where + ' LIMIT 50'
             results.append(columns)
-            results.append(c.execute(sql_search.format(*params)).fetchall())
+            c.execute(sql_search.format(*params))
+            results.append(c.fetchall())
             all_results.append(results)
         returnList.append(all_results)
         c.close()
-        db.close()
         return returnList
                 
     def get_record_with_type(self, table_id, record_id):
-        db = MySQLdb.connect(settings.DATABASES['data']['HOST'],
-                             settings.DATABASES['data']['USER'],
-                             settings.DATABASES['data']['PASSWORD'],
-                             settings.DATABASES['data']['NAME']) 
         c = self.db.cursor()
         record = [table_id, record_id,]
         recorddetails = []
@@ -144,24 +131,20 @@ class DAO(object):
                     else:
                         sqlquery = 'select {} from {} where _id = {}'
                     params = [fieldc.field, tablec.sql_table_config_name, record_id]
+                    c.execute(sqlquery.format(*params))
                     recorddetails.append([
                         fieldc.field_id, 
                         fieldc.type,
                         fieldc.pos,
                         fieldc.name, 
-                        c.execute(sqlquery.format(*params)).fetchone()[0],
+                        c.fetchone()[0],
                         fieldc.select,
                         ])
         record.append(sorted(recorddetails, key=itemgetter(2)))
         c.close()
-        db.close()
         return record
     
     def insertrecord(self, table_id, fieldstoadd):
-        db = MySQLdb.connect(settings.DATABASES['data']['HOST'],
-                             settings.DATABASES['data']['USER'],
-                             settings.DATABASES['data']['PASSWORD'],
-                             settings.DATABASES['data']['NAME']) 
         c = self.db.cursor()
         sqlquery = 'INSERT INTO {}'
         sqlvalues = ' VALUES'
@@ -191,14 +174,9 @@ class DAO(object):
         conn.commit()
         record_id = c.lastrowid
         c.close()
-        db.close()
         return record_id
     
     def editrecord(self, table_id, record_id, fieldstochange):
-        db = MySQLdb.connect(settings.DATABASES['data']['HOST'],
-                             settings.DATABASES['data']['USER'],
-                             settings.DATABASES['data']['PASSWORD'],
-                             settings.DATABASES['data']['NAME']) 
         c = self.db.cursor()        
         sqlquery = 'UPDATE {} SET'
         for tablec in self.tables_config:
@@ -219,7 +197,6 @@ class DAO(object):
         c.execute(sqlquery.format(*params))
         db.commit()
         c.close()
-        db.close()
         return
                
     def getrecordform(self, table_id):
@@ -240,10 +217,6 @@ class DAO(object):
         return recordform
 
     def delete(self, table_id, record_id):
-        db = MySQLdb.connect(settings.DATABASES['data']['HOST'],
-                             settings.DATABASES['data']['USER'],
-                             settings.DATABASES['data']['PASSWORD'],
-                             settings.DATABASES['data']['NAME']) 
         c = self.db.cursor()        
         sqlquery = 'DELETE FROM {} WHERE _id = {}'
         for tablec in self.tables_config:
@@ -252,14 +225,9 @@ class DAO(object):
         c.execute(sqlquery.format(*params))
         db.commit()
         c.close()
-        db.close()
         return
     
     def get_related_records(self, table_id, record_id):
-        db = MySQLdb.connect(settings.DATABASES['data']['HOST'],
-                             settings.DATABASES['data']['USER'],
-                             settings.DATABASES['data']['PASSWORD'],
-                             settings.DATABASES['data']['NAME'])     
         c = self.db.cursor()   
         relatedrecords = []
         for relationship in self.tables_relationships:
@@ -277,29 +245,21 @@ class DAO(object):
                     if tablec.id == table_id:
                         tabletosearch = tablec.sql_table_config_name
                 params = [fieldtosearch, tabletosearch, record_id]
-                relatedrecords.append((relatedfield, self.search(c.execute(sqlquery.format(*params)).fetchone()[0], relatedtable)))
+                c.execute(sqlquery.format(*params))
+                relatedrecords.append((relatedfield, self.search(c.fetchone()[0], relatedtable)))
         c.close()
-        db.close()
         return relatedrecords
         
-    def getNextId(self, table_id, column_name):
-        db = MySQLdb.connect(settings.DATABASES['data']['HOST'],
-                             settings.DATABASES['data']['USER'],
-                             settings.DATABASES['data']['PASSWORD'],
-                             settings.DATABASES['data']['NAME']) 
+    def getLastId(self, table_id, column_name):
         c = self.db.cursor()
         sqlquery = 'SELECT MAX({}) FROM {}'
         params = [column_name, table_id]
-        highestId = c.execute(sqlquery.format(*params)).fetchone()[0]
+        c.execute(sqlquery.format(*params))
+        highestId = c.fetchone()[0]
         c.close()
-        db.close()             
-        return int(highestId) +1
+        return int(highestId)
     
     def generateExport(self):
-        db = MySQLdb.connect(settings.DATABASES['data']['HOST'],
-                             settings.DATABASES['data']['USER'],
-                             settings.DATABASES['data']['PASSWORD'],
-                             settings.DATABASES['data']['NAME']) 
         c = self.db.cursor()
         for tablec in self.tables_config:
             with open(os.getcwd()+'/export/CSVFiles/'+tablec.name+'.csv', 'wb') as mycsv:
@@ -323,7 +283,8 @@ class DAO(object):
                 sqlquery = sqlquery + ' FROM {}'
                 params.append(tablec.sql_table_config_name)
                 wr.writerow(columns)
-                for row in c.execute(sqlquery.format(*params)).fetchall():
+                c.execute(sqlquery.format(*params))
+                for row in c.fetchall():
                     wr.writerow(row)
         filename = 'EasyNutExport'+date.today().strftime('%d%b%Y')
         zipPath = os.getcwd()+'/export/'
@@ -333,5 +294,4 @@ class DAO(object):
                 os.remove(os.path.join(os.getcwd()+'/export/', f))
         shutil.make_archive(zipPath + filename, 'zip', toZip)
         c.close()
-        db.close()   
         return zipPath + filename 
