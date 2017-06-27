@@ -71,15 +71,17 @@
 						{% endif %}
 					</tbody>
 				</table>
-				<form action="{% url 'emr:addrecord' %}" type="get">
-					{% csrf_token %}
-					{% with table_id=tableresults.1 related_record_entry=relatedrecord.1.0.0 related_record_field=relatedrecord.0 %}
-						<input type="hidden" name="recordtable" value="{{ table_id }}">
-						<input type="hidden" name="related_record_entry" value="{{ related_record_entry }}">
-						<input type="hidden" name="related_record_field" value="{{ related_record_field }}">				
-						<input type="submit" value="Add related {{ tableresults.0 }}" class="button"/>
-					{% endwith %}
-				</form>
+				{% if tableresults.1 != '1' %}
+					<form action="{% url 'emr:addrecord' %}" type="get">
+						{% csrf_token %}
+						{% with table_id=tableresults.1 related_record_entry=relatedrecord.1.0.0 related_record_field=relatedrecord.0 %}
+							<input type="hidden" name="recordtable" value="{{ table_id }}">
+							<input type="hidden" name="related_record_entry" value="{{ related_record_entry }}">
+							<input type="hidden" name="related_record_field" value="{{ related_record_field }}">				
+							<input type="submit" value="Add related {{ tableresults.0 }}" class="button"/>
+						{% endwith %}
+					</form>
+				{% endif %}
 				<br/><br/><br/>
 			{% endfor %}		
 		{% endfor %}
