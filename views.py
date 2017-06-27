@@ -67,8 +67,8 @@ def addrecord(request):
     daoobject = DAO()
     daoobject.set_tables_config()
     daoobject.set_tables_relationships() 
-    if (not related_record_entry) and (table_id == 1):
-        related_record_entry = daoobject.getLastId('tabla_1', 'campo_1') + 1
+    if (not related_record_entry) and (table_id == '1'):
+        related_record_entry = daoobject.getNewId('tabla_1', 'campo_1')
         related_record_field = 'campo_1'
     if table_id != "0":
         return render(request, template_name, {

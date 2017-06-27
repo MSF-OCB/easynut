@@ -274,10 +274,20 @@ class DAO(object):
         highestId = c.fetchone()[0]
         c.close()
         if highestId:
-            return int(highestId)
+            return highestId
         else:
             return 0
-    
+
+    def getNewId(self, table_id, column_name):
+        lastId = self.getLastId(table_id, column_name)
+        newIdInt = int(lastId) + 1
+        newIdStr = str(newIdInt)
+        zerosToAdd = 6-len(newIdStr)
+        IdToReturn = ''
+        for i in xrange(zerosToAdd):
+            IdToReturn = IdToReturn + '0'
+        return IdToReturn + newIdStr
+                
     def generateExport(self):
         c = self.db.cursor()
         for tablec in self.tables_config:
