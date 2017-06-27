@@ -151,22 +151,38 @@ class DAO(object):
             if tablec.id == table_id:
                 params = [tablec.sql_table_config_name, ]
         for counter, field in enumerate(fieldstoadd):
+            if field[1] == '':
+                field[1] = 'NULL'
             if counter == 0:
                 sqlquery = sqlquery + ' ({}'
-                sqlvalues = sqlvalues + ' ("{}"'
+                if field[2] == 1:
+                    sqlvalues = sqlvalues + ' ({}'
+                elif field[2] == 0:
+                    sqlvalues = sqlvalues + ' (STR_TO_DATE("{}", "%M %d, %Y")'                     
+                else:
+                    sqlvalues = sqlvalues + ' ("{}"'
             elif counter == (len(fieldstoadd) -1):
                 sqlquery = sqlquery + ', {})'
-                sqlvalues = sqlvalues + ', "{}")'
+                if field[2] == 1:
+                    sqlvalues = sqlvalues + ', {})'
+                elif field[2] == 0:
+                    sqlvalues = sqlvalues + ', STR_TO_DATE("{}", "%M %d, %Y"))'
+                else:
+                    sqlvalues = sqlvalues + ', "{}")'
             else:
                 sqlquery = sqlquery + ', {}'
-                sqlvalues = sqlvalues + ', "{}"'  
+                if field[2] == 1:
+                    sqlvalues = sqlvalues + ', {}'  
+                elif field[2] == 0:
+                    sqlvalues = sqlvalues + ', STR_TO_DATE("{}", "%M %d, %Y")'  
+                else:
+                    sqlvalues = sqlvalues + ', "{}"'  
             params.append(field[0])            
-            if field[2] == 0:
-                paramsvalues.append(field[1])
+            paramsvalues.append(field[1])
         sqlcomplete = sqlquery + sqlvalues
-        paramstotal = params + paramsvalues  
+        paramstotal = params + paramsvalues
         c.execute(sqlcomplete.format(*paramstotal))
-        conn.commit()
+        self.db.commit()
         record_id = c.lastrowid
         c.close()
         return record_id
@@ -178,16 +194,28 @@ class DAO(object):
             if tablec.id == table_id:
                 params = [tablec.sql_table_config_name, ]
         for counter, field in enumerate(fieldstochange):
+            if field[1] == '':
+                field[1] = 'NULL'
             if counter == 0:
-                sqlquery = sqlquery + ' {} = "{}"'
+                if field[2] == 1:
+                    sqlquery = sqlquery + ' {} = {}'
+                elif field[2] == 0:
+                    sqlquery = sqlquery + ' {} = STR_TO_DATE("{}", "%M %d, %Y")'
+                else:
+                    sqlquery = sqlquery + ' {} = "{}"'
             else:
-                sqlquery = sqlquery + ', {} = "{}"'
+                if field[2] == 1:
+                    sqlquery = sqlquery + ', {} = {}'
+                elif field[2] == 0:
+                    sqlquery = sqlquery + ', {} = STR_TO_DATE("{}", "%M %d, %Y")'
+                else:
+                    sqlquery = sqlquery + ', {} = "{}"'
             params.append(field[0])
             params.append(field[1])            
         sqlquery = sqlquery + ' WHERE _id = {}'
         params.append(record_id)
         c.execute(sqlquery.format(*params))
-        db.commit()
+        self.db.commit()
         c.close()
         return
                
