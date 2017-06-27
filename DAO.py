@@ -95,8 +95,8 @@ class DAO(object):
             for fieldc in tablec.fields:
                 if fieldc.list == True:
                     if fieldc.type == fieldc.field_type_date:
-                        columns.append(fieldc.name + ' (mm/dd/yyyy)')
-                        sql_search_select = sql_search_select + ", strftime('%m/%d/%Y', datetime({}, 'unixepoch'))"
+                        columns.append(fieldc.name + ' (yyyy-mm-dd)')
+                        sql_search_select = sql_search_select + ", {}"
                     else:
                         columns.append(fieldc.name)
                         sql_search_select = sql_search_select + ", {}"
@@ -126,10 +126,7 @@ class DAO(object):
             if tablec.id == table_id:
                 record.append(tablec.name)
                 for fieldc in tablec.fields:
-                    if fieldc.type == fieldc.field_type_date:
-                        sqlquery = "select strftime('%m/%d/%Y', datetime({}, 'unixepoch')) from {} where _id = {}"
-                    else:
-                        sqlquery = 'select {} from {} where _id = {}'
+                    sqlquery = 'select {} from {} where _id = {}'
                     params = [fieldc.field, tablec.sql_table_config_name, record_id]
                     c.execute(sqlquery.format(*params))
                     recorddetails.append([
@@ -165,8 +162,6 @@ class DAO(object):
                 sqlvalues = sqlvalues + ', "{}"'  
             params.append(field[0])            
             if field[2] == 0:
-                paramsvalues.append(time.mktime(datetime.datetime.strptime(field[1], "%m/%d/%Y").timetuple()))
-            else:
                 paramsvalues.append(field[1])
         sqlcomplete = sqlquery + sqlvalues
         paramstotal = params + paramsvalues  
@@ -188,10 +183,7 @@ class DAO(object):
             else:
                 sqlquery = sqlquery + ', {} = "{}"'
             params.append(field[0])
-            if field[2] == 0:
-                params.append(time.mktime(datetime.datetime.strptime(field[1], "%m/%d/%Y").timetuple()))
-            else:
-                params.append(field[1])            
+            params.append(field[1])            
         sqlquery = sqlquery + ' WHERE _id = {}'
         params.append(record_id)
         c.execute(sqlquery.format(*params))
@@ -257,7 +249,10 @@ class DAO(object):
         c.execute(sqlquery.format(*params))
         highestId = c.fetchone()[0]
         c.close()
-        return int(highestId)
+        if highestId:
+            return int(highestId)
+        else:
+            return 0
     
     def generateExport(self):
         c = self.db.cursor()
@@ -269,15 +264,9 @@ class DAO(object):
                 params = []
                 for counter, field in enumerate(tablec.fields):
                     if counter == 0:
-                        if field.type == field.field_type_date:
-                            sqlquery = sqlquery + ' strftime("%m/%d/%Y", datetime({}, "unixepoch"))'
-                        else:
-                            sqlquery = sqlquery + ' {}' 
+                        sqlquery = sqlquery + ' {}' 
                     else:
-                        if field.type == field.field_type_date:
-                            sqlquery = sqlquery + ', strftime("%m/%d/%Y", datetime({}, "unixepoch"))'
-                        else:
-                            sqlquery = sqlquery + ', {}'
+                        sqlquery = sqlquery + ', {}'
                     params.append(field.field_id)
                     columns.append(str(field.name))
                 sqlquery = sqlquery + ' FROM {}'
