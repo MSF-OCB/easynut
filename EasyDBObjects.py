@@ -34,11 +34,13 @@ class FieldConfig(object):
     field_type_int = 1
     field_type_str = 2
     field_type_sel = 3
+    field_type_not = 4
     field_types = {
         'fecha' : field_type_date,
         'entero' : field_type_int,
         'texto' : field_type_str,
-        'select' : field_type_sel,        
+        'select' : field_type_sel,    
+        'notes' : field_type_not,                
         }
     
     # hash map false / true
