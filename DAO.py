@@ -11,6 +11,7 @@ import time
 import csv
 import os, re
 import shutil
+from MySQLdb import converters
 
 class DAO(object):
 
@@ -19,10 +20,14 @@ class DAO(object):
         self.tables_config_lite = {}
         self.tables_relationships = []
         self.search_results = []
+        
+        conv=converters.conversions.copy()
+        conv[246]=float    # convert decimals to floats
+        conv[10]=str       # convert dates
         self.db = MySQLdb.connect(settings.DATABASES['data']['HOST'],
                              settings.DATABASES['data']['USER'],
                              settings.DATABASES['data']['PASSWORD'],
-                             settings.DATABASES['data']['NAME'])
+                             settings.DATABASES['data']['NAME'], conv=conv)
         
     def set_tables_config(self):
         c = self.db.cursor()
@@ -228,7 +233,7 @@ class DAO(object):
                 if field[2] == 1:
                     sqlvalues = sqlvalues + ' ({}'
                 elif field[2] == 0:
-                    sqlvalues = sqlvalues + ' (STR_TO_DATE("{}", "%b %d, %Y")'                     
+                    sqlvalues = sqlvalues + ' (STR_TO_DATE("{}", "%Y-%m-%d")'                     
                 else:
                     sqlvalues = sqlvalues + ' ("{}"'
             elif counter == (len(fieldstoadd) -1):
@@ -236,7 +241,7 @@ class DAO(object):
                 if field[2] == 1:
                     sqlvalues = sqlvalues + ', {})'
                 elif field[2] == 0:
-                    sqlvalues = sqlvalues + ', STR_TO_DATE("{}", "%b %d, %Y"))'
+                    sqlvalues = sqlvalues + ', STR_TO_DATE("{}", "%Y-%m-%d"))'
                 else:
                     sqlvalues = sqlvalues + ', "{}")'
             else:
@@ -244,7 +249,7 @@ class DAO(object):
                 if field[2] == 1:
                     sqlvalues = sqlvalues + ', {}'  
                 elif field[2] == 0:
-                    sqlvalues = sqlvalues + ', STR_TO_DATE("{}", "%b %d, %Y")'  
+                    sqlvalues = sqlvalues + ', STR_TO_DATE("{}", "%Y-%m-%d")'  
                 else:
                     sqlvalues = sqlvalues + ', "{}"'  
             params.append(field[0])            
@@ -270,14 +275,14 @@ class DAO(object):
                 if field[2] == 1:
                     sqlquery = sqlquery + ' {} = {}'
                 elif field[2] == 0:
-                    sqlquery = sqlquery + ' {} = STR_TO_DATE("{}", "%b %d, %Y")'
+                    sqlquery = sqlquery + ' {} = STR_TO_DATE("{}", "%Y-%m-%d")'
                 else:
                     sqlquery = sqlquery + ' {} = "{}"'
             else:
                 if field[2] == 1:
                     sqlquery = sqlquery + ', {} = {}'
                 elif field[2] == 0:
-                    sqlquery = sqlquery + ', {} = STR_TO_DATE("{}", "%b %d, %Y")'
+                    sqlquery = sqlquery + ', {} = STR_TO_DATE("{}", "%Y-%m-%d")'
                 else:
                     sqlquery = sqlquery + ', {} = "{}"'
             params.append(field[0])
