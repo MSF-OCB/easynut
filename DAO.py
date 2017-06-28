@@ -55,8 +55,9 @@ class DAO(object):
                         setattr(fieldc, attributev, fieldc.field_types[sqlresult])
                     elif attributev == 'select':
                         selectlist = []
-                        for tostrip in sqlresult.split(','):
-                            selectlist.append(tostrip.strip())
+                        if sqlresult is not None:
+                            for tostrip in sqlresult.split(','):
+                                selectlist.append(tostrip.strip())
                         setattr(fieldc, attributev, selectlist)
                     else:
                         setattr(fieldc, attributev, sqlresult)
