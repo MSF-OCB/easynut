@@ -40,6 +40,8 @@
 									<option value="{{ choice }}" {% if choice == field.4 %}selected="selected"{% endif %}>{{ choice }}</option>
 								{% endfor %}				
 							</select>										
+						{% elif field.1 == 4 %}
+							<textarea cols="80" rows="10" name="{{ field.0 }}" {% if field.4 != None %}value="{{ field.4 }}"{% endif %}></textarea>
 						{% endif %}
 					</td>
 				</tr>
