@@ -4,8 +4,7 @@
 	<div align="center">
 		<form action="{% url 'emr:results' %}" type="get">
 			{% csrf_token %}
-			<p><br/></p>
-			<input type="text" id="searchstring" name="searchstring" value=""  size="50" class="button"/><br/>
+			<input type="text" id="searchstring" name="searchstring" value="" class="button"/><p></p>
 			<select name="tablesearch" class="dropdown">
 				<option value="0">All tables</option>
 				{% for k,v in edbtables %}
@@ -18,7 +17,7 @@
 	<form action="{% url 'emr:addrecord' %}" type="get">
 		{% csrf_token %}
 		<div class="container" align="center">
-			<br/>
+			<br/><p></p>
 			<h3>OR</h3>
 			<br/><br/>
 			<select name="recordtable" class="dropdown">
@@ -28,7 +27,7 @@
 				{% endfor %}			
 			</select>
 			<input type="submit" name="addrecord" value="Add record" class="button"/>
-			<br/><br/><br/><br/>
+			<br/><br/><br/>
 		</div>
 	</form>
 {% endblock %}

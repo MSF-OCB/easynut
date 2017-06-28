@@ -1,24 +1,25 @@
 {% extends "emr/base.html" %}
 
 {% block content %}	
-	<h1>Search results for "{{ searchresults.0.0 }}" in {{ searchresults.0.1 }}:</h1>
-	<br/><br/><br/>
+	<h2>Search results for "{{ searchresults.0.0 }}" in {{ searchresults.0.1 }}:</h1>
+	<p></p><p></p>
 	{% for tableresults in searchresults.1 %}
-		<h2>{{ tableresults.0 }}</h2>
-		<br/>
+		<h3>{{ tableresults.0 }}</h2>
+		<p></p>
 		<table class="table" id="hor-minimalist-b">
 			<thead>
 				<tr>
 					{% for columnname in tableresults.2 %}
 						<th scope="col">{{ columnname }}</td>
 					{% endfor %}
-					<th  scope="col" width="15%">Action</td>
+					<th  scope="col" width="5%">Edit</td>
+					<th  scope="col" width="5%">Delete</td>
 				</tr>
 			</thead>
 			<tbody>
 				{% if not tableresults.3 %}
 					<tr>
-						<td colspan="{{ tableresults.2|length|add:'+1' }}">No results found for this search</td>
+						<td colspan="{{ tableresults.2|length|add:'+2' }}">No results found for this search</td>
 					</tr>
 				{% else %}
 					{% for records in tableresults.3 %}
@@ -31,15 +32,16 @@
 								{% endif %}
 							{% endfor %}
 							{% with record_id=records.0 table_id=tableresults.1 %}
-								<td width="15%"><a href="{% url 'emr:edit' table_id record_id %}">Edit</a> |||||| 
-								<a href="{% url 'emr:deleterecord' table_id record_id %}" onclick="return confirm('Are you sure you want to delete this record?')">Delete</a></td>
+								<td width="5%"><a href="{% url 'emr:edit' table_id record_id %}">Edit</a></td> 
+								<td width="5%"><a href="{% url 'emr:deleterecord' table_id record_id %}" onclick="return confirm('Are you sure you want to delete this record?')">Delete</a></td>
 							{% endwith %}
 						</tr>
 					{% endfor %}			
 				{% endif %}
 			</tbody>
 		</table>
-		<br/><br/><br/>
+		<p></p>
 	{% endfor %}
+	<p></p>
 	<i>* This version of EasyNut is limited to 100 results per table. If you reached this limit and did not find anything relevant, refine your search</i> 
 {% endblock %}

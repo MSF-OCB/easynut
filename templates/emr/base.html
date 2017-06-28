@@ -1,6 +1,7 @@
 {% load staticfiles %}
 
 <html>
+
 	<link rel="stylesheet" type="text/css" href="{% static 'emr/style.css' %}" />
 	<script type="text/javascript" src="/static/emr/js/jquery-3.2.1.min.js"></script> 
 	<link rel="stylesheet" type="text/css" href="{% static 'emr/jquery-ui.css' %}" />
@@ -11,43 +12,37 @@
 				alert("Last ID used: {{ lastId }}");
 			});
 		});
-	 </script>
-	<html xmlns="http://www.w3.org/1999/xhtml">
+	</script>
+
 	<head>
-		<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-		<title></title>
-		<meta name="keywords" content="" />
-		<meta name="description" content="" />
+	    <meta charset="utf-8">
+	    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+	    <meta name="viewport" content="width=device-width, initial-scale=1">
+	    <title>Fori - EasyNut</title>
 	</head>
-	<body>
-		<div id="header-wrapper">
-			<div id="header" class="container">
-				<div id="logo">
-					<h1><a href="{% url 'emr:index' %}">EasyNut</a></h1>
-				</div>
-				<div id="menu">
-					<ul>
-						<li><a href="#" accesskey="1" id="nextId">Get last ID</a></li>
-						<li>&nbsp;</li>						
-						<li><a href="{% url 'emr:downloadexport' %}" accesskey="2">Export</a></li>
-					</ul>
-				</div>
-			</div>
-		</div>
-		<div id="welcome-wrapper">
-			<div id="welcome" class="container" align="center">
-				<div class="title">
-					<h2>Fori - Nutrition System</h2>
-				</div>
-				<br/>
-				<div align="left">
-		            {% block content %}
-		            {% endblock %}
-	            </div>
-	        </div>
-	    </div>		
-	</body>	
-	<div id="copyright" class="container">
-		<p>MSF - Nigeria - Fori | Support: <a href="mailto:msfocb-blantyre-ehealth@brussels.msf.org">msfocb-blantyre-ehealth@brussels.msf.org</a> | OCB eHealth</a>.</p>
-	</div>
+	
+	<header>
+		<nav><li><a href="{% url 'emr:index' %}" class="btn">Home</a></li></nav>
+		<nav>
+			<li><a href="#" accesskey="1" id="nextId" class="btn">Get last ID</a></li>
+			<li><a href="{% url 'emr:downloadexport' %}" accesskey="2" class="btn">Export</a></li>
+		</nav>
+	</header>
+	
+	<body>	
+		<section class="hero">
+			<div class="background-image"></div>
+			<h1>EasyNut</h1>
+			<h3>Fori - Nutrition System</h3>
+		</section>
+		
+		<section class="features">
+            {% block content %}
+            {% endblock %}		
+		</section>	
+			
+		<footer>
+			<p>MSF - Nigeria - Fori | Support: <a href="mailto:msfocb-blantyre-ehealth@brussels.msf.org">msfocb-blantyre-ehealth@brussels.msf.org</a> | OCB eHealth</a>.</p>
+		</footer>		
+	</body>
 </html>
