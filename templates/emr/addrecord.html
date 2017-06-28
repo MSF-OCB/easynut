@@ -30,7 +30,10 @@
 						{% elif field.1 == 1 %}
 							<input type="text" class="numbersOnly" name="{{ field.0 }}" {% if field.0 == related_record_field %}value="{{ related_record_entry }}"{% endif %}> (number only)
 						{% elif field.1 == 2 %}
-							<input type="text" name="{{ field.0 }}" {% if field.0 == related_record_field %}value="{{ related_record_entry }}"{% endif %}>
+							<input type="text" 
+							name="{{ field.0 }}" 
+							{% if field.0 == related_record_field %}value="{{ related_record_entry }}"{% endif %} 
+							{% if field.3 == 'MSF ID' %} class="numbersOnly"{% endif %}>
 						{% elif field.1 == 3 %}
 							<select name="{{ field.0 }}">
 								{% for choice in field.4 %}
