@@ -85,29 +85,103 @@ class DAO(object):
             filtered_tables = self.tables_config
             usersearch.append('all tables')
         returnList.append(usersearch)
+        entryList = entry.split(' ')
         for tablec in filtered_tables:
-            sql_search_select = "select {}"
-            params = ['_id']
-            paramswhere = []
-            sql_search_where = ' from {} where '
-            results = [tablec.name, tablec.id]
-            columns = []
-            for fieldc in tablec.fields:
-                if fieldc.list == True:
-                    columns.append(fieldc.name)
-                    sql_search_select = sql_search_select + ", {}"
-                    params.append(fieldc.field)
-                if sql_search_where == ' from {} where ':
-                    sql_search_where = sql_search_where + '({} like {})'
-                else:
-                    sql_search_where = sql_search_where + ' or ({} like {})'
-                paramswhere.append(fieldc.field)
-                paramswhere.append('"%{}%"'.format(entry))
-            params.append(tablec.sql_table_config_name)
-            params.extend(paramswhere)
-            sql_search = sql_search_select + sql_search_where + ' LIMIT 50'
-            results.append(columns)
-            c.execute(sql_search.format(*params))
+            sqlfinalquery = ''
+            parantheses = ''   
+            if len(entryList) == 1:
+                sql_search_select = "select {}"
+                params = ['_id']
+                paramswhere = []
+                sql_search_where = ' from {} where '
+                results = [tablec.name, tablec.id]
+                columns = []
+                for fieldc in tablec.fields:
+                    if fieldc.list == True:
+                        columns.append(fieldc.name)
+                        sql_search_select = sql_search_select + ", {}"
+                        params.append(fieldc.field)
+                    if sql_search_where == ' from {} where ':
+                        sql_search_where = sql_search_where + '({} like {})'
+                    else:
+                        sql_search_where = sql_search_where + ' or ({} like {})'
+                    paramswhere.append(fieldc.field)
+                    paramswhere.append('"%{}%"'.format(entryList[0]))
+                params.append(tablec.sql_table_config_name)
+                params.extend(paramswhere)
+                sql_search = sql_search_select + sql_search_where
+                results.append(columns)
+                sqlfinalquery = sql_search.format(*params)
+            else:
+                for counter, singleEntry in enumerate(entryList, 1):
+                    if counter == 1:                        
+                        # First select
+                        sql_search_select = "select {}"
+                        params = ['_id']
+                        paramswhere = []
+                        sql_search_where = ' from {} where '
+                        results = [tablec.name, tablec.id]
+                        columns = []
+                        for counter, fieldc in enumerate(tablec.fields, 1):
+                            if fieldc.list == True:
+                                columns.append(fieldc.name)
+                                sql_search_select = sql_search_select + ", {}"
+                                params.append(fieldc.field)
+                            if counter == 1:
+                                sql_search_where = sql_search_where + '(({} like {})'
+                            elif counter == len(tablec.fields):
+                                sql_search_where = sql_search_where + ' or ({} like {})) AND _id IN ('
+                            else:
+                                sql_search_where = sql_search_where + ' or ({} like {})'
+                            paramswhere.append(fieldc.field)
+                            paramswhere.append('"%{}%"'.format(singleEntry))
+                        params.append(tablec.sql_table_config_name)
+                        params.extend(paramswhere)
+                        sql_search = sql_search_select + sql_search_where 
+                        results.append(columns)
+                        sqlfinalquery = sql_search.format(*params)
+                    elif counter == len(entryList):
+                        # Last select
+                        sql_search_select = "select _id"
+                        params = []
+                        paramswhere = []
+                        sql_search_where = ' from {} where '
+                        for counter, fieldc in enumerate(tablec.fields, 1):
+                            if counter == 1:
+                                sql_search_where = sql_search_where + '(({} like {})'
+                            elif counter == len(tablec.fields):
+                                sql_search_where = sql_search_where + ' or ({} like {}))'
+                            else:
+                                sql_search_where = sql_search_where + ' or ({} like {})'
+                            paramswhere.append(fieldc.field)
+                            paramswhere.append('"%{}%"'.format(singleEntry))
+                        params.append(tablec.sql_table_config_name)
+                        params.extend(paramswhere)
+                        sql_search = sql_search_select + sql_search_where 
+                        sqlfinalquery = sqlfinalquery + sql_search.format(*params)
+                        parantheses = parantheses +')'
+                    else:
+                        # Middle select
+                        sql_search_select = "select _id"
+                        params = []
+                        paramswhere = []
+                        sql_search_wher = ' from {} where '
+                        for counter, fieldc in enumerate(tablec.fields, 1):
+                            if counter == 1:
+                                sql_search_where = sql_search_where + '(({} like {})'
+                            elif counter == len(tablec.fields):
+                                sql_search_where = sql_search_where + ' or ({} like {})) AND IN ('
+                            else:
+                                sql_search_where = sql_search_where + ' or ({} like {})'
+                            paramswhere.append(fieldc.field)
+                            paramswhere.append('"%{}%"'.format(singleEntry))
+                        params.append(tablec.sql_table_config_name)
+                        params.extend(paramswhere)
+                        sql_search = sql_search_select + sql_search_where 
+                        sqlfinalquery = sqlfinalquery + sql_search.format(*params)
+                        parantheses = parantheses +')'
+            sqlfinalquery = sqlfinalquery + parantheses + ' LIMIT 100'
+            c.execute(sqlfinalquery)
             results.append(c.fetchall())
             all_results.append(results)
         returnList.append(all_results)
@@ -154,7 +228,7 @@ class DAO(object):
                 if field[2] == 1:
                     sqlvalues = sqlvalues + ' ({}'
                 elif field[2] == 0:
-                    sqlvalues = sqlvalues + ' (STR_TO_DATE("{}", "%M %d, %Y")'                     
+                    sqlvalues = sqlvalues + ' (STR_TO_DATE("{}", "%b %d, %Y")'                     
                 else:
                     sqlvalues = sqlvalues + ' ("{}"'
             elif counter == (len(fieldstoadd) -1):
@@ -162,7 +236,7 @@ class DAO(object):
                 if field[2] == 1:
                     sqlvalues = sqlvalues + ', {})'
                 elif field[2] == 0:
-                    sqlvalues = sqlvalues + ', STR_TO_DATE("{}", "%M %d, %Y"))'
+                    sqlvalues = sqlvalues + ', STR_TO_DATE("{}", "%b %d, %Y"))'
                 else:
                     sqlvalues = sqlvalues + ', "{}")'
             else:
@@ -170,7 +244,7 @@ class DAO(object):
                 if field[2] == 1:
                     sqlvalues = sqlvalues + ', {}'  
                 elif field[2] == 0:
-                    sqlvalues = sqlvalues + ', STR_TO_DATE("{}", "%M %d, %Y")'  
+                    sqlvalues = sqlvalues + ', STR_TO_DATE("{}", "%b %d, %Y")'  
                 else:
                     sqlvalues = sqlvalues + ', "{}"'  
             params.append(field[0])            
@@ -196,14 +270,14 @@ class DAO(object):
                 if field[2] == 1:
                     sqlquery = sqlquery + ' {} = {}'
                 elif field[2] == 0:
-                    sqlquery = sqlquery + ' {} = STR_TO_DATE("{}", "%M %d, %Y")'
+                    sqlquery = sqlquery + ' {} = STR_TO_DATE("{}", "%b %d, %Y")'
                 else:
                     sqlquery = sqlquery + ' {} = "{}"'
             else:
                 if field[2] == 1:
                     sqlquery = sqlquery + ', {} = {}'
                 elif field[2] == 0:
-                    sqlquery = sqlquery + ', {} = STR_TO_DATE("{}", "%M %d, %Y")'
+                    sqlquery = sqlquery + ', {} = STR_TO_DATE("{}", "%b %d, %Y")'
                 else:
                     sqlquery = sqlquery + ', {} = "{}"'
             params.append(field[0])
