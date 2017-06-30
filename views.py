@@ -19,20 +19,34 @@ def index(request):
     return render(request, template_name, {'edbtables': daoobject.tables_config_lite, 'lastId' : daoobject.getLastId('tabla_1', 'campo_1')})
 
 def results(request):
-    search_query = request.GET.get('searchstring')
-    tablesearch = request.GET.get('tablesearch')
     template_name = 'emr/results.html'
+    search_query = request.GET.get('searchstring')
+    daoobject = DAO()
+    daoobject.set_tables_config()    
+    if daoobject.doesIdExist(search_query):
+        return patient(request, daoobject.doesIdExist(search_query))    
+    else:
+        return render(request, template_name, {'searchresults': daoobject.search(search_query, '1'), 'lastId' : daoobject.getLastId('tabla_1', 'campo_1')})
+
+def patient(request, record_id):
+    template_name = 'emr/patient.html'    
     daoobject = DAO()
     daoobject.set_tables_config()
-    return render(request, template_name, {'searchresults': daoobject.search(search_query, tablesearch), 'lastId' : daoobject.getLastId('tabla_1', 'campo_1')})
-
+    daoobject.set_tables_relationships()
+    return render(request, template_name, {
+        'record': daoobject.get_record_with_type('1', record_id, True), 
+        'relatedrecords' : daoobject.get_related_records('1', record_id),
+        'lastId' : daoobject.getLastId('tabla_1', 'campo_1')
+        })
+    
+    
 def detail(request, table_id, record_id):
     template_name = 'emr/detail.html'
     daoobject = DAO()
     daoobject.set_tables_config()
     daoobject.set_tables_relationships()
     return render(request, template_name, {
-        'record': daoobject.get_record_with_type(table_id, record_id), 
+        'record': daoobject.get_record_with_type(table_id, record_id, False), 
         'relatedrecords' : daoobject.get_related_records(table_id, record_id),
         'lastId' : daoobject.getLastId('tabla_1', 'campo_1')
         })
@@ -41,7 +55,7 @@ def edit(request, table_id, record_id):
     template_name = 'emr/edit.html'
     daoobject = DAO()
     daoobject.set_tables_config()    
-    return render(request, template_name, {'record': daoobject.get_record_with_type(table_id, record_id), 'lastId' : daoobject.getLastId('tabla_1', 'campo_1')})
+    return render(request, template_name, {'record': daoobject.get_record_with_type(table_id, record_id, False), 'lastId' : daoobject.getLastId('tabla_1', 'campo_1')})
 
 def save(request):
     record_id = request.GET.get('record_id')
@@ -52,18 +66,17 @@ def save(request):
     for tablec in daoobject.tables_config:
         if tablec.id == table_id:
             for fieldc in tablec.fields:
-               fieldstochange.append([fieldc.field_id, request.GET.get(fieldc.field_id), fieldc.type])
+                if fieldc.name == 'MSF ID':
+                    patientId = daoobject.getPatientIdFromMsfId(request.GET.get(fieldc.field_id))
+                fieldstochange.append([fieldc.field_id, request.GET.get(fieldc.field_id), fieldc.type])
     if record_id != "0":
         daoobject.editrecord(table_id, record_id, fieldstochange)
     else:
         record_id = daoobject.insertrecord(table_id, fieldstochange)
-    return detail(request, table_id, record_id)
+    return patient(request, patientId)
 
-def addrecord(request):
+def addrecord(request, table_id, related_record_entry, related_record_field):
     template_name = 'emr/addrecord.html'
-    table_id = request.GET.get('recordtable')
-    related_record_entry = request.GET.get('related_record_entry')
-    related_record_field = request.GET.get('related_record_field')
     daoobject = DAO()
     daoobject.set_tables_config()
     daoobject.set_tables_relationships() 

@@ -4,30 +4,19 @@
 	<div align="center">
 		<form action="{% url 'emr:results' %}" type="get">
 			{% csrf_token %}
-			<input type="text" id="searchstring" name="searchstring" value="" class="button"/><p></p>
-			<select name="tablesearch" class="dropdown">
-				<option value="0">All tables</option>
-				{% for k,v in edbtables %}
-				<option value="{{ k }}">{{ v }}</option>
-				{% endfor %}				
-			</select>				
-			<input type="submit" name="search" value="Search" class="button"/>
+			<table>
+				<tr><input type="text" id="searchstring" placeholder="Access by ID or search patient" name="searchstring" class="searchbox"/></tr>
+				<tr><b>&</b></tr>
+				<tr><input type="submit" name="search" value="Search" class="btna"/></tr>
+			</table>			
 		</form>
 	</div>
-	<form action="{% url 'emr:addrecord' %}" type="get">
-		{% csrf_token %}
-		<div class="container" align="center">
-			<br/><p></p>
-			<h3>OR</h3>
-			<br/><br/>
-			<select name="recordtable" class="dropdown">
-				<option value="0">Select a type</option>
-				{% for k,v in edbtables %}
-				<option value="{{ k }}">{{ v }}</option>
-				{% endfor %}			
-			</select>
-			<input type="submit" name="addrecord" value="Add record" class="button"/>
-			<br/><br/><br/>
-		</div>
-	</form>
+	<p></p>
+	<p></p>
+	<p></p>
+	<h2>Or</h2>
+	<p></p>
+	{% with table_id='1' related_record_entry='0' related_record_field='0' %}
+		<a href="{% url 'emr:addrecord' table_id related_record_entry related_record_field %}" class="btna">Add patient</a>
+	{% endwith %}				
 {% endblock %}

@@ -207,28 +207,47 @@ class DAO(object):
         return [sqlfinalquery, results, parantheses]
 
 
-    def get_record_with_type(self, table_id, record_id):
+    def get_record_with_type(self, table_id, record_id, listFields):
         c = self.db.cursor()
         record = [table_id, record_id,]
         recorddetails = []
+        patientId = '0'
         for tablec in self.tables_config:
             if tablec.id == table_id:
                 record.append(tablec.name)
                 for fieldc in tablec.fields:
-                    sqlquery = 'select {} from {} where _id = {}'
-                    params = [fieldc.field, tablec.sql_table_config_name, record_id]
-                    c.execute(sqlquery.format(*params))
-                    recorddetails.append([
-                        fieldc.field_id, 
-                        fieldc.type,
-                        fieldc.pos,
-                        fieldc.name, 
-                        c.fetchone()[0],
-                        fieldc.select,
-                        ])
+                    if (listFields and fieldc.list) or (not listFields):
+                        sqlquery = 'select {} from {} where _id = {}'
+                        params = [fieldc.field, tablec.sql_table_config_name, record_id]
+                        c.execute(sqlquery.format(*params))
+                        result = c.fetchone()[0]
+                        if fieldc.name == 'MSF ID':
+                            patientId = self.getPatientIdFromMsfId(result)
+                        recorddetails.append([
+                            fieldc.field_id, 
+                            fieldc.type,
+                            fieldc.pos,
+                            fieldc.name, 
+                            result,
+                            fieldc.select,
+                            ])
         record.append(sorted(recorddetails, key=itemgetter(2)))
+        record.append(patientId)
         c.close()
         return record
+    
+    def getPatientIdFromMsfId(self, msfid):
+        c = self.db.cursor()
+        sqlquery = 'SELECT _id FROM tabla_1 WHERE campo_1 LIKE {}'
+        params = ['"%{}%"'.format(msfid)]
+        c.execute(sqlquery.format(*params))
+        result = c.fetchone()
+        if result:
+            ID = result[0]
+        else:
+            ID = '0'
+        c.close()
+        return ID
     
     def insertrecord(self, table_id, fieldstoadd):
         c = self.db.cursor()
@@ -380,6 +399,18 @@ class DAO(object):
         for i in xrange(zerosToAdd):
             IdToReturn = IdToReturn + '0'
         return IdToReturn + newIdStr
+
+    def doesIdExist(self, entry):
+        c = self.db.cursor()
+        sqlquery = 'SELECT _id FROM tabla_1 WHERE campo_1 = {} LIMIT 1'
+        params = ['"{}"'.format(entry)]
+        c.execute(sqlquery.format(*params))
+        result = c.fetchone()
+        c.close()
+        if result:
+            return result[0]
+        else:
+            return False
                 
     def generateExport(self):
         c = self.db.cursor()
