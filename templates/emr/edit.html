@@ -22,6 +22,7 @@
 		<input type="hidden" name="table_id" value="{{ record.0 }}">		
 		<table class="table" id="hor-minimalist-b">
 			{% for field in record.3 %}
+				<tbody>
 				<tr>
 					<td><b>{{ field.3 }}</b></td>
 					<td>
@@ -40,17 +41,19 @@
 									<option value="{{ choice }}" {% if choice == field.4 %}selected="selected"{% endif %}>{{ choice }}</option>
 								{% endfor %}				
 							</select>										
+						{% elif field.1 == 4 %}
+							<div class="textdiv"><textarea name="{{ field.0 }}" {% if field.4 != None %}value="{{ field.4 }}"{% endif %}></textarea></div>
 						{% endif %}
 					</td>
 				</tr>
+				</tbody>
 			{% endfor %}
 		</table>
-		<br/>
-		<table>
+		<br/>		
+		<table class="tablep">
 			<tr>
-				<td><input type="submit" name="edit" value="Save" class="button"/></td>
-				<td width="70%">&nbsp;</td>
-				<td></td>			
+				<td><input type="submit" name="edit" value="Save" class="btne"/></td>
+				<td width='10%'><a href="{% url 'emr:patient' record.4 %}" class="btne" onclick="return confirm('The changes made are not going to be saved. Are you sure?')">Patient</a></td>
 			</tr>
 		</table>
 	</form>

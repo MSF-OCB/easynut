@@ -91,101 +91,18 @@ class DAO(object):
             filtered_tables = self.tables_config
             usersearch.append('all tables')
         returnList.append(usersearch)
-        entryList = entry.split(' ')
+        entryClean = re.sub(' +',' ',entry)
+        entryList = entryClean.split(' ')
         for tablec in filtered_tables:
             sqlfinalquery = ''
             parantheses = ''   
             if len(entryList) == 1:
-                sql_search_select = "select {}"
-                params = ['_id']
-                paramswhere = []
-                sql_search_where = ' from {} where '
-                results = [tablec.name, tablec.id]
-                columns = []
-                for fieldc in tablec.fields:
-                    if fieldc.list == True:
-                        columns.append(fieldc.name)
-                        sql_search_select = sql_search_select + ", {}"
-                        params.append(fieldc.field)
-                    if sql_search_where == ' from {} where ':
-                        sql_search_where = sql_search_where + '({} like {})'
-                    else:
-                        sql_search_where = sql_search_where + ' or ({} like {})'
-                    paramswhere.append(fieldc.field)
-                    paramswhere.append('"%{}%"'.format(entryList[0]))
-                params.append(tablec.sql_table_config_name)
-                params.extend(paramswhere)
-                sql_search = sql_search_select + sql_search_where
-                results.append(columns)
-                sqlfinalquery = sql_search.format(*params)
+                queryAndparantheses = self.singleSearchQuery(entryList, tablec, parantheses)
             else:
-                for counter, singleEntry in enumerate(entryList, 1):
-                    if counter == 1:                        
-                        # First select
-                        sql_search_select = "select {}"
-                        params = ['_id']
-                        paramswhere = []
-                        sql_search_where = ' from {} where '
-                        results = [tablec.name, tablec.id]
-                        columns = []
-                        for counter, fieldc in enumerate(tablec.fields, 1):
-                            if fieldc.list == True:
-                                columns.append(fieldc.name)
-                                sql_search_select = sql_search_select + ", {}"
-                                params.append(fieldc.field)
-                            if counter == 1:
-                                sql_search_where = sql_search_where + '(({} like {})'
-                            elif counter == len(tablec.fields):
-                                sql_search_where = sql_search_where + ' or ({} like {})) AND _id IN ('
-                            else:
-                                sql_search_where = sql_search_where + ' or ({} like {})'
-                            paramswhere.append(fieldc.field)
-                            paramswhere.append('"%{}%"'.format(singleEntry))
-                        params.append(tablec.sql_table_config_name)
-                        params.extend(paramswhere)
-                        sql_search = sql_search_select + sql_search_where 
-                        results.append(columns)
-                        sqlfinalquery = sql_search.format(*params)
-                    elif counter == len(entryList):
-                        # Last select
-                        sql_search_select = "select _id"
-                        params = []
-                        paramswhere = []
-                        sql_search_where = ' from {} where '
-                        for counter, fieldc in enumerate(tablec.fields, 1):
-                            if counter == 1:
-                                sql_search_where = sql_search_where + '(({} like {})'
-                            elif counter == len(tablec.fields):
-                                sql_search_where = sql_search_where + ' or ({} like {}))'
-                            else:
-                                sql_search_where = sql_search_where + ' or ({} like {})'
-                            paramswhere.append(fieldc.field)
-                            paramswhere.append('"%{}%"'.format(singleEntry))
-                        params.append(tablec.sql_table_config_name)
-                        params.extend(paramswhere)
-                        sql_search = sql_search_select + sql_search_where 
-                        sqlfinalquery = sqlfinalquery + sql_search.format(*params)
-                        parantheses = parantheses +')'
-                    else:
-                        # Middle select
-                        sql_search_select = "select _id"
-                        params = []
-                        paramswhere = []
-                        sql_search_wher = ' from {} where '
-                        for counter, fieldc in enumerate(tablec.fields, 1):
-                            if counter == 1:
-                                sql_search_where = sql_search_where + '(({} like {})'
-                            elif counter == len(tablec.fields):
-                                sql_search_where = sql_search_where + ' or ({} like {})) AND IN ('
-                            else:
-                                sql_search_where = sql_search_where + ' or ({} like {})'
-                            paramswhere.append(fieldc.field)
-                            paramswhere.append('"%{}%"'.format(singleEntry))
-                        params.append(tablec.sql_table_config_name)
-                        params.extend(paramswhere)
-                        sql_search = sql_search_select + sql_search_where 
-                        sqlfinalquery = sqlfinalquery + sql_search.format(*params)
-                        parantheses = parantheses +')'
+                queryAndparantheses = self.multiSearchQuery(entryList, tablec, parantheses)
+            sqlfinalquery = queryAndparantheses[0]
+            results = queryAndparantheses[1]
+            parantheses = queryAndparantheses[2]
             sqlfinalquery = sqlfinalquery + parantheses + ' LIMIT 100'
             c.execute(sqlfinalquery)
             results.append(c.fetchall())
@@ -193,30 +110,144 @@ class DAO(object):
         returnList.append(all_results)
         c.close()
         return returnList
-                
-    def get_record_with_type(self, table_id, record_id):
+    
+    def singleSearchQuery(self, entryList, tablec, parantheses):
+        sql_search_select = "select {}"
+        params = ['_id']
+        paramswhere = []
+        sql_search_where = ' from {} where '
+        results = [tablec.name, tablec.id]
+        columns = []
+        for fieldc in tablec.fields:
+            if fieldc.list == True:
+                columns.append(fieldc.name)
+                sql_search_select = sql_search_select + ", {}"
+                params.append(fieldc.field)
+            if sql_search_where == ' from {} where ':
+                sql_search_where = sql_search_where + '({} like {})'
+            else:
+                sql_search_where = sql_search_where + ' or ({} like {})'
+            paramswhere.append(fieldc.field)
+            paramswhere.append('"%{}%"'.format(entryList[0]))
+        params.append(tablec.sql_table_config_name)
+        params.extend(paramswhere)
+        sql_search = sql_search_select + sql_search_where
+        results.append(columns)
+        return [sql_search.format(*params), results, parantheses]
+
+
+    def multiSearchQuery(self, entryList, tablec, parantheses):
+        for counter, singleEntry in enumerate(entryList, 1):
+            if counter == 1:                        
+                # First select
+                sql_search_select = "select {}"
+                params = ['_id']
+                paramswhere = []
+                sql_search_where = ' from {} where '
+                results = [tablec.name, tablec.id]
+                columns = []
+                for counter, fieldc in enumerate(tablec.fields, 1):
+                    if fieldc.list == True:
+                        columns.append(fieldc.name)
+                        sql_search_select = sql_search_select + ", {}"
+                        params.append(fieldc.field)
+                    if counter == 1:
+                        sql_search_where = sql_search_where + '(({} like {})'
+                    elif counter == len(tablec.fields):
+                        sql_search_where = sql_search_where + ' or ({} like {})) AND _id IN ('
+                    else:
+                        sql_search_where = sql_search_where + ' or ({} like {})'
+                    paramswhere.append(fieldc.field)
+                    paramswhere.append('"%{}%"'.format(singleEntry))
+                params.append(tablec.sql_table_config_name)
+                params.extend(paramswhere)
+                sql_search = sql_search_select + sql_search_where 
+                results.append(columns)
+                sqlfinalquery = sql_search.format(*params)
+                parantheses = parantheses +')'
+            elif counter == len(entryList):
+                # Last select
+                sql_search_select = "select _id"
+                params = []
+                paramswhere = []
+                sql_search_where = ' from {} where '
+                for counter, fieldc in enumerate(tablec.fields, 1):
+                    if counter == 1:
+                        sql_search_where = sql_search_where + '(({} like {})'
+                    elif counter == len(tablec.fields):
+                        sql_search_where = sql_search_where + ' or ({} like {}))'
+                    else:
+                        sql_search_where = sql_search_where + ' or ({} like {})'
+                    paramswhere.append(fieldc.field)
+                    paramswhere.append('"%{}%"'.format(singleEntry))
+                params.append(tablec.sql_table_config_name)
+                params.extend(paramswhere)
+                sql_search = sql_search_select + sql_search_where 
+                sqlfinalquery = sqlfinalquery + sql_search.format(*params)
+            else:
+                # Middle select
+                sql_search_select = "select _id"
+                params = []
+                paramswhere = []
+                sql_search_where = ' from {} where '
+                for counter, fieldc in enumerate(tablec.fields, 1):
+                    if counter == 1:
+                        sql_search_where = sql_search_where + '(({} like {})'
+                    elif counter == len(tablec.fields):
+                        sql_search_where = sql_search_where + ' or ({} like {})) AND _id IN ('
+                    else:
+                        sql_search_where = sql_search_where + ' or ({} like {})'
+                    paramswhere.append(fieldc.field)
+                    paramswhere.append('"%{}%"'.format(singleEntry))
+                params.append(tablec.sql_table_config_name)
+                params.extend(paramswhere)
+                sql_search = sql_search_select + sql_search_where 
+                sqlfinalquery = sqlfinalquery + sql_search.format(*params)
+                parantheses = parantheses +')'
+        return [sqlfinalquery, results, parantheses]
+
+
+    def get_record_with_type(self, table_id, record_id, listFields):
         c = self.db.cursor()
         record = [table_id, record_id,]
         recorddetails = []
+        patientId = '0'
         for tablec in self.tables_config:
             if tablec.id == table_id:
                 record.append(tablec.name)
                 for fieldc in tablec.fields:
-                    sqlquery = 'select {} from {} where _id = {}'
-                    params = [fieldc.field, tablec.sql_table_config_name, record_id]
-                    print params
-                    c.execute(sqlquery.format(*params))
-                    recorddetails.append([
-                        fieldc.field_id, 
-                        fieldc.type,
-                        fieldc.pos,
-                        fieldc.name, 
-                        c.fetchone()[0],
-                        fieldc.select,
-                        ])
+                    if (listFields and fieldc.list) or (not listFields):
+                        sqlquery = 'select {} from {} where _id = {}'
+                        params = [fieldc.field, tablec.sql_table_config_name, record_id]
+                        c.execute(sqlquery.format(*params))
+                        result = c.fetchone()[0]
+                        if fieldc.name == 'MSF ID':
+                            patientId = self.getPatientIdFromMsfId(result)
+                        recorddetails.append([
+                            fieldc.field_id, 
+                            fieldc.type,
+                            fieldc.pos,
+                            fieldc.name, 
+                            result,
+                            fieldc.select,
+                            ])
         record.append(sorted(recorddetails, key=itemgetter(2)))
+        record.append(patientId)
         c.close()
         return record
+    
+    def getPatientIdFromMsfId(self, msfid):
+        c = self.db.cursor()
+        sqlquery = 'SELECT _id FROM tabla_1 WHERE campo_1 LIKE {}'
+        params = ['"%{}%"'.format(msfid)]
+        c.execute(sqlquery.format(*params))
+        result = c.fetchone()
+        if result:
+            ID = result[0]
+        else:
+            ID = '0'
+        c.close()
+        return ID
     
     def insertrecord(self, table_id, fieldstoadd):
         c = self.db.cursor()
@@ -368,6 +399,18 @@ class DAO(object):
         for i in xrange(zerosToAdd):
             IdToReturn = IdToReturn + '0'
         return IdToReturn + newIdStr
+
+    def doesIdExist(self, entry):
+        c = self.db.cursor()
+        sqlquery = 'SELECT _id FROM tabla_1 WHERE campo_1 = {} LIMIT 1'
+        params = ['"{}"'.format(entry)]
+        c.execute(sqlquery.format(*params))
+        result = c.fetchone()
+        c.close()
+        if result:
+            return result[0]
+        else:
+            return False
                 
     def generateExport(self):
         c = self.db.cursor()
