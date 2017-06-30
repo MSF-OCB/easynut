@@ -25,7 +25,10 @@ class TableConfig(object):
     def set_sql_names(self):
         self.sql_table_config_name = 'tabla_' + str(self.id)
         self.sql_table_field_config_name = self.sql_table_config_name + '_des'
-        
+
+    def printable_fields(self):
+        return filter(lambda f: f.list, self.fields)
+
         
 class FieldConfig(object):
     
@@ -84,4 +87,3 @@ class FieldConfig(object):
         self.pos = 0
         self.use = True
         self.relationship = False
-        

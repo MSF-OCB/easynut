@@ -204,6 +204,7 @@ class DAO(object):
                 for fieldc in tablec.fields:
                     sqlquery = 'select {} from {} where _id = {}'
                     params = [fieldc.field, tablec.sql_table_config_name, record_id]
+                    print params
                     c.execute(sqlquery.format(*params))
                     recorddetails.append([
                         fieldc.field_id, 
