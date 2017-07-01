@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from __future__ import print_function
 from __future__ import unicode_literals
 from django.utils import timezone
 from operator import itemgetter
@@ -13,6 +14,7 @@ import os, re
 import shutil
 from MySQLdb import converters
 
+
 class DAO(object):
 
     def __init__(self):
@@ -25,9 +27,9 @@ class DAO(object):
         conv[246]=float    # convert decimals to floats
         conv[10]=str       # convert dates
         self.db = MySQLdb.connect(settings.DATABASES['data']['HOST'],
-                             settings.DATABASES['data']['USER'],
-                             settings.DATABASES['data']['PASSWORD'],
-                             settings.DATABASES['data']['NAME'], conv=conv)
+                                  settings.DATABASES['data']['USER'],
+                                  settings.DATABASES['data']['PASSWORD'],
+                                  settings.DATABASES['data']['NAME'], conv=conv)
         
     def set_tables_config(self):
         c = self.db.cursor()
@@ -94,118 +96,35 @@ class DAO(object):
         entryClean = re.sub(' +',' ',entry)
         entryList = entryClean.split(' ')
         for tablec in filtered_tables:
-            sqlfinalquery = ''
-            parantheses = ''   
-            if len(entryList) == 1:
-                queryAndparantheses = self.singleSearchQuery(entryList, tablec, parantheses)
-            else:
-                queryAndparantheses = self.multiSearchQuery(entryList, tablec, parantheses)
-            sqlfinalquery = queryAndparantheses[0]
-            results = queryAndparantheses[1]
-            parantheses = queryAndparantheses[2]
-            sqlfinalquery = sqlfinalquery + parantheses + ' LIMIT 100'
-            c.execute(sqlfinalquery)
+            query = self.search_query(entryList, tablec) + ' limit 100'
+            results = [tablec.name, tablec.id] + [map(lambda f: f.name, filter(lambda f: f.list, tablec.fields))]
+            c.execute(query)
             results.append(c.fetchall())
             all_results.append(results)
         returnList.append(all_results)
         c.close()
         return returnList
-    
-    def singleSearchQuery(self, entryList, tablec, parantheses):
-        sql_search_select = "select {}"
-        params = ['_id']
-        paramswhere = []
-        sql_search_where = ' from {} where '
-        results = [tablec.name, tablec.id]
-        columns = []
-        for fieldc in tablec.fields:
-            if fieldc.list == True:
-                columns.append(fieldc.name)
-                sql_search_select = sql_search_select + ", {}"
-                params.append(fieldc.field)
-            if sql_search_where == ' from {} where ':
-                sql_search_where = sql_search_where + '({} like {})'
-            else:
-                sql_search_where = sql_search_where + ' or ({} like {})'
-            paramswhere.append(fieldc.field)
-            paramswhere.append('"%{}%"'.format(entryList[0]))
-        params.append(tablec.sql_table_config_name)
-        params.extend(paramswhere)
-        sql_search = sql_search_select + sql_search_where
-        results.append(columns)
-        return [sql_search.format(*params), results, parantheses]
 
+    def search_query(self, search_params, tablec):
+        query = 'select {} from {} where '.format(', '.join(['_id'] + (map(lambda f: f.field, filter(lambda f: f.list, tablec.fields)))),
+                                                  tablec.sql_table_config_name)
+        where_string = []
+        for search_param in search_params:
+            param_clause = '(' + ' or '.join(map(lambda f: self.search_condition(f, search_param), tablec.fields)) + ')'
+            where_string.append(param_clause)
 
-    def multiSearchQuery(self, entryList, tablec, parantheses):
-        for counter, singleEntry in enumerate(entryList, 1):
-            if counter == 1:                        
-                # First select
-                sql_search_select = "select {}"
-                params = ['_id']
-                paramswhere = []
-                sql_search_where = ' from {} where '
-                results = [tablec.name, tablec.id]
-                columns = []
-                for counter, fieldc in enumerate(tablec.fields, 1):
-                    if fieldc.list == True:
-                        columns.append(fieldc.name)
-                        sql_search_select = sql_search_select + ", {}"
-                        params.append(fieldc.field)
-                    if counter == 1:
-                        sql_search_where = sql_search_where + '(({} like {})'
-                    elif counter == len(tablec.fields):
-                        sql_search_where = sql_search_where + ' or ({} like {})) AND _id IN ('
-                    else:
-                        sql_search_where = sql_search_where + ' or ({} like {})'
-                    paramswhere.append(fieldc.field)
-                    paramswhere.append('"%{}%"'.format(singleEntry))
-                params.append(tablec.sql_table_config_name)
-                params.extend(paramswhere)
-                sql_search = sql_search_select + sql_search_where 
-                results.append(columns)
-                sqlfinalquery = sql_search.format(*params)
-                parantheses = parantheses +')'
-            elif counter == len(entryList):
-                # Last select
-                sql_search_select = "select _id"
-                params = []
-                paramswhere = []
-                sql_search_where = ' from {} where '
-                for counter, fieldc in enumerate(tablec.fields, 1):
-                    if counter == 1:
-                        sql_search_where = sql_search_where + '(({} like {})'
-                    elif counter == len(tablec.fields):
-                        sql_search_where = sql_search_where + ' or ({} like {}))'
-                    else:
-                        sql_search_where = sql_search_where + ' or ({} like {})'
-                    paramswhere.append(fieldc.field)
-                    paramswhere.append('"%{}%"'.format(singleEntry))
-                params.append(tablec.sql_table_config_name)
-                params.extend(paramswhere)
-                sql_search = sql_search_select + sql_search_where 
-                sqlfinalquery = sqlfinalquery + sql_search.format(*params)
-            else:
-                # Middle select
-                sql_search_select = "select _id"
-                params = []
-                paramswhere = []
-                sql_search_where = ' from {} where '
-                for counter, fieldc in enumerate(tablec.fields, 1):
-                    if counter == 1:
-                        sql_search_where = sql_search_where + '(({} like {})'
-                    elif counter == len(tablec.fields):
-                        sql_search_where = sql_search_where + ' or ({} like {})) AND _id IN ('
-                    else:
-                        sql_search_where = sql_search_where + ' or ({} like {})'
-                    paramswhere.append(fieldc.field)
-                    paramswhere.append('"%{}%"'.format(singleEntry))
-                params.append(tablec.sql_table_config_name)
-                params.extend(paramswhere)
-                sql_search = sql_search_select + sql_search_where 
-                sqlfinalquery = sqlfinalquery + sql_search.format(*params)
-                parantheses = parantheses +')'
-        return [sqlfinalquery, results, parantheses]
+        query += ' and '.join(where_string)
 
+        return query
+
+    @staticmethod
+    def search_condition(fieldc, value):
+        if fieldc.type == 1:
+            return '{} = {}'.format(fieldc.field_id, value)
+        elif fieldc.type == 0:
+            return '{} = STR_TO_DATE(\'{}\', "%Y-%m-%d")'.format(fieldc.field_id, value)
+        else:
+            return '{} like \'%{}%\''.format(fieldc.field_id, value)
 
     def get_record_with_type(self, table_id, record_id, listFields):
         c = self.db.cursor()
@@ -250,50 +169,34 @@ class DAO(object):
         return ID
     
     def insertrecord(self, table_id, fieldstoadd):
-        c = self.db.cursor()
-        sqlquery = 'INSERT INTO {}'
-        sqlvalues = ' VALUES'
-        params = []
-        paramsvalues = []
         for tablec in self.tables_config:
             if tablec.id == table_id:
-                params = [tablec.sql_table_config_name, ]
-        for counter, field in enumerate(fieldstoadd):
-            if field[1] == '':
-                field[1] = 'NULL'
-            if counter == 0:
-                sqlquery = sqlquery + ' ({}'
-                if field[2] == 1:
-                    sqlvalues = sqlvalues + ' ({}'
-                elif field[2] == 0:
-                    sqlvalues = sqlvalues + ' (STR_TO_DATE("{}", "%Y-%m-%d")'                     
-                else:
-                    sqlvalues = sqlvalues + ' ("{}"'
-            elif counter == (len(fieldstoadd) -1):
-                sqlquery = sqlquery + ', {})'
-                if field[2] == 1:
-                    sqlvalues = sqlvalues + ', {})'
-                elif field[2] == 0:
-                    sqlvalues = sqlvalues + ', STR_TO_DATE("{}", "%Y-%m-%d"))'
-                else:
-                    sqlvalues = sqlvalues + ', "{}")'
-            else:
-                sqlquery = sqlquery + ', {}'
-                if field[2] == 1:
-                    sqlvalues = sqlvalues + ', {}'  
-                elif field[2] == 0:
-                    sqlvalues = sqlvalues + ', STR_TO_DATE("{}", "%Y-%m-%d")'  
-                else:
-                    sqlvalues = sqlvalues + ', "{}"'  
-            params.append(field[0])            
-            paramsvalues.append(field[1])
-        sqlcomplete = sqlquery + sqlvalues
-        paramstotal = params + paramsvalues
-        c.execute(sqlcomplete.format(*paramstotal))
-        self.db.commit()
-        record_id = c.lastrowid
-        c.close()
-        return record_id
+                # insert into {table} (<fields>) values (<values>)
+                fields = []
+                values = []
+
+                for field in fieldstoadd:
+                    fields.append(field[0])
+
+                    if field[1] == '' or field[1] is None:
+                        values.append('NULL')
+                    elif field[2] == 1:
+                        values.append('{}'.format(field[1]))
+                    elif field[2] == 0:
+                        values.append('STR_TO_DATE("{}", "%Y-%m-%d")'.format(field[1]))
+                    else:
+                        values.append('\'{}\''.format(field[1]))
+
+                query = 'insert into {} ({}) values ({})'.format(tablec.sql_table_config_name,
+                                                                 ', '.join(fields),
+                                                                 ', '.join(values))
+                c = self.db.cursor()
+                c.execute(query)
+                self.db.commit()
+                record_id = c.lastrowid
+                c.close()
+                return record_id
+        return None
     
     def editrecord(self, table_id, record_id, fieldstochange):
         c = self.db.cursor()        
@@ -351,7 +254,7 @@ class DAO(object):
             if tablec.id == table_id:
                 params = [tablec.sql_table_config_name, record_id]
         c.execute(sqlquery.format(*params))
-        db.commit()
+        self.db.commit()
         c.close()
         return
     
