@@ -250,6 +250,29 @@ class DAO(object):
         self.db.commit()
         c.close()
         return
+
+    def select_from_record_id(self, table_id, record_id, showall=True):
+        c = self.db.cursor()
+        sqlquery = 'select {} from {} where _id = {}'
+        for tablec in self.tables_config:
+            if tablec.id == table_id:
+                params = [self.select_string(tablec, showall), tablec.sql_table_config_name, record_id]
+                c.execute(sqlquery.format(*params))
+                record = c.fetchone()
+                if record is not None:
+                    fields = map(lambda x: x[0], c.description)
+                    result = dict(zip(fields, record))
+                    c.close()
+                    return result
+
+    @staticmethod
+    def select_string(table_config, showall):
+        if showall:
+            fields = table_config.fields
+        else:
+            fields = table_config.printable_fields()
+
+        return ', '.join(['_id'] + map(lambda f: f.field, fields))
     
     def get_related_records(self, table_id, record_id):
         c = self.db.cursor()   
