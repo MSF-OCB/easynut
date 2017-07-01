@@ -12,7 +12,8 @@ app_name = 'emr'
 #router.register(r'', TableViewSet, base_name='api')
 
 urlpatterns = [
-	url(r'^loginview/$', views.loginview, name='loginview'),
+	url(r'^login/$', views.loginview, name='login'),
+	url(r'^logoutbutton/$', views.logoutbutton, name='logoutbutton'),	
     #url(r'api/', include(router.urls)),
     #url(r'api-auth/', include('rest_framework.urls', namespace='rest_framework')),	
 	url(r'^$', views.index, name='index'),
