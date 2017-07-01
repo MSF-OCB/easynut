@@ -15,7 +15,6 @@ import os
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
-
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/1.11/howto/deployment/checklist/
 
@@ -26,7 +25,6 @@ SECRET_KEY = 'a9i94jd))4gslewiemnjvvjrt-6o^_cnm^3ban8x1as3r6g32&'
 DEBUG = True
 
 ALLOWED_HOSTS = ['localhost']
-
 
 # Application definition
 
@@ -71,7 +69,6 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'django_easynut.wsgi.application'
 
-
 # Database
 # https://docs.djangoproject.com/en/1.11/ref/settings/#databases
 
@@ -79,10 +76,10 @@ DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
         'NAME': 'easynut',
-	    'USER': 'easynut',
-	    'PASSWORD': 'MySQLJust4EasyNut',
-	    'HOST': '127.0.0.1',
-	    'PORT': '',
+        'USER': 'easynut',
+        'PASSWORD': 'MySQLJust4EasyNut',
+        'HOST': '127.0.0.1',
+        'PORT': '',
     },
     'data': {
         'ENGINE': 'django.db.backends.mysql',
@@ -90,29 +87,27 @@ DATABASES = {
         'USER': 'easynut',
         'PASSWORD': 'MySQLJust4EasyNut',
         'HOST': '127.0.0.1',
-        'PORT': '',        
-        }
+        'PORT': '',
+    }
 }
-
 
 # Password validation
 # https://docs.djangoproject.com/en/1.11/ref/settings/#auth-password-validators
 
 AUTH_PASSWORD_VALIDATORS = [
-#    {
-#        'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
-#    },
-#    {
-#        'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
-#    },
-#    {
-#        'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
-#    },
-#    {
-#        'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
-#    },
+    #    {
+    #        'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
+    #    },
+    #    {
+    #        'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
+    #    },
+    #    {
+    #        'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
+    #    },
+    #    {
+    #        'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
+    #    },
 ]
-
 
 # Where do we send the user to after successfully loging in
 LOGIN_REDIRECT_URL = '/emr'
@@ -130,10 +125,8 @@ USE_L10N = True
 
 USE_TZ = True
 
-
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/1.11/howto/static-files/
 
 STATIC_URL = '/static/'
 STATIC_ROOT = 'static'
-
