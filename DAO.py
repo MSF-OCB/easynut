@@ -199,36 +199,29 @@ class DAO(object):
         return None
     
     def editrecord(self, table_id, record_id, fieldstochange):
-        c = self.db.cursor()        
-        sqlquery = 'UPDATE {} SET'
         for tablec in self.tables_config:
             if tablec.id == table_id:
-                params = [tablec.sql_table_config_name, ]
-        for counter, field in enumerate(fieldstochange):
-            if field[1] == '':
-                field[1] = 'NULL'
-            if counter == 0:
-                if field[2] == 1:
-                    sqlquery = sqlquery + ' {} = {}'
-                elif field[2] == 0:
-                    sqlquery = sqlquery + ' {} = STR_TO_DATE("{}", "%Y-%m-%d")'
-                else:
-                    sqlquery = sqlquery + ' {} = "{}"'
-            else:
-                if field[2] == 1:
-                    sqlquery = sqlquery + ', {} = {}'
-                elif field[2] == 0:
-                    sqlquery = sqlquery + ', {} = STR_TO_DATE("{}", "%Y-%m-%d")'
-                else:
-                    sqlquery = sqlquery + ', {} = "{}"'
-            params.append(field[0])
-            params.append(field[1])            
-        sqlquery = sqlquery + ' WHERE _id = {}'
-        params.append(record_id)
-        c.execute(sqlquery.format(*params))
-        self.db.commit()
-        c.close()
-        return
+                # update {table} set <f1> = <v1>, <f2> = <v2>, ...
+                assignments = []
+
+                for field in fieldstochange:
+                    if field[1] == '' or field[1] is None:
+                        assignments.append('{} = NULL'.format(field[0]))
+                    elif field[2] == 1:
+                        assignments.append('{} = {}'.format(field[0], field[1]))
+                    elif field[2] == 0:
+                        assignments.append('{} = STR_TO_DATE("{}", "%Y-%m-%d")'.format(field[0], field[1]))
+                    else:
+                        assignments.append('{} = \'{}\''.format(field[0], field[1]))
+
+                query = 'update {} set {} where _id = {}'.format(tablec.sql_table_config_name, ', '.join(assignments), record_id)
+
+                c = self.db.cursor()
+                print(query)
+                c.execute(query)
+                self.db.commit()
+                c.close()
+                return
                
     def getrecordform(self, table_id):
         recordform = []
