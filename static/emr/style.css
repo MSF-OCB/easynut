@@ -39,6 +39,25 @@ input[type="text"]:hover
 	opacity: 1;
 }
 
+input[type="password"].searchbox{
+	display: flex;
+	height: 50%;
+	width: 50%;
+	font-size: 100%;
+  	background-color:   #ffffff;
+	border-radius: 40px;
+	opacity: 1;
+	curser: pointer;
+	font-weight: 800;
+	text-align: center;	
+    vertical-align: middle;
+    padding: 10px 10px;
+}
+input[type="password"]:hover
+{
+	opacity: 1;
+}
+
 input[type="submit"].searchnow{
 	display: flex;
 	height: 30%;

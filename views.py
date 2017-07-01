@@ -26,12 +26,11 @@ def loginview(request):
                 login(request, user)
                 return HttpResponseRedirect('/emr/')
             else:
-                return HttpResponse("Your account is disabled.")
+                return render(request, 'emr/loginview.html', {'wrongcrendentials' : 'Your account is disabled.'})
         else:
-            print "Invalid login details: {0}, {1}".format(username, password)
-            return HttpResponse("Invalid login details supplied.")
+            return render(request, 'emr/loginview.html', {'wrongcrendentials' : 'Invalid username / password combination provided'})
     else:
-        return render(request, 'emr/loginview.html')
+        return render(request, 'emr/loginview.html', {'wrongcrendentials' : ''})
 
 @login_required
 def index(request):
