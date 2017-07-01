@@ -13,6 +13,7 @@ import os, re
 import shutil
 from MySQLdb import converters
 
+
 class DAO(object):
 
     def __init__(self):
@@ -25,9 +26,9 @@ class DAO(object):
         conv[246]=float    # convert decimals to floats
         conv[10]=str       # convert dates
         self.db = MySQLdb.connect(settings.DATABASES['data']['HOST'],
-                             settings.DATABASES['data']['USER'],
-                             settings.DATABASES['data']['PASSWORD'],
-                             settings.DATABASES['data']['NAME'], conv=conv)
+                                  settings.DATABASES['data']['USER'],
+                                  settings.DATABASES['data']['PASSWORD'],
+                                  settings.DATABASES['data']['NAME'], conv=conv)
         
     def set_tables_config(self):
         c = self.db.cursor()
@@ -134,7 +135,6 @@ class DAO(object):
         sql_search = sql_search_select + sql_search_where
         results.append(columns)
         return [sql_search.format(*params), results, parantheses]
-
 
     def multiSearchQuery(self, entryList, tablec, parantheses):
         for counter, singleEntry in enumerate(entryList, 1):
@@ -250,50 +250,35 @@ class DAO(object):
         return ID
     
     def insertrecord(self, table_id, fieldstoadd):
-        c = self.db.cursor()
-        sqlquery = 'INSERT INTO {}'
-        sqlvalues = ' VALUES'
-        params = []
-        paramsvalues = []
         for tablec in self.tables_config:
             if tablec.id == table_id:
-                params = [tablec.sql_table_config_name, ]
-        for counter, field in enumerate(fieldstoadd):
-            if field[1] == '':
-                field[1] = 'NULL'
-            if counter == 0:
-                sqlquery = sqlquery + ' ({}'
-                if field[2] == 1:
-                    sqlvalues = sqlvalues + ' ({}'
-                elif field[2] == 0:
-                    sqlvalues = sqlvalues + ' (STR_TO_DATE("{}", "%Y-%m-%d")'                     
-                else:
-                    sqlvalues = sqlvalues + ' ("{}"'
-            elif counter == (len(fieldstoadd) -1):
-                sqlquery = sqlquery + ', {})'
-                if field[2] == 1:
-                    sqlvalues = sqlvalues + ', {})'
-                elif field[2] == 0:
-                    sqlvalues = sqlvalues + ', STR_TO_DATE("{}", "%Y-%m-%d"))'
-                else:
-                    sqlvalues = sqlvalues + ', "{}")'
-            else:
-                sqlquery = sqlquery + ', {}'
-                if field[2] == 1:
-                    sqlvalues = sqlvalues + ', {}'  
-                elif field[2] == 0:
-                    sqlvalues = sqlvalues + ', STR_TO_DATE("{}", "%Y-%m-%d")'  
-                else:
-                    sqlvalues = sqlvalues + ', "{}"'  
-            params.append(field[0])            
-            paramsvalues.append(field[1])
-        sqlcomplete = sqlquery + sqlvalues
-        paramstotal = params + paramsvalues
-        c.execute(sqlcomplete.format(*paramstotal))
-        self.db.commit()
-        record_id = c.lastrowid
-        c.close()
-        return record_id
+                # insert into {table} (<fields>) values (<values>)
+                fields = []
+                values = []
+
+                for field in fieldstoadd:
+                    fields.append(field[0])
+
+                    if field[1] == '' or field[1] is None:
+                        values.append('NULL')
+                    elif field[2] == 1:
+                        values.append('{}'.format(field[1]))
+                    elif field[2] == 0:
+                        values.append('STR_TO_DATE("{}", "%Y-%m-%d")'.format(field[1]))
+                    else:
+                        values.append('\'{}\''.format(field[1]))
+
+                query = 'insert into {} ({}) values ({})'.format(tablec.sql_table_config_name,
+                                                                 ', '.join(fields),
+                                                                 ', '.join(values))
+
+                c = self.db.cursor()
+                c.execute(query)
+                self.db.commit()
+                record_id = c.lastrowid
+                c.close()
+                return record_id
+        return None
     
     def editrecord(self, table_id, record_id, fieldstochange):
         c = self.db.cursor()        
