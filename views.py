@@ -1,8 +1,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
-from django.shortcuts import get_object_or_404, render
-from django.http import HttpResponseRedirect, HttpResponse, Http404
-from django.template import loader
+from django.shortcuts import get_object_or_404, render, render_to_response,redirect
+from django.template import loader, RequestContext
 from django.urls import reverse
 from django.views import generic
 from django.utils import timezone
@@ -11,13 +10,37 @@ from django.template.context_processors import request
 from DAO import *
 from EasyDBObjects import *
 from django.utils.encoding import smart_str
+from django.http import *
+from django.contrib.auth.decorators import login_required
+from django.contrib.auth import authenticate, login, logout
+from django.utils.decorators import method_decorator
 
+def loginview(request):
+    context = RequestContext(request)
+    if request.method == 'POST':
+        username = request.POST['username']
+        password = request.POST['password']
+        user = authenticate(username=username, password=password)
+        if user:
+            if user.is_active:
+                login(request, user)
+                return HttpResponseRedirect('/emr/')
+            else:
+                return HttpResponse("Your account is disabled.")
+        else:
+            print "Invalid login details: {0}, {1}".format(username, password)
+            return HttpResponse("Invalid login details supplied.")
+    else:
+        return render(request, 'emr/loginview.html')
+
+@login_required
 def index(request):
     template_name = 'emr/index.html'
     daoobject = DAO()
     daoobject.set_tables_config()
     return render(request, template_name, {'edbtables': daoobject.tables_config_lite, 'lastId' : daoobject.getLastId('tabla_1', 'campo_1')})
 
+@login_required
 def results(request):
     template_name = 'emr/results.html'
     search_query = request.GET.get('searchstring')
@@ -28,6 +51,7 @@ def results(request):
     else:
         return render(request, template_name, {'searchresults': daoobject.search(search_query, '1'), 'lastId' : daoobject.getLastId('tabla_1', 'campo_1')})
 
+@login_required
 def patient(request, record_id):
     template_name = 'emr/patient.html'    
     daoobject = DAO()
@@ -39,7 +63,7 @@ def patient(request, record_id):
         'lastId' : daoobject.getLastId('tabla_1', 'campo_1')
         })
     
-    
+@login_required
 def detail(request, table_id, record_id):
     template_name = 'emr/detail.html'
     daoobject = DAO()
@@ -51,12 +75,14 @@ def detail(request, table_id, record_id):
         'lastId' : daoobject.getLastId('tabla_1', 'campo_1')
         })
 
+@login_required
 def edit(request, table_id, record_id):
     template_name = 'emr/edit.html'
     daoobject = DAO()
     daoobject.set_tables_config()    
     return render(request, template_name, {'record': daoobject.get_record_with_type(table_id, record_id, False), 'lastId' : daoobject.getLastId('tabla_1', 'campo_1')})
 
+@login_required
 def save(request):
     record_id = request.GET.get('record_id')
     table_id = request.GET.get('table_id')
@@ -75,12 +101,13 @@ def save(request):
         record_id = daoobject.insertrecord(table_id, fieldstochange)
     return patient(request, patientId)
 
+@login_required
 def addrecord(request, table_id, related_record_entry, related_record_field):
     template_name = 'emr/addrecord.html'
     daoobject = DAO()
     daoobject.set_tables_config()
     daoobject.set_tables_relationships() 
-    if (not related_record_entry) and (table_id == '1'):
+    if (related_record_entry == '0') and (table_id == '1'):
         related_record_entry = daoobject.getNewId('tabla_1', 'campo_1')
         related_record_field = 'campo_1'
     if table_id != "0":
@@ -92,12 +119,14 @@ def addrecord(request, table_id, related_record_entry, related_record_field):
             })
     return index(request)
 
+@login_required
 def deleterecord(request, table_id, record_id):
     daoobject = DAO()
     daoobject.set_tables_config()
     daoobject.delete(table_id, record_id)
     return index(request)
 
+@login_required
 def downloadexport(request):
     daoobject = DAO()
     daoobject.set_tables_config()

@@ -1,10 +1,10 @@
-from django.conf.urls import url
-
+from django.conf.urls import url, include
 from . import views
 
 app_name = 'emr'
 
 urlpatterns = [
+	url(r'^loginview/$', views.loginview, name='loginview'),
 	url(r'^$', views.index, name='index'),
 	url(r'^(?P<record_id>[0-9]+)/patient/$', views.patient, name='patient'),	
 	url(r'^(?P<table_id>[0-9]+)/(?P<record_id>[0-9]+)/detail/$', views.detail, name='detail'),	

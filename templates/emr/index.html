@@ -1,22 +1,26 @@
 {% extends "emr/base.html" %}
 
 {% block content %}
-	<div align="center">
-		<form action="{% url 'emr:results' %}" type="get">
-			{% csrf_token %}
-			<table>
-				<tr><input type="text" id="searchstring" placeholder="Access by ID or search patient" name="searchstring" class="searchbox"/></tr>
-				<tr><b>&</b></tr>
-				<tr><input type="submit" name="search" value="Search" class="btna"/></tr>
-			</table>			
-		</form>
-	</div>
-	<p></p>
-	<p></p>
-	<p></p>
-	<h2>Or</h2>
-	<p></p>
-	{% with table_id='1' related_record_entry='0' related_record_field='0' %}
-		<a href="{% url 'emr:addrecord' table_id related_record_entry related_record_field %}" class="btna">Add patient</a>
-	{% endwith %}				
+	<section class="hero is-fullheight">
+		<br/>
+		<div align="center">
+			<form action="{% url 'emr:results' %}" type="get">
+				{% csrf_token %}
+				<table>
+					<tr><input type="text" id="searchstring" placeholder="Access by ID or search patients" name="searchstring" class="searchbox"/></tr>
+					<tr>&nbsp;</tr>
+					<tr><b>&</b></tr>
+					<tr>&nbsp;</tr>
+					<tr><input type="submit" name="search" value="SEARCH" class="searchnow"/></tr>
+				</table>			
+			</form>
+		</div>	
+		<h1 class="title has-text-centered is-doudou">or</h1>	
+		<div align="center">
+			{% with table_id='1' related_record_entry='0' related_record_field='0' %}
+				<a href="{% url 'emr:addrecord' table_id related_record_entry related_record_field %}" class="button is-doudou go">Add patient</a>
+			{% endwith %}		
+		</div>
+		<p></p>
+	</section>
 {% endblock %}

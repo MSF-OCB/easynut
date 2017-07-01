@@ -1,72 +1,88 @@
 {% extends "emr/base.html" %}
 
 {% block content %}	
-	{% with record_id=record.1 table_id=record.0 %}	
-		<table class="tablep">
-			<tr>
-				<td><h1>Patient #{{ record.3.0.4 }}</h1></td>			
-				<td width='10%'><a href="{% url 'emr:detail' table_id record_id %}" class="btna">View</a></td>
-				<td width='10%'><a href="{% url 'emr:edit' table_id record_id %}" class="btne">Edit</a></td>
-				<td width='10%'><a href="{% url 'emr:deleterecord' table_id record_id %}" class="btnd" onclick="return confirm('Are you sure you want to delete this patient?')">Delete</a></td>
-			</tr>
-		</table>
-	{% endwith %}
-	<table class="table" id="hor-minimalist-b">
-		{% for field in record.3 %}
-			<tr>
-				<td><b>{{ field.3 }}</b></td>
-				<td>{{ field.4 }}</td>
-			</tr>
-		{% endfor %}
-	</table>
-	{% if relatedrecords %}
-		<p></p>
-		{% for relatedrecord in relatedrecords %}
-			{% for tableresults in relatedrecord.1.1 %}
-				{% with table_id=tableresults.1 related_record_entry=relatedrecord.1.0.0 related_record_field=relatedrecord.0 %}
-					<table class="tablep">
+	<section class="hero is-light">
+		<div class="hero-body">
+			<br/>
+			<div class="container">
+				{% with record_id=record.1 table_id=record.0 %}	
+					<table>
 						<tr>
-							<td><b><font size="5">{{ tableresults.0 }}</font></b></td>
-							<td width='10%'><a href="{% url 'emr:addrecord' table_id related_record_entry related_record_field %}" class="btna">Add</a></td>
+							<td><span class="title">Patient #{{ record.3.0.4 }}</span></td>
+							<td width="5%"><a href="{% url 'emr:detail' table_id record_id %}" class="button is-mei go">View</a></td>
+							<td width="5%"><a href="{% url 'emr:edit' table_id record_id %}" class="button is-mei careful">Edit</a></td>
+							<td width="5%"><a href="{% url 'emr:deleterecord' table_id record_id %}" class="button is-mei dangerous" onclick="return confirm('Are you sure you want to delete this patient?')">Delete</a></td>				
 						</tr>
 					</table>
-				{% endwith %}			
-				<table class="table" id="hor-minimalist-b">
-					<thead>
+				{% endwith %}
+				<br/>				
+				<table class="table">
+					{% for field in record.3 %}
 						<tr>
-							{% for columnname in tableresults.2 %}
-								<th scope="col">{{ columnname }}</td>
-							{% endfor %}
-							<th  scope="col" width="5%">Edit</td>
-							<th  scope="col" width="5%">Delete</td>
+							<td><b>{{ field.3 }}</b></td>
+							<td>{{ field.4 }}</td>
 						</tr>
-					</thead>
-					<tbody>
-						{% if not tableresults.3 %}
-							<tr>
-								<td colspan="{{ tableresults.2|length|add:'+2' }}">No related records found</td>
-							</tr>
-						{% else %}
-							{% for records in tableresults.3 %}
-								<tr>
-									{% for record in records %}
-										{% if forloop.counter != 1 %}
-											{% with record_id=records.0 table_id=tableresults.1 %}
-												<td><a href="{% url 'emr:detail' table_id record_id %}">{{ record }}</a></td>
-											{% endwith %}
-										{% endif %}
-									{% endfor %}
-									{% with record_id=records.0 table_id=tableresults.1 %}
-										<td width="5%"><a href="{% url 'emr:edit' table_id record_id %}" class="btne">Edit</a></td>
-										<td width="5%"><a href="{% url 'emr:deleterecord' table_id record_id %}" class='btnd' onclick="return confirm('Are you sure you want to delete this record?')">Delete</a></td>
-									{% endwith %}
-								</tr>
-							{% endfor %}			
-						{% endif %}
-					</tbody>
+					{% endfor %}
 				</table>
-				<p></p>
-			{% endfor %}		
-		{% endfor %}
-	{% endif %}
+				{% if relatedrecords %}
+					<br/>
+					{% for relatedrecord in relatedrecords %}
+						{% for tableresults in relatedrecord.1.1 %}				
+							{% with table_id=tableresults.1 related_record_entry=relatedrecord.1.0.0 related_record_field=relatedrecord.0 %}
+								<table>
+									<tr>
+										<td><span class="subtitle">{{ tableresults.0 }}</span></td>
+										<td width='5%'><a href="{% url 'emr:addrecord' table_id related_record_entry related_record_field %}" class="button is-mei go">Add</buttona></td>
+									</tr>
+								</table>
+							{% endwith %}
+							<div class="columns">
+								<div class="column is-12">
+									<table id="nofeatures" class="table is-striped is-bordered" cellspacing="0" width="100%">
+								        <thead>
+								            <tr>
+												<th  scope="col" width="5%">View</td>
+												{% for columnname in tableresults.2 %}
+													<th scope="col">{{ columnname }}</td>
+												{% endfor %}
+												<th  scope="col" width="5%">Edit</td>
+												<th  scope="col" width="5%">Delete</td>
+											</tr>
+										</thead>
+										<tbody>
+											{% if not tableresults.3 %}
+												<tr>
+													<td colspan="{{ tableresults.2|length|add:'+3' }}">No related records found</td>
+												</tr>
+											{% else %}
+												{% for records in tableresults.3 %}
+													<tr>
+														{% with record_id=records.0 table_id=tableresults.1 %}
+															<td width="5%"><a href="{% url 'emr:detail' table_id record_id %}" class="button is-mei go">View</a></td>													
+														{% endwith %}
+														{% for record in records %}
+															{% if forloop.counter != 1 %}
+																{% with record_id=records.0 table_id=tableresults.1 %}
+																	<td>{{ record }}</td>
+																{% endwith %}
+															{% endif %}
+														{% endfor %}
+														{% with record_id=records.0 table_id=tableresults.1 %}
+															<td width="5%"><a href="{% url 'emr:edit' table_id record_id %}" class="button is-mei careful">Edit</a></td>
+															<td width="5%"><a href="{% url 'emr:deleterecord' table_id record_id %}" class='button is-mei dangerous' onclick="return confirm('Are you sure you want to delete this record?')">Delete</a></td>
+														{% endwith %}
+													</tr>
+												{% endfor %}			
+											{% endif %}
+										</tbody>
+									</table>
+								</div>
+							</div>
+						{% endfor %}		
+					{% endfor %}				
+				{% endif %}
+			</div>
+		</div>
+		<br/>
+	</section>
 {% endblock %}

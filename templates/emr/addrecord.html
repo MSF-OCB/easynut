@@ -1,59 +1,71 @@
 {% extends "emr/base.html" %}
 {% block content %}	
-	<script>
-		$(document).ready( function() {
-			$(".datepicker").datepicker({ 
-				dateFormat: 'yy-mm-dd',
-	            changeMonth: true,
-	            changeYear: true,
-	            yearRange: "-100:+0",
-	            maxDate: new Date
-				});		
-			$('.numbersOnly').keyup(function () { 
-			    this.value = this.value.replace(/[^0-9\.]/g,'');
-			});
-		});
-	</script>
-	
-	<form action="{% url 'emr:save' %}" type="get">
-		{% csrf_token %}
-		<h1>Create new {{ recordform.1 }} record</h1><br/>
-		<input type="hidden" name="record_id" value=0>
-		<input type="hidden" name="table_id" value="{{ recordform.0 }}">		
-		<table class="table" id="hor-minimalist-b">
-			{% for field in recordform.2 %}
-				<tr>
-					<td><b>{{ field.3 }}</b></td>
-					<td>
-						{% if field.1 == 0 %}
-							<input type="date" class="datepicker" name="{{ field.0 }}"> (yyyy-mm-dd)
-						{% elif field.1 == 1 %}
-							<input type="text" class="numbersOnly" name="{{ field.0 }}" {% if field.0 == related_record_field %}value="{{ related_record_entry }}"{% endif %}> (number only)
-						{% elif field.1 == 2 %}
-							<input type="text" 
-							name="{{ field.0 }}" 
-							{% if field.0 == related_record_field %}value="{{ related_record_entry }}"{% endif %} 
-							{% if field.3 == 'MSF ID' %} class="numbersOnly"{% endif %}>
-						{% elif field.1 == 3 %}
-							<select name="{{ field.0 }}">
-								{% for choice in field.4 %}
-									<option value="{{ choice }}" >{{ choice }}</option>
-								{% endfor %}				
-							</select>										
-						{% elif field.1 == 4 %}
-							<textarea cols="80" rows="10" name="{{ field.0 }}"></textarea>
-						{% endif %}
-					</td>
-				</tr>
-			{% endfor %}
-		</table>
-		<br/>
-		<table>
-			<tr>
-				<td><input type="submit" value="Save" class="button"/></td>
-				<td width="70%">&nbsp;</td>
-				<td></td>			
-			</tr>
-		</table>
-	</form>
+
+	<section class="hero is-light">
+		<div class="hero-body">
+			<br/>
+			<div class="container">
+				<table>
+					<tr>
+						<td><span class="title">Create new {{ recordform.1 }} record</span></td>
+						<td width="5%"><a href="javascript:history.back()" class="button is-mei careful" onclick="return confirm('The changes made are not going to be saved. Are you sure?')">Back</a></td>
+					</tr>
+				</table>
+				<br/>
+				<form action="{% url 'emr:save' %}" type="get">
+					{% csrf_token %}
+					<input type="hidden" name="record_id" value=0>
+					<input type="hidden" name="table_id" value="{{ recordform.0 }}">		
+					<div class="columns">
+						<div class="column is-12">
+							<table id="nofeatures" class="table is-striped is-bordered" cellspacing="0" width="100%">
+								{% for field in recordform.2 %}
+									<tr>
+										<td width="30%"><b>{{ field.3 }}</b></td>
+										<td>
+											{% if field.1 == 0 %}
+												<input type="text" class="datepicker-doudou" name="{{ field.0 }}"/>
+											{% elif field.1 == 1 %}
+												<div class="numbersOnly"><input type="text" name="{{ field.0 }}" {% if field.0 == related_record_field %}value="{{ related_record_entry }}"{% endif %}/> (number only)</div>
+											{% elif field.1 == 2 %}
+												{% if field.3 == 'MSF ID' %}<div class="numbersOnly">{% endif %} 
+													<input type="text" class="input" 
+													{% if field.0 == related_record_field %}value="{{ related_record_entry }}"{% endif %} 
+													{% if field.3 == 'MSF ID' %} class="numbersOnly"{% endif %}
+													name="{{ field.0 }}">
+												{% if field.3 == 'MSF ID' %}</div>{% endif %} 
+											{% elif field.1 == 3 %}
+											<span class="select is-fullwidth">
+												<select class="select" name="{{ field.0 }}">
+													{% for choice in field.4 %}
+														<option value="{{ choice }}">{{ choice }}</option>
+													{% endfor %}				
+												</select>						
+											</span>				
+											{% elif field.1 == 5 %}
+												<div class="radiosection">
+													{% for choice in field.4 %}												
+														<input id="{{ choice }}" name="{{ field.0 }}" type="radio" value="{{ choice }}"/>
+														<label for="{{ choice }}" class="side-label">{{ choice }}</label>												
+													{% endfor %}
+												</div>						
+											{% elif field.1 == 4 %}
+												<div class="textdiv"><textarea  class="textarea" name="{{ field.0 }}"></textarea></div>
+											{% endif %}
+										</td>
+									</tr>							
+								{% endfor %}
+							</table>
+						</div>
+					</div>
+					
+					<table>
+						<tr>
+							<td><input type="submit" name="Save" value="Save" class="searchnow"/></td>
+						</tr>
+					</table>					
+				</form>
+			</div>
+		</div>
+	</section>
 {% endblock %}

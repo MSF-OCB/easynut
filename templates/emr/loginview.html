@@ -1,0 +1,11 @@
+{% extends "emr/base.html" %}
+
+{% block content %}	
+	<p></p>
+	<form id="login_form" method="POST" action="{% url 'emr:loginview' %}">
+		{% csrf_token %}
+	    <input type="text" name="username" value="" placeholder="Username"/><p></p>
+	    <input type="password" name="password" value="" placeholder="Password"/><p></p><p></p>
+	    <input type="submit" value="Login"  class="has-text-centered"/>
+	</form>
+{% endblock %}

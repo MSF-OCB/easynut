@@ -2,47 +2,77 @@
 
 <html>
 
-	<link rel="stylesheet" type="text/css" href="{% static 'emr/style.css' %}" />
-	<script type="text/javascript" src="/static/emr/js/jquery-3.2.1.min.js"></script> 
-	<link rel="stylesheet" type="text/css" href="{% static 'emr/jquery-ui.css' %}" />
-	<script type="text/javascript" src="/static/emr/js/jquery-ui.js"></script>	
-	<script type="text/javascript">
-		$(document).ready( function() {
-			$("#nextId").click(function () {
-				alert("Last ID used: {{ lastId }}");
-			});
-		});
-	</script>
-
-	<head>
+	<head>	
 	    <meta charset="utf-8">
 	    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-	    <meta name="viewport" content="width=device-width, initial-scale=1">
+	    <meta name="viewport" content="width=device-width, initial-scale=1">	
 	    <title>Fori - EasyNut</title>
-	</head>
-	
-	<header>
-		<nav><li><a href="{% url 'emr:index' %}" class="btn">Home</a></li></nav>
-		<nav>
-			<li><a href="#" accesskey="1" id="nextId" class="btn">Last ID</a></li>
-			<li><a href="{% url 'emr:downloadexport' %}" accesskey="2" class="btn">Export</a></li>
-		</nav>
-	</header>
-	
-	<body>	
-		<section class="hero">
-			<div class="background-image"></div>
-			<h1>EasyNut</h1>
-			<h3>Fori - Nutrition System</h3>
-		</section>
+	    
+		<link rel="stylesheet" type="text/css" href="{% static 'emr/style.css' %}" />
+        <link rel="stylesheet" type="text/css" href="{% static 'emr/datepicker.min.css' %}">
+		<link rel="stylesheet" type="text/css" href="{% static 'emr/jquery-ui.css' %}" />
 		
-		<section class="features">
-            {% block content %}
-            {% endblock %}		
-		</section>	
-			
-		<footer>
-			<p>MSF - Nigeria - Fori | Support: <a href="mailto:msfocb-blantyre-ehealth@brussels.msf.org">msfocb-blantyre-ehealth@brussels.msf.org</a> | OCB eHealth</a>.</p>
-		</footer>		
+		<script type="text/javascript" src="/static/emr/js/jquery-3.2.1.min.js"></script> 
+		<script type="text/javascript" src="/static/emr/js/jquery-ui.js"></script>	
+        <script type="text/javascript" src="/static/emr/js/datepicker.min.js"></script>
+        <script type="text/javascript" src="/static/emr/js/i18n/datepicker.en.js"></script>		
+		
+
+	</head>
+
+
+
+		<script type="text/javascript">
+			$(document).ready( function() {
+				$("#nextId").click(function () {
+					alert("Last ID used: {{ lastId }}");
+				});
+				$(".datepicker-doudou").datepicker({
+					language: 'en',
+					dateFormat: 'yyyy-mm-dd',			       
+					todayButton: new Date(),
+					autoClose: true
+				});
+					
+				$('.numbersOnly').children(":first").keyup(function () { 
+				    this.value = this.value.replace(/[^0-9\.]/g,'');
+				});
+			});
+		</script>	    
+	
+	<body>
+		<nav class="nav has-shadow is-fixed-top">
+			<div class="container">
+				<div class="nav-left">
+				  	<a class="nav-item is-brand" href="{% url 'emr:index' %}">Home</a>
+	  			</a>
+				</div>
+				<div class="nav-right">
+					<a class="nav-item is-tab" href="#" accesskey="1" id="nextId" class="btn">Last ID</a>
+					<a class="nav-item" href="{% url 'emr:downloadexport' %}" accesskey="2" class="btn">Export</a>
+					<a class="nav-item" href="{% url 'emr:downloadexport' %}" accesskey="3" class="btn">Log out</a>					
+				</div>				
+			</div>	
+		</nav>	
+		<div id="main">
+			<section class="section">
+				<div class="container">
+					<div class="heading">
+						<a href="{% url 'emr:index' %}"><h1 class="title">EasyNut</h1><h5 class="subtitle">Fori - Nutrition System</h5><h6>Version 1.0</h6></a>
+					</div>
+				</div>
+			</section>
+		</div>
+		{% block content %}
+		{% endblock %}				
+		<footer class="footer">
+        	<div class="container">
+            	<div class="content has-text-centered">
+            		<p>MSF - Nigeria - Fori<br/>
+            		<a href="mailto:msfocb-blantyre-ehealth@brussels.msf.org">msfocb-blantyre-ehealth@brussels.msf.org</a><br/>
+            		OCB eHealth</p>
+          		</div>
+        	</div>
+        </footer>		
 	</body>
 </html>
