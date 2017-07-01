@@ -21,7 +21,7 @@ class DAO(object):
         self.tables_config = []
         self.tables_config_lite = {}
         self.tables_relationships = []
-        self.search_results = []
+        self.easy_user = []
         
         conv=converters.conversions.copy()
         conv[246]=float    # convert decimals to floats
@@ -121,7 +121,7 @@ class DAO(object):
     def search_condition(fieldc, value):
         if fieldc.type == 1:
             return '{} = {}'.format(fieldc.field_id, value)
-        elif fieldc.type == 0:
+        elif fieldc.type == 0 and value != 'NULL':
             return '{} = STR_TO_DATE(\'{}\', "%Y-%m-%d")'.format(fieldc.field_id, value)
         else:
             return '{} like \'%{}%\''.format(fieldc.field_id, value)
@@ -182,7 +182,7 @@ class DAO(object):
                         values.append('NULL')
                     elif field[2] == 1:
                         values.append('{}'.format(field[1]))
-                    elif field[2] == 0:
+                    elif field[2] == 0 and field[1] != 'NULL':
                         values.append('STR_TO_DATE("{}", "%Y-%m-%d")'.format(field[1]))
                     else:
                         values.append('\'{}\''.format(field[1]))
@@ -210,14 +210,14 @@ class DAO(object):
             if counter == 0:
                 if field[2] == 1:
                     sqlquery = sqlquery + ' {} = {}'
-                elif field[2] == 0:
+                elif field[2] == 0 and field[1] != 'NULL':
                     sqlquery = sqlquery + ' {} = STR_TO_DATE("{}", "%Y-%m-%d")'
                 else:
                     sqlquery = sqlquery + ' {} = "{}"'
             else:
                 if field[2] == 1:
                     sqlquery = sqlquery + ', {} = {}'
-                elif field[2] == 0:
+                elif field[2] == 0 and field[1] != 'NULL':
                     sqlquery = sqlquery + ', {} = STR_TO_DATE("{}", "%Y-%m-%d")'
                 else:
                     sqlquery = sqlquery + ', {} = "{}"'
@@ -345,3 +345,31 @@ class DAO(object):
         shutil.make_archive(zipPath + filename, 'zip', toZip)
         c.close()
         return zipPath + filename 
+    
+    
+    def setEasyUser(self, user):
+        canExport = False
+        canLastId = False
+        addPatient = False
+        tableRules = {}
+        if user.groups.filter(name='Admin').exists():
+            canExport = True
+            canLastId = True
+            addPatient = True
+
+        if user.groups.filter(name='Registration').exists():
+            addPatient = True
+            
+        if user.groups.filter(name='ID Check').exists():
+            canLastId = True
+            
+        self.easy_user = {
+            'canExport': canExport,
+            'canLastId': canLastId,
+            'addPatient': addPatient
+            }
+        
+        
+        
+        
+        

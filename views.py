@@ -42,7 +42,12 @@ def index(request):
     template_name = 'emr/index.html'
     daoobject = DAO()
     daoobject.set_tables_config()
-    return render(request, template_name, {'edbtables': daoobject.tables_config_lite, 'lastId' : daoobject.getLastId('tabla_1', 'campo_1')})
+    daoobject.setEasyUser(request.user)
+    return render(request, template_name, {
+        'edbtables': daoobject.tables_config_lite, 
+        'lastId' : daoobject.getLastId('tabla_1', 'campo_1'),
+        'easyUser': daoobject.easy_user
+        })
 
 @login_required
 def results(request):

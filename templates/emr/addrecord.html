@@ -45,8 +45,8 @@
 											{% elif field.1 == 5 %}
 												<div class="radiosection">
 													{% for choice in field.4 %}												
-														<input id="{{ choice }}" name="{{ field.0 }}" type="radio" value="{{ choice }}"/>
-														<label for="{{ choice }}" class="side-label">{{ choice }}</label>												
+														<input id="{{ field.0 }}{{ choice }}" name="{{ field.0 }}" type="radio" value="{{ choice }}"/>
+														<label for="{{ field.0 }}{{ choice }}" class="side-label">{{ choice }}</label>												
 													{% endfor %}
 												</div>						
 											{% elif field.1 == 4 %}

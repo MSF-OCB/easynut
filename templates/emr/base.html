@@ -20,11 +20,9 @@
 
 	</head>
 
-
-
 		<script type="text/javascript">
 			$(document).ready( function() {
-				$("#nextId").click(function () {
+				$("#lastIdClick").click(function () {
 					alert("Last ID used: {{ lastId }}");
 				});
 				$(".datepicker-doudou").datepicker({
@@ -48,9 +46,9 @@
 	  			</a>
 				</div>
 				<div class="nav-right">
-					<a class="nav-item is-tab" href="#" accesskey="1" id="nextId" class="btn">Last ID</a>
-					<a class="nav-item" href="{% url 'emr:downloadexport' %}" accesskey="2" class="btn">Export</a>
-					<a class="nav-item" href="{% url 'emr:logoutbutton' %}" accesskey="3" class="btn">Log out</a>					
+					{% if easyUser.canLastId %}<a class="nav-item is-tab" href="#" accesskey="1" id="lastIdClick" class="btn">Last ID</a>{% endif %}
+					{% if easyUser.canExport %}<a class="nav-item" href="{% url 'emr:downloadexport' %}" accesskey="2" class="btn">Export</a>{% endif %}
+					<a class="nav-item" href="{% url 'emr:logoutbutton' %}" accesskey="3" class="btn">Log out: {{ user.username }}</a>									
 				</div>				
 			</div>	
 		</nav>	
