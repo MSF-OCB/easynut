@@ -48,7 +48,7 @@
 													{% endfor %}
 												</div>						
 											{% elif field.1 == 4 %}
-												<div class="textdiv"><textarea  class="textarea" name="{{ field.0 }}" {% if field.4 != None %}value="{{ field.4 }}"{% endif %}></textarea></div>
+												<div class="textdiv"><textarea  class="textarea" name="{{ field.0 }}">{% if field.4 != None %}{{ field.4 }}{% endif %}</textarea></div>
 											{% endif %}
 										</td>
 									</tr>
