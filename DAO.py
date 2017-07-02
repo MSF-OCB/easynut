@@ -438,7 +438,7 @@ class DAO(object):
         for role in easy_roles:
             for group in user.groups.all():
                 if group.id == role[0]:
-                    for utk, utv in user_tables[role[1]]:
+                    for utk, utv in user_tables[str(role[1])].iteritems():
                         if utk == 'view_table' and utv == False and role[2] == 1:
                             user_tables[role[1]][utk] = True
                         if utk == 'add_table' and utv == False and role[3] == 1:
