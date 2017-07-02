@@ -1,16 +1,12 @@
 from __future__ import print_function
 from rest_framework import status
 from rest_framework.views import APIView
-
 from rest_framework.authentication import SessionAuthentication, BasicAuthentication
-
 from rest_framework.exceptions import APIException
-
-import DAO
-
 from rest_framework.response import Response
 
-from REST import Table, TableSerializer
+import DAO
+from REST import Record, RecordSerializer
 
 
 class CsrfExemptSessionAuthentication(SessionAuthentication):
@@ -20,6 +16,9 @@ class CsrfExemptSessionAuthentication(SessionAuthentication):
 
 
 class Utils:
+    def __init__(self):
+        pass
+
     @staticmethod
     def only_viewable(request):
         if "showall" in request.query_params and request.query_params["showall"] == "true":
@@ -27,23 +26,12 @@ class Utils:
         else:
             return False
 
-    @staticmethod
-    def extract_where_params(table_config, query_params):
-        where_params = dict()
-        field_names = map(lambda f: TableSerializer.sanitize(f.name), table_config.fields)
 
-        for (key, value) in query_params.items():
-            if key in field_names:
-                where_params[key] = value
-
-        return where_params
-
-
-class TableList(APIView):
+class RecordList(APIView):
     authentication_classes = (CsrfExemptSessionAuthentication, BasicAuthentication)
 
     def __init__(self, **kwargs):
-        super(TableList, self).__init__(**kwargs)
+        super(RecordList, self).__init__(**kwargs)
         self.daoobject = DAO.DAO()
         self.daoobject.set_tables_config()
         self.daoobject.set_tables_relationships()
@@ -51,35 +39,41 @@ class TableList(APIView):
     def get(self, request, table_id):
         for tablec in self.daoobject.tables_config:
             if tablec.id == table_id:
-                where_params = Utils.extract_where_params(tablec, request.query_params)
-                where_string = ' and '.join(['%s = \'%s\'' % (key, value) for (key, value) in where_params.items()])
-
-                print(where_string)
-
-                c = self.daoobject.db.cursor()
-                query = "select {} from {}"
-                params = (self.daoobject.select_string(tablec, showall=Utils.only_viewable(request)), tablec.sql_table_config_name)
-                print(query.format(*params))
-                c.execute(query.format(*params))
-                rows = c.fetchall()
-                fields = map(lambda x: x[0], c.description)
-                results = [dict(zip(fields, row)) for row in rows]
-                records = map(lambda r: Table(tablec, **r), results)
-                c.close()
-
-                serializer = TableSerializer(table_config=tablec,
-                                             instance=records,
-                                             many=True,
-                                             showall=Utils.only_viewable(request))
-                return Response(serializer.data)
+                where_params = self.construct_where_params(tablec, request.query_params)
+                if where_params:
+                    rows = self.daoobject.search_by_fields(tablec, where_params, Utils.only_viewable(request))
+                    records = map(lambda r: Record(tablec, **r), rows)
+                    serializer = RecordSerializer(table_config=tablec,
+                                                  instance=records,
+                                                  many=True,
+                                                  showall=Utils.only_viewable(request))
+                    return Response(serializer.data)
+                else:
+                    serializer = RecordSerializer(table_config=tablec,
+                                                  instance=[],
+                                                  many=True,
+                                                  showall=Utils.only_viewable(request))
+                    return Response(serializer.data)
         return Response(status=status.HTTP_404_NOT_FOUND)
+
+    @staticmethod
+    def construct_where_params(tablec, query_params):
+        where_params = dict()
+        for field in tablec.fields:
+            sanitized = RecordSerializer.sanitize(field.name)
+            if sanitized in query_params:
+                where_clause = dict()
+                where_clause['fieldc'] = field
+                where_clause['value'] = query_params[sanitized]
+                where_params[field.field_id] = where_clause
+        return where_params
 
     def post(self, request, table_id):
         for tablec in self.daoobject.tables_config:
             if tablec.id == table_id:
-                serializer = TableSerializer(table_config=tablec,
-                                             data=request.data,
-                                             showall=True)
+                serializer = RecordSerializer(table_config=tablec,
+                                              data=request.data,
+                                              showall=True)
                 if serializer.is_valid():
                     serializer.save()
                     return Response(serializer.data, status=status.HTTP_201_CREATED)
@@ -87,11 +81,11 @@ class TableList(APIView):
         return Response(status=status.HTTP_404_NOT_FOUND)
 
 
-class TableDetail(APIView):
+class RecordDetail(APIView):
     authentication_classes = (CsrfExemptSessionAuthentication, BasicAuthentication)
 
     def __init__(self, **kwargs):
-        super(TableDetail, self).__init__(**kwargs)
+        super(RecordDetail, self).__init__(**kwargs)
         self.daoobject = DAO.DAO()
         self.daoobject.set_tables_config()
         self.daoobject.set_tables_relationships()
@@ -104,20 +98,19 @@ class TableDetail(APIView):
             if tablec.id == table_id:
                 result = self.daoobject.select_from_record_id(table_id, pk, showall=Utils.only_viewable(request))
                 if result is not None:
-                    serializer = TableSerializer(table_config=tablec, instance=Table(tablec, **result), many=False, showall=Utils.only_viewable(request))
+                    serializer = RecordSerializer(table_config=tablec, instance=Record(tablec, **result), many=False, showall=Utils.only_viewable(request))
                     return Response(serializer.data)
         return Response(status=status.HTTP_404_NOT_FOUND)
 
     def post(self, request, table_id, pk):
         for tablec in self.daoobject.tables_config:
             if tablec.id == table_id:
-                table = self.daoobject.select_from_record_id(table_id, pk)
-                print(table)
-                if table:
-                    serializer = TableSerializer(table_config=tablec,
-                                                 instance=Table(tablec, **table),
-                                                 data=request.data,
-                                                 showall=True)
+                record = self.daoobject.select_from_record_id(table_id, pk)
+                if record:
+                    serializer = RecordSerializer(table_config=tablec,
+                                                  instance=Record(tablec, **record),
+                                                  data=request.data,
+                                                  showall=True)
                     if serializer.is_valid():
                         serializer.save()
                         return Response(serializer.data, status=status.HTTP_201_CREATED)

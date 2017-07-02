@@ -1,26 +1,22 @@
 import re
 
-from django.http import Http404
-from rest_framework.exceptions import APIException
-
 import DAO
 from EasyDBObjects import FieldConfig
 
-from rest_framework.response import Response
-from rest_framework import serializers, viewsets
+from rest_framework import serializers
 
 
-class Table(object):
+class Record(object):
     def __init__(self, table_config, **kwargs):
         # For every field in the table, we inject a property in this instance
         for field in (['_id'] + map(lambda c: c.field_id, table_config.fields)):
             setattr(self, field, kwargs.get(field, None))
 
 
-class TableSerializer(serializers.Serializer):
+class RecordSerializer(serializers.Serializer):
 
     def __init__(self, table_config, showall=True, **kwargs):
-        super(TableSerializer, self).__init__(**kwargs)
+        super(RecordSerializer, self).__init__(**kwargs)
         self.table_config = table_config
         self.daoobject = DAO.DAO()
         self.daoobject.set_tables_config()
@@ -46,14 +42,14 @@ class TableSerializer(serializers.Serializer):
         return re.sub('[^0-9a-zA-Z_]', '_', dirty)
 
     def create(self, validated_data):
-        table = Table(id=None, table_config=self.table_config, **validated_data)
+        record = Record(id=None, table_config=self.table_config, **validated_data)
         to_add = []
         for field_def in self.table_config.fields:
             if field_def.field_id in validated_data:
                 to_add.append([field_def.field_id, validated_data[field_def.field_id], field_def.type])
-        id = self.daoobject.insertrecord(self.table_config.id, to_add)
-        table._id = id
-        return table
+        record_id = self.daoobject.insertrecord(self.table_config.id, to_add)
+        record._id = record_id
+        return record
 
     def update(self, instance, validated_data):
         print(validated_data)
@@ -62,4 +58,4 @@ class TableSerializer(serializers.Serializer):
             if field_def.field_id in validated_data and validated_data[field_def.field_id] is not None and validated_data[field_def.field_id] != '':
                 to_edit.append([field_def.field_id, validated_data[field_def.field_id], field_def.type])
         self.daoobject.editrecord(self.table_config.id, instance._id, to_edit)
-        return Table(self.table_config, **self.daoobject.select_from_record_id(self.table_config.id, instance._id))
+        return Record(self.table_config, **self.daoobject.select_from_record_id(self.table_config.id, instance._id))
