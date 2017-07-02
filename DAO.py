@@ -97,7 +97,7 @@ class DAO(object):
         entryClean = re.sub(' +',' ',entry)
         entryList = entryClean.split(' ')
         for tablec in filtered_tables:
-            query = self.search_query(entryList, tablec) + ' limit 100'
+            query = self.search_query(entryList, tablec) + ' ORDER BY timestamp DESC limit 100'
             results = [tablec.name, tablec.id] + [map(lambda f: f.name, filter(lambda f: f.list, tablec.fields))]
             c.execute(query)
             results.append(c.fetchall())
