@@ -433,7 +433,6 @@ class DAO(object):
                 'edit_table': False,
                 'delete_table': False
                 }
-        user_tables['1']['view_table'] = True
         
         for role in easy_roles:
             for group in user.groups.all():
