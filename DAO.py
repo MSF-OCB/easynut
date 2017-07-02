@@ -4,6 +4,7 @@ from __future__ import unicode_literals
 from django.utils import timezone
 from operator import itemgetter
 from EasyDBObjects import *
+from ExternalFields import *
 from datetime import date
 from django.conf import settings
 import MySQLdb
@@ -100,7 +101,7 @@ class DAO(object):
             results = [tablec.name, tablec.id] + [map(lambda f: f.name, filter(lambda f: f.list, tablec.fields))]
             c.execute(query)
             results.append(c.fetchall())
-            all_results.append(results)
+            all_results.append(self.launchExternalFields(results))
         returnList.append(all_results)
         c.close()
         return returnList
@@ -170,6 +171,8 @@ class DAO(object):
         record.append(sorted(recorddetails, key=itemgetter(2)))
         record.append(patientId)
         c.close()
+        if listFields:
+            return self.launchSingleExternalFields(record)
         return record
     
     def getPatientIdFromMsfId(self, msfid):
@@ -479,8 +482,14 @@ class DAO(object):
             if k == table_id and v[type]:
                 return True    
         return False
-    
         
+    def launchExternalFields(self, results):
+        extF = ExternalFields()
+        return extF.addFields(results, self.tables_config)
+        
+    def launchSingleExternalFields(self, results):
+        extF = ExternalFields()
+        return extF.addSingleFields(results, self.tables_config)        
         
         
         
