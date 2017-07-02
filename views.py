@@ -86,12 +86,14 @@ def detail(request, table_id, record_id):
     daoobject.set_tables_config()
     daoobject.set_tables_relationships()
     daoobject.setEasyUser(request.user)
-    return render(request, template_name, {
-        'record': daoobject.get_record_with_type(table_id, record_id, False), 
-        'relatedrecords' : daoobject.get_related_records(table_id, record_id),
-        'lastId' : daoobject.getLastId('tabla_1', 'campo_1'),
-        'easyUser': daoobject.easy_user
-        })
+    if daoobject.backEndUserRolesCheck(table_id, 'view_table'):
+        return render(request, template_name, {
+            'record': daoobject.get_record_with_type(table_id, record_id, False), 
+            'relatedrecords' : daoobject.get_related_records(table_id, record_id),
+            'lastId' : daoobject.getLastId('tabla_1', 'campo_1'),
+            'easyUser': daoobject.easy_user
+            })
+    return index(request)
 
 @login_required
 def edit(request, table_id, record_id):
@@ -99,11 +101,13 @@ def edit(request, table_id, record_id):
     daoobject = DAO()
     daoobject.set_tables_config()   
     daoobject.setEasyUser(request.user)
-    return render(request, template_name, {
-        'record': daoobject.get_record_with_type(table_id, record_id, False), 
-        'lastId' : daoobject.getLastId('tabla_1', 'campo_1'),
-        'easyUser': daoobject.easy_user
-        })
+    if daoobject.backEndUserRolesCheck(table_id, 'edit_table'):
+        return render(request, template_name, {
+            'record': daoobject.get_record_with_type(table_id, record_id, False), 
+            'lastId' : daoobject.getLastId('tabla_1', 'campo_1'),
+            'easyUser': daoobject.easy_user
+            })
+    return index(request)
 
 @login_required
 def save(request):
@@ -111,6 +115,7 @@ def save(request):
     table_id = request.GET.get('table_id')
     daoobject = DAO()
     daoobject.set_tables_config()
+    daoobject.setEasyUser(request.user)
     fieldstochange = []
     for tablec in daoobject.tables_config:
         if tablec.id == table_id:
@@ -119,9 +124,11 @@ def save(request):
                     patientId = daoobject.getPatientIdFromMsfId(request.GET.get(fieldc.field_id))
                 fieldstochange.append([fieldc.field_id, request.GET.get(fieldc.field_id), fieldc.type])
     if record_id != "0":
-        daoobject.editrecord(table_id, record_id, fieldstochange)
+        if daoobject.backEndUserRolesCheck(table_id, 'edit_table'):
+            daoobject.editrecord(table_id, record_id, fieldstochange)
     else:
-        record_id = daoobject.insertrecord(table_id, fieldstochange)
+        if daoobject.backEndUserRolesCheck(table_id, 'add_table'):
+            record_id = daoobject.insertrecord(table_id, fieldstochange)
     return patient(request, patientId)
 
 @login_required
@@ -131,17 +138,18 @@ def addrecord(request, table_id, related_record_entry, related_record_field):
     daoobject.set_tables_config()
     daoobject.set_tables_relationships() 
     daoobject.setEasyUser(request.user)
-    if (related_record_entry == '0') and (table_id == '1'):
-        related_record_entry = daoobject.getNewId('tabla_1', 'campo_1')
-        related_record_field = 'campo_1'
-    if table_id != "0":
-        return render(request, template_name, {
-            'recordform': daoobject.getrecordform(table_id),
-            'related_record_entry' : related_record_entry,
-            'related_record_field' : related_record_field,
-            'lastId' : daoobject.getLastId('tabla_1', 'campo_1'),
-            'easyUser': daoobject.easy_user
-            })
+    if daoobject.backEndUserRolesCheck(table_id, 'add_table'):
+        if (related_record_entry == '0') and (table_id == '1'):
+            related_record_entry = daoobject.getNewId('tabla_1', 'campo_1')
+            related_record_field = 'campo_1'
+        if table_id != "0":
+            return render(request, template_name, {
+                'recordform': daoobject.getrecordform(table_id),
+                'related_record_entry' : related_record_entry,
+                'related_record_field' : related_record_field,
+                'lastId' : daoobject.getLastId('tabla_1', 'campo_1'),
+                'easyUser': daoobject.easy_user
+                })
     return index(request)
 
 @login_required
@@ -149,7 +157,8 @@ def deleterecord(request, table_id, record_id):
     daoobject = DAO()
     daoobject.set_tables_config()
     daoobject.setEasyUser(request.user)
-    daoobject.delete(table_id, record_id)
+    if daoobject.backEndUserRolesCheck(table_id, 'delete_table'):
+        daoobject.delete(table_id, record_id)
     return index(request)
 
 @login_required
@@ -157,12 +166,15 @@ def downloadexport(request):
     daoobject = DAO()
     daoobject.set_tables_config()
     daoobject.setEasyUser(request.user)
-    zip = daoobject.generateExport()+'.zip'
-    if os.path.exists(zip):
-        with open(zip, 'rb') as fh:
-            response = HttpResponse(fh.read(), content_type="application/zip")
-            response['Content-Disposition'] = 'inline; filename=' + os.path.basename(zip)
-            return response
-    raise Http404
+    if request.user.groups.filter(id=2).exists():
+        zip = daoobject.generateExport()+'.zip'
+        if os.path.exists(zip):
+            with open(zip, 'rb') as fh:
+                response = HttpResponse(fh.read(), content_type="application/zip")
+                response['Content-Disposition'] = 'inline; filename=' + os.path.basename(zip)
+                return response
+        raise Http404
+    else:
+        return index(request)
 
            

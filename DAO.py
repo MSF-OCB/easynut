@@ -21,7 +21,7 @@ class DAO(object):
         self.tables_config = []
         self.tables_config_lite = {}
         self.tables_relationships = []
-        self.easy_user = []
+        self.easy_user = {}
         
         conv=converters.conversions.copy()
         conv[246]=float    # convert decimals to floats
@@ -473,4 +473,14 @@ class DAO(object):
         c.close()
         return
 
+    def backEndUserRolesCheck(self, table_id, type):
+        for k,v in self.easy_user['tables'].iteritems():
+            if k == table_id and v[type]:
+                return True    
+        return False
+    
+        
+        
+        
+        
         
