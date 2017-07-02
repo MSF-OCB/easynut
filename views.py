@@ -117,6 +117,7 @@ def save(request):
     daoobject.set_tables_config()
     daoobject.setEasyUser(request.user)
     fieldstochange = []
+    patientId = 0
     for tablec in daoobject.tables_config:
         if tablec.id == table_id:
             for fieldc in tablec.fields:
@@ -129,6 +130,8 @@ def save(request):
     else:
         if daoobject.backEndUserRolesCheck(table_id, 'add_table'):
             record_id = daoobject.insertrecord(table_id, fieldstochange)
+            if table_id == '1':
+                patientId = record_id
     return patient(request, patientId)
 
 @login_required

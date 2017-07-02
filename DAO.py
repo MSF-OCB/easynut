@@ -186,6 +186,7 @@ class DAO(object):
         return ID
     
     def insertrecord(self, table_id, fieldstoadd):
+        record_id = None
         for tablec in self.tables_config:
             if tablec.id == table_id:
                 # insert into {table} (<fields>) values (<values>)
@@ -209,11 +210,12 @@ class DAO(object):
                                                                  ', '.join(values))
                 c = self.db.cursor()
                 c.execute(query)
-                self.db.commit()
                 record_id = c.lastrowid
+                self.db.commit()
+                record_id2 = c.lastrowid
                 c.close()
-                return record_id
-        return None
+                record_id_3 = record_id
+        return record_id
     
     def editrecord(self, table_id, record_id, fieldstochange):
         sqlquery = 'UPDATE {} SET'
