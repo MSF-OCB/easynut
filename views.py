@@ -55,10 +55,15 @@ def results(request):
     search_query = request.GET.get('searchstring')
     daoobject = DAO()
     daoobject.set_tables_config()    
+    daoobject.setEasyUser(request.user)
     if daoobject.doesIdExist(search_query):
         return patient(request, daoobject.doesIdExist(search_query))    
     else:
-        return render(request, template_name, {'searchresults': daoobject.search(search_query, '1'), 'lastId' : daoobject.getLastId('tabla_1', 'campo_1')})
+        return render(request, template_name, {
+            'searchresults': daoobject.search(search_query, '1'), 
+            'lastId' : daoobject.getLastId('tabla_1', 'campo_1'),
+            'easyUser': daoobject.easy_user
+            })
 
 @login_required
 def patient(request, record_id):
@@ -66,10 +71,12 @@ def patient(request, record_id):
     daoobject = DAO()
     daoobject.set_tables_config()
     daoobject.set_tables_relationships()
+    daoobject.setEasyUser(request.user)
     return render(request, template_name, {
         'record': daoobject.get_record_with_type('1', record_id, True), 
         'relatedrecords' : daoobject.get_related_records('1', record_id),
-        'lastId' : daoobject.getLastId('tabla_1', 'campo_1')
+        'lastId' : daoobject.getLastId('tabla_1', 'campo_1'),
+        'easyUser': daoobject.easy_user
         })
     
 @login_required
@@ -78,18 +85,25 @@ def detail(request, table_id, record_id):
     daoobject = DAO()
     daoobject.set_tables_config()
     daoobject.set_tables_relationships()
+    daoobject.setEasyUser(request.user)
     return render(request, template_name, {
         'record': daoobject.get_record_with_type(table_id, record_id, False), 
         'relatedrecords' : daoobject.get_related_records(table_id, record_id),
-        'lastId' : daoobject.getLastId('tabla_1', 'campo_1')
+        'lastId' : daoobject.getLastId('tabla_1', 'campo_1'),
+        'easyUser': daoobject.easy_user
         })
 
 @login_required
 def edit(request, table_id, record_id):
     template_name = 'emr/edit.html'
     daoobject = DAO()
-    daoobject.set_tables_config()    
-    return render(request, template_name, {'record': daoobject.get_record_with_type(table_id, record_id, False), 'lastId' : daoobject.getLastId('tabla_1', 'campo_1')})
+    daoobject.set_tables_config()   
+    daoobject.setEasyUser(request.user)
+    return render(request, template_name, {
+        'record': daoobject.get_record_with_type(table_id, record_id, False), 
+        'lastId' : daoobject.getLastId('tabla_1', 'campo_1'),
+        'easyUser': daoobject.easy_user
+        })
 
 @login_required
 def save(request):
@@ -116,6 +130,7 @@ def addrecord(request, table_id, related_record_entry, related_record_field):
     daoobject = DAO()
     daoobject.set_tables_config()
     daoobject.set_tables_relationships() 
+    daoobject.setEasyUser(request.user)
     if (related_record_entry == '0') and (table_id == '1'):
         related_record_entry = daoobject.getNewId('tabla_1', 'campo_1')
         related_record_field = 'campo_1'
@@ -124,7 +139,8 @@ def addrecord(request, table_id, related_record_entry, related_record_field):
             'recordform': daoobject.getrecordform(table_id),
             'related_record_entry' : related_record_entry,
             'related_record_field' : related_record_field,
-            'lastId' : daoobject.getLastId('tabla_1', 'campo_1')
+            'lastId' : daoobject.getLastId('tabla_1', 'campo_1'),
+            'easyUser': daoobject.easy_user
             })
     return index(request)
 
@@ -132,6 +148,7 @@ def addrecord(request, table_id, related_record_entry, related_record_field):
 def deleterecord(request, table_id, record_id):
     daoobject = DAO()
     daoobject.set_tables_config()
+    daoobject.setEasyUser(request.user)
     daoobject.delete(table_id, record_id)
     return index(request)
 
@@ -139,6 +156,7 @@ def deleterecord(request, table_id, record_id):
 def downloadexport(request):
     daoobject = DAO()
     daoobject.set_tables_config()
+    daoobject.setEasyUser(request.user)
     zip = daoobject.generateExport()+'.zip'
     if os.path.exists(zip):
         with open(zip, 'rb') as fh:

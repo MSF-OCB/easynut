@@ -35,9 +35,9 @@
 									{% for columnname in tableresults.2 %}
 										<th scope="col">{{ columnname }}</td>
 									{% endfor %}
-									<th  scope="col" width="5%">View</td>
-									<th  scope="col" width="5%">Edit</td>
-									<th  scope="col" width="5%">Delete</td>
+									{% if easyUser.tables.1.view_table %}<th  scope="col" width="5%">View</td>{% endif %}
+									{% if easyUser.tables.1.edit_table %}<th  scope="col" width="5%">Edit</td>{% endif %}
+									{% if easyUser.tables.1.delete_table %}<th  scope="col" width="5%">Delete</td>{% endif %}
 					            </tr>
 					        </thead>				        	
 					        <tbody>
@@ -60,9 +60,9 @@
 												{% endif %}
 											{% endfor %}
 											{% with record_id=records.0 table_id=tableresults.1 %}
-												<td width="5%"><a href="{% url 'emr:detail' table_id record_id %}" class="button is-mei go">View</a></td> 
-												<td width="5%"><a href="{% url 'emr:edit' table_id record_id %}" class="button is-mei careful">Edit</a></td> 
-												<td width="5%"><a href="{% url 'emr:deleterecord' table_id record_id %}" class="button is-mei dangerous" onclick="return confirm('Are you sure you want to delete this record?')">Delete</a></td>
+												{% if easyUser.tables.1.view_table %}<td width="5%"><a href="{% url 'emr:detail' table_id record_id %}" class="button is-mei go">View</a></td>{% endif %}
+												{% if easyUser.tables.1.edit_table %}<td width="5%"><a href="{% url 'emr:edit' table_id record_id %}" class="button is-mei careful">Edit</a></td>{% endif %}
+												{% if easyUser.tables.1.delete_table %}<td width="5%"><a href="{% url 'emr:deleterecord' table_id record_id %}" class="button is-mei dangerous" onclick="return confirm('Are you sure you want to delete this record?')">Delete</a></td>{% endif %}
 											{% endwith %}
 										</tr>
 									{% endfor %}			

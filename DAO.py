@@ -199,57 +199,58 @@ class DAO(object):
         return None
     
     def editrecord(self, table_id, record_id, fieldstochange):
+        sqlquery = 'UPDATE {} SET'
+        c = self.db.cursor()
         for tablec in self.tables_config:
             if tablec.id == table_id:
-
-#                params = [tablec.sql_table_config_name, ]
-#        for counter, field in enumerate(fieldstochange):
-#            if field[1] == '':
-#                field[1] = 'NULL'
-#            if counter == 0:
-#                if field[2] == 1:
-#                    sqlquery = sqlquery + ' {} = {}'
-#                elif field[2] == 0 and field[1] != 'NULL':
-#                    sqlquery = sqlquery + ' {} = STR_TO_DATE("{}", "%Y-%m-%d")'
-#                else:
-#                    sqlquery = sqlquery + ' {} = "{}"'
-#            else:
-#                if field[2] == 1:
-#                    sqlquery = sqlquery + ', {} = {}'
-#                elif field[2] == 0 and field[1] != 'NULL':
-#                    sqlquery = sqlquery + ', {} = STR_TO_DATE("{}", "%Y-%m-%d")'
-#                else:
-#                    sqlquery = sqlquery + ', {} = "{}"'
-#            params.append(field[0])
-#            params.append(field[1])            
-#        sqlquery = sqlquery + ' WHERE _id = {}'
-#        params.append(record_id)
-#        c.execute(sqlquery.format(*params))
-#        self.db.commit()
-#        c.close()
-#        return
+                params = [tablec.sql_table_config_name, ]
+        for counter, field in enumerate(fieldstochange):
+            if field[1] == '':
+                field[1] = 'NULL'
+            if counter == 0:
+                if field[2] == 1:
+                    sqlquery = sqlquery + ' {} = {}'
+                elif field[2] == 0 and field[1] != 'NULL':
+                    sqlquery = sqlquery + ' {} = STR_TO_DATE("{}", "%Y-%m-%d")'
+                else:
+                    sqlquery = sqlquery + ' {} = "{}"'
+            else:
+                if field[2] == 1:
+                    sqlquery = sqlquery + ', {} = {}'
+                elif field[2] == 0 and field[1] != 'NULL':
+                    sqlquery = sqlquery + ', {} = STR_TO_DATE("{}", "%Y-%m-%d")'
+                else:
+                    sqlquery = sqlquery + ', {} = "{}"'
+            params.append(field[0])
+            params.append(field[1])            
+        sqlquery = sqlquery + ' WHERE _id = {}'
+        params.append(record_id)
+        c.execute(sqlquery.format(*params))
+        self.db.commit()
+        c.close()
+        return
     
                 # update {table} set <f1> = <v1>, <f2> = <v2>, ...
-                assignments = []
-
-                for field in fieldstochange:
-                    if field[1] == '' or field[1] is None:
-                        assignments.append('{} = NULL'.format(field[0]))
-                    elif field[2] == 1:
-                        assignments.append('{} = {}'.format(field[0], field[1]))
-                    elif field[2] == 0:
-                        assignments.append('{} = STR_TO_DATE("{}", "%Y-%m-%d")'.format(field[0], field[1]))
-                    else:
-                        assignments.append('{} = \'{}\''.format(field[0], field[1]))
-
-                query = 'update {} set {} where _id = {}'.format(tablec.sql_table_config_name, ', '.join(assignments), record_id)
-
-                c = self.db.cursor()
-                print(query)
-                c.execute(query)
-                self.db.commit()
-                c.close()
-            return
+#                assignments = []
+#
+ #               for field in fieldstochange:
+  #                  if field[1] == '' or field[1] is None:
+   #                     assignments.append('{} = NULL'.format(field[0]))
+    #                elif field[2] == 1:
+     #                   assignments.append('{} = {}'.format(field[0], field[1]))
+      #              elif field[2] == 0:
+       #                 assignments.append('{} = STR_TO_DATE("{}", "%Y-%m-%d")'.format(field[0], field[1]))
+        #            else:
+         #               assignments.append('{} = \'{}\''.format(field[0], field[1]))
+#
+ #               query = 'update {} set {} where _id = {}'.format(tablec.sql_table_config_name, ', '.join(assignments), record_id)
+#
+ #               c = self.db.cursor()
+  #              print(query)
+   #             c.execute(query)
+    #            self.db.commit()
+     #           c.close()
+      #      return
                
     def getrecordform(self, table_id):
         recordform = []
@@ -306,22 +307,23 @@ class DAO(object):
         c = self.db.cursor()   
         relatedrecords = []
         for relationship in self.tables_relationships:
-            if (relationship[0] == table_id) or (relationship[2] == table_id):
-                sqlquery = 'SELECT {} FROM {} WHERE _id = {}'
-                if relationship[0] == table_id:
-                    fieldtosearch = relationship[1]
-                    relatedtable = relationship[2]
-                    relatedfield = relationship[3]
-                elif relationship[2] == table_id:       
-                    fieldtosearch = relationship[3]
-                    relatedtable = relationship[0]
-                    relatedfield = relationship[1]                    
-                for tablec in self.tables_config:
-                    if tablec.id == table_id:
-                        tabletosearch = tablec.sql_table_config_name
-                params = [fieldtosearch, tabletosearch, record_id]
-                c.execute(sqlquery.format(*params))
-                relatedrecords.append((relatedfield, self.search(c.fetchone()[0], relatedtable)))
+            if self.easy_user['tables'][relationship[0]]['view_table'] and self.easy_user['tables'][relationship[2]]['view_table']:  
+                if (relationship[0] == table_id) or (relationship[2] == table_id):
+                    sqlquery = 'SELECT {} FROM {} WHERE _id = {}'
+                    if relationship[0] == table_id:
+                        fieldtosearch = relationship[1]
+                        relatedtable = relationship[2]
+                        relatedfield = relationship[3]
+                    elif relationship[2] == table_id:       
+                        fieldtosearch = relationship[3]
+                        relatedtable = relationship[0]
+                        relatedfield = relationship[1]                    
+                    for tablec in self.tables_config:
+                        if tablec.id == table_id:
+                            tabletosearch = tablec.sql_table_config_name
+                    params = [fieldtosearch, tabletosearch, record_id]
+                    c.execute(sqlquery.format(*params))
+                    relatedrecords.append((relatedfield, self.search(c.fetchone()[0], relatedtable)))
         c.close()
         return relatedrecords
         
@@ -392,28 +394,65 @@ class DAO(object):
     
     
     def setEasyUser(self, user):
+        # User groups (careful, this has to be linked with the Django group table)
+        group_reg = 1
+        group_adm = 2
+        group_flo = 3
+        group_nur = 4
+        group_idc = 5
+        group_pha = 6 
+        
+        c = self.db.cursor()
+        sql_query = 'SELECT group_id, table_id, view_table, add_table, edit_table, delete_table FROM easy_roles'
+        c.execute(sql_query)
+        easy_roles = c.fetchall()
+        user_tables = {}
+        
+        for tclk, tclv in self.tables_config_lite:
+            user_tables[tclk] = {
+                'view_table': False,
+                'add_table': False,
+                'edit_table': False,
+                'delete_table': False
+                }
+        user_tables['1']['view_table'] = True
+        
+        for role in easy_roles:
+            for group in user.groups.all():
+                if group.id == role[0]:
+                    for utk, utv in user_tables[role[1]]:
+                        if utk == 'view_table' and utv == False and role[2] == 1:
+                            user_tables[role[1]][utk] = True
+                        if utk == 'add_table' and utv == False and role[3] == 1:
+                            user_tables[role[1]][utk] = True                        
+                        if utk == 'edit_table' and utv == False and role[4] == 1:
+                            user_tables[role[1]][utk] = True
+                        if utk == 'delete_table' and utv == False and role[5] == 1:
+                            user_tables[role[1]][utk] = True
+        
         canExport = False
         canLastId = False
-        addPatient = False
-        tableRules = {}
-        if user.groups.filter(name='Admin').exists():
+        
+        if user.groups.filter(id=group_adm).exists():
             canExport = True
             canLastId = True
-            addPatient = True
-
-        if user.groups.filter(name='Registration').exists():
-            addPatient = True
+            for tclk, tclv in self.tables_config_lite:
+                user_tables[tclk] = {
+                    'view_table': True,
+                    'add_table': True,
+                    'edit_table': True,
+                    'delete_table': True
+                    }
             
-        if user.groups.filter(name='ID Check').exists():
+        if user.groups.filter(id=group_idc).exists():
             canLastId = True
             
         self.easy_user = {
             'canExport': canExport,
             'canLastId': canLastId,
-            'addPatient': addPatient
+            'tables': user_tables
             }
-        
-        
-        
-        
+        c.close()
+        return
+
         

@@ -30,10 +30,18 @@
 					<table class="tablep">
 						<tr>
 							<td width='20%' align="left"><a href="{% url 'emr:patient' record.4 %}" class="button is-mei go">Patient</a></td>
-							<td width='20%'>&nbsp;</td>
-							<td width='20%' align="center"><a href="{% url 'emr:edit' table_id record_id %}" class="button is-mei careful">Edit</a></td>
-							<td width='20%'>&nbsp;</td>
-							<td width='20%' align="right"><a href="{% url 'emr:deleterecord' table_id record_id %}" class="button is-mei dangerous">Delete</a></td>
+			          		{% for k,v in easyUser.tables.items %}
+								{% if k == table_id and v.edit_table %}																														
+									<td width='20%'>&nbsp;</td>
+									<td width='20%' align="center"><a href="{% url 'emr:edit' table_id record_id %}" class="button is-mei careful">Edit</a></td>
+								{% endif %}
+							{% endfor %}																												
+			          		{% for k,v in easyUser.tables.items %}
+								{% if k == table_id and v.delete_table %}																							
+									<td width='20%'>&nbsp;</td>
+									<td width='20%' align="right"><a href="{% url 'emr:deleterecord' table_id record_id %}" class="button is-mei dangerous">Delete</a></td>
+								{% endif %}
+							{% endfor %}																												
 						</tr>
 					</table>	
 				{% endwith %}
