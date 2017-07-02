@@ -18,8 +18,8 @@ class ExternalFields(object):
         
         
     def addFields(self, results, tables_config):
-        #if results[1] == '1':
-            #results = self.addLastStep(results, tables_config)
+        if results[1] == '7':
+            results = self.addWeightDifference(results, tables_config)
         return results
     
     def addSingleFields(self, results, tables_config):
@@ -28,34 +28,6 @@ class ExternalFields(object):
             results = self.addNextAppointmentSingle(results, tables_config)
         return results    
     
-    def addLastStep(self, results, tables_config):
-        c = self.db.cursor()
-        results[2].append('Last step')
-        newResults = []
-        for result in results[3]:
-            newIndResult = []
-            for fieldr in result:
-                newIndResult.append(fieldr)
-            laststeps = {}
-            for tablec in tables_config:
-                if tablec.id != '1':
-                    sql_query = 'SELECT MAX(timestamp) FROM {} WHERE campo_2 = {}'
-                    params = [tablec.sql_table_config_name, result[1]]
-                    c.execute(sql_query.format(*params))
-                    timestamp = c.fetchone()[0]
-                    if timestamp:
-                        laststeps[tablec.name] = timestamp
-            if bool(laststeps):
-                lastStep = max(laststeps, key=laststeps.get)
-                Date = laststeps[lastStep].strftime('%a %d %b at %H:%M')
-                Answer = lastStep + ' ' + Date
-                newIndResult.append(Answer)                
-            else:
-                newIndResult.append('New')
-            newResults.append(newIndResult)
-        results[3] = newResults  
-        return results
-
     def addLastStepSingle(self, results, tables_config):
         c = self.db.cursor()
         lastStep = []
@@ -105,6 +77,30 @@ class ExternalFields(object):
             results[3].append(lastStep)
         return results
     
-    
+    def addWeightDifference(self, results, tables_config):
+        c = self.db.cursor()
+        weightInd = 0
+        newColumns = []
+        for counter0, column in enumerate(results[2]):
+            if column == 'Weight':
+                weightInd = counter0
+                newColumns.append('Weight')
+                newColumns.append('Weight difference')
+            else:
+                newColumns.append(column)
+        results[2] = newColumns
+        newResults = []
+        for counter1, result in enumerate(results[3]):
+            newIndResult = []
+            for counter2, fieldr in enumerate(result):
+                newIndResult.append(fieldr)
+                if counter2 == weightInd + 1:
+                    if counter1 != (len(results[3])-1):
+                        newIndResult.append(results[3][counter1][weightInd+1] - results[3][counter1+1][weightInd+1])
+                    else:
+                        newIndResult.append('')
+            newResults.append(newIndResult)
+        results[3] = newResults  
+        return results
     
     
