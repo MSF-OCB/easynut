@@ -1,15 +1,11 @@
 from __future__ import print_function
 from rest_framework import status
 from rest_framework.views import APIView
-
 from rest_framework.authentication import SessionAuthentication, BasicAuthentication
-
 from rest_framework.exceptions import APIException
-
-import DAO
-
 from rest_framework.response import Response
 
+import DAO
 from REST import Record, RecordSerializer
 
 
@@ -43,15 +39,7 @@ class RecordList(APIView):
     def get(self, request, table_id):
         for tablec in self.daoobject.tables_config:
             if tablec.id == table_id:
-                where_params = dict()
-                for field in tablec.fields:
-                    sanitized = RecordSerializer.sanitize(field.name)
-                    if sanitized in request.query_params:
-                        where_clause = dict()
-                        where_clause['fieldc'] = field
-                        where_clause['value'] = request.query_params[sanitized]
-                        where_params[field.field_id] = where_clause
-
+                where_params = self.construct_where_params(tablec, request.query_params)
                 if where_params:
                     rows = self.daoobject.search_by_fields(tablec, where_params, Utils.only_viewable(request))
                     records = map(lambda r: Record(tablec, **r), rows)
@@ -67,6 +55,18 @@ class RecordList(APIView):
                                                   showall=Utils.only_viewable(request))
                     return Response(serializer.data)
         return Response(status=status.HTTP_404_NOT_FOUND)
+
+    @staticmethod
+    def construct_where_params(tablec, query_params):
+        where_params = dict()
+        for field in tablec.fields:
+            sanitized = RecordSerializer.sanitize(field.name)
+            if sanitized in query_params:
+                where_clause = dict()
+                where_clause['fieldc'] = field
+                where_clause['value'] = query_params[sanitized]
+                where_params[field.field_id] = where_clause
+        return where_params
 
     def post(self, request, table_id):
         for tablec in self.daoobject.tables_config:

@@ -47,8 +47,8 @@ class RecordSerializer(serializers.Serializer):
         for field_def in self.table_config.fields:
             if field_def.field_id in validated_data:
                 to_add.append([field_def.field_id, validated_data[field_def.field_id], field_def.type])
-        id = self.daoobject.insertrecord(self.table_config.id, to_add)
-        record._id = id
+        record_id = self.daoobject.insertrecord(self.table_config.id, to_add)
+        record._id = record_id
         return record
 
     def update(self, instance, validated_data):
