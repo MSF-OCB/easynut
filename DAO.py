@@ -117,6 +117,23 @@ class DAO(object):
 
         return query
 
+    def search_by_fields(self, tablec, search_params, showall):
+        where_string = []
+        for search_param in search_params:
+            where_string.append(self.search_condition(search_params[search_param]['fieldc'], search_params[search_param]['value']))
+
+        query = "select {} from {} where {}".format(self.select_string(tablec, showall),
+                                                    tablec.sql_table_config_name,
+                                                    ' and '.join(where_string))
+
+        c = self.db.cursor()
+        c.execute(query)
+        rows = c.fetchall()
+        fields = map(lambda x: x[0], c.description)
+        results = [dict(zip(fields, row)) for row in rows]
+        c.close()
+        return results
+
     @staticmethod
     def search_condition(fieldc, value):
         if fieldc.type == 1:
@@ -245,7 +262,6 @@ class DAO(object):
                 query = 'update {} set {} where _id = {}'.format(tablec.sql_table_config_name, ', '.join(assignments), record_id)
 
                 c = self.db.cursor()
-                print(query)
                 c.execute(query)
                 self.db.commit()
                 c.close()
