@@ -63,7 +63,7 @@ input[type="submit"].searchnow{
 	height: 30%;
 	width: 30%;
 	font-size: 100%;
-  	background-color:   #009933;
+  	background-color:   #0099ff;
 	border-radius: 40px;
 	opacity: 0.5;
 	color: #000000;
@@ -108,6 +108,7 @@ input[type="submit"]:hover
 	text-transform: uppercase;
 	color: #000000;
 	opacity: 0.5;
+	font-weight: 800;
     box-shadow: 0 0 20px rgba(0, 0, 0, .2);
     vertical-align: middle;
 }
@@ -124,11 +125,11 @@ input[type="submit"]:hover
 }
 
 .button.go{
-	background-color: #009933;
+	background-color: #0099ff;
 }
 
 .button.careful{
-	background-color: #FE9A2E;
+	background-color: #0033cc;
 }
 
 .button.dangerous{

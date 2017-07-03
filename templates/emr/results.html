@@ -5,7 +5,6 @@
 		<div align="center">
 			<br/>
 			<form action="{% url 'emr:results' %}" type="get">
-				{% csrf_token %}
 				<table>
 					<tr><input type="text" id="searchstring" placeholder="Access by ID or search patients" name="searchstring" class="searchbox"/></tr>
 					<tr>&nbsp;</tr>
