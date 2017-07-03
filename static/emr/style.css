@@ -203,7 +203,7 @@ input[type="checkbox"], input[type="radio"] {
 
 input:checked + .side-label {
     color: #fff;
-	background-color: #009933;
+	background-color: #0099ff;
 }
 
 input:checked + .side-label::before {
@@ -396,7 +396,7 @@ body {
 }
 
 a {
-  color: #009933;
+  color: #0099ff;
   cursor: pointer;
   text-decoration: none;
   -webkit-transition: none 86ms ease-out;
