@@ -19,8 +19,8 @@
 				<table class="table">
 					{% for field in record.3 %}
 						<tr>
-							<td><b>{{ field.3 }}</b></td>
-							<td>{{ field.4 }}</td>
+							<td><b>{% if field.3 == None %}Not recorded{% else %}{{ field.3 }}{% endif %}</b></td>
+							<td>{% if field.4 == None %}Not recorded{% else %}{{ field.4 }}{% endif %}</td>
 						</tr>
 					{% endfor %}
 				</table>
@@ -87,13 +87,11 @@
 														{% for record in records %}
 															{% if forloop.counter != 1 %}
 																{% with record_id=records.0 table_id=tableresults.1 %}
-																	<td>{{ record }}</td>
+																	<td>{% if record == None %}Not recorded{% else %}{{ record }}{% endif %}</td>
 																{% endwith %}
 															{% endif %}
 														{% endfor %}
 														{% with record_id=records.0 table_id=tableresults.1 %}
-														
-														
 											          		{% for k,v in easyUser.tables.items %}
 																{% if k == tableresults.1 and v.edit_table %}														
 																	<td width="5%"><a href="{% url 'emr:edit' table_id record_id %}" class="button is-mei careful">Edit</a></td>

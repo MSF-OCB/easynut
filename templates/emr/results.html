@@ -54,7 +54,7 @@
 													{% endwith %}
 												{% elif forloop.counter != 1 %}
 													{% with record_id=records.0 %}
-														<td>{{ record }}</td>
+														<td>{% if record == None %}Not recorded{% else %}{{ record }}{% endif %}</td>
 													{% endwith %}
 												{% endif %}
 											{% endfor %}

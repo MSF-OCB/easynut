@@ -82,9 +82,9 @@ class ExternalFields(object):
         weightInd = 0
         newColumns = []
         for counter0, column in enumerate(results[2]):
-            if column == 'Weight':
+            if column == 'Weight (kg)':
                 weightInd = counter0
-                newColumns.append('Weight')
+                newColumns.append('Weight (kg)')
                 newColumns.append('Weight difference')
             else:
                 newColumns.append(column)

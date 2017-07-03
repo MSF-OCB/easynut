@@ -19,7 +19,7 @@
 							{% for field in record.3 %}
 								<tr>
 									<td><b>{{ field.3 }}</b></td>
-									<td>{{ field.4 }}</td>
+									<td>{% if field.4 == None %}Not recorded{% else %}{{ field.4 }}{% endif %}</td>
 								</tr>
 							{% endfor %}
 						</table>
