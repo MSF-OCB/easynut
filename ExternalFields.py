@@ -68,9 +68,9 @@ class ExternalFields(object):
             sql_query = 'SELECT campo_7 FROM tabla_8 WHERE campo_2 = {} ORDER BY timestamp DESC LIMIT 1'
             params = [msfId,]
             c.execute(sql_query.format(*params))
-            date = c.fetchone()[0]
+            date = c.fetchone()
             if bool(date):
-                datetime_object = datetime.datetime.strptime(date, '%Y-%m-%d')
+                datetime_object = datetime.datetime.strptime(date[0], '%Y-%m-%d')
                 lastStep = [0, 0, listLength+1, 'Next visit', datetime_object.strftime('%A %d %B %Y'), '']
             else:
                 lastStep = [0, 0, listLength+1, 'Next visit', 'Unknown', '']
