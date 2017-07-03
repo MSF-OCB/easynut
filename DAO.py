@@ -387,7 +387,7 @@ class DAO(object):
     def generateExport(self):
         c = self.db.cursor()
         for tablec in self.tables_config:
-            with open(os.getcwd()+'/export/CSVFiles/'+tablec.name+'.csv', 'wb') as mycsv:
+            with open(os.getcwd()+'/export/CSVFiles/'+re.sub('[^\w\-_\. ]', '', tablec.name)+'.csv', 'wb') as mycsv:
                 wr = csv.writer(mycsv, quoting=csv.QUOTE_ALL)                
                 columns = []
                 sqlquery= 'SELECT '
