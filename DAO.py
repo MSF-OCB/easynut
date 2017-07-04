@@ -15,7 +15,6 @@ import os, re
 import shutil
 from MySQLdb import converters
 
-# test for git
 
 class DAO(object):
 
@@ -387,8 +386,10 @@ class DAO(object):
                 
     def generateExport(self):
         c = self.db.cursor()
+        BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        exportDir = os.path.join(BASE_DIR, 'export/')
         for tablec in self.tables_config:
-            with open(os.getcwd()+'/export/CSVFiles/'+re.sub('[^\w\-_\. ]', '', tablec.name)+'.csv', 'wb') as mycsv:
+            with open(exportDir+'CSVFiles/'+re.sub('[^\w\-_\. ]', '', tablec.name)+'.csv', 'wb') as mycsv:
                 wr = csv.writer(mycsv, quoting=csv.QUOTE_ALL)                
                 columns = []
                 sqlquery= 'SELECT '
@@ -407,11 +408,11 @@ class DAO(object):
                 for row in c.fetchall():
                     wr.writerow(row)
         filename = 'EasyNutExport'+date.today().strftime('%d%b%Y')
-        zipPath = os.getcwd()+'/export/'
-        toZip = os.getcwd()+'/export/CSVFiles'
-        for f in os.listdir(os.getcwd()+'/export/'):
+        zipPath = exportDir
+        toZip = exportDir+'CSVFiles'
+        for f in os.listdir(exportDir):
             if re.search('^EasyNutExport([0-9a-zA-Z]+).zip', f):
-                os.remove(os.path.join(os.getcwd()+'/export/', f))
+                os.remove(os.path.join(exportDir, f))
         shutil.make_archive(zipPath + filename, 'zip', toZip)
         c.close()
         return zipPath + filename 
