@@ -386,8 +386,7 @@ class DAO(object):
                 
     def generateExport(self):
         c = self.db.cursor()
-        BASE_DIR = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
-        exportDir = os.path.join(BASE_DIR, 'export/')
+        exportDir = os.path.join(settings.BASE_DIR, 'export/')
         for tablec in self.tables_config:
             with open(exportDir+'CSVFiles/'+re.sub('[^\w\-_\. ]', '', tablec.name)+'.csv', 'wb') as mycsv:
                 wr = csv.writer(mycsv, quoting=csv.QUOTE_ALL)                
