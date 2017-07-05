@@ -15,6 +15,8 @@
 						</tr>
 					</table>
 				{% endwith %}
+			</div>
+			<div class="container">			
 				<br/>				
 				<table class="table">
 					{% for field in record.3 %}
@@ -24,11 +26,13 @@
 						</tr>
 					{% endfor %}
 				</table>
-				{% if relatedrecords %}
-					<br/>
-					{% for relatedrecord in relatedrecords %}
-						{% for tableresults in relatedrecord.1.1 %}				
-							{% with table_id=tableresults.1 table_id2=tableresults.1 related_record_entry=relatedrecord.1.0.0 related_record_field=relatedrecord.0 %}
+			</div>
+			{% if relatedrecords %}
+				<br/>
+				{% for relatedrecord in relatedrecords %}
+					{% for tableresults in relatedrecord.1.1 %}				
+						{% with table_id=tableresults.1 table_id2=tableresults.1 related_record_entry=relatedrecord.1.0.0 related_record_field=relatedrecord.0 %}
+							<div class="container">
 								<table>
 									<tr>
 										<td><span class="subtitle">{{ tableresults.0 }}</span></td>
@@ -43,9 +47,11 @@
 										{% endfor %}
 									</tr>
 								</table>
-							{% endwith %}
+							</div>
+						{% endwith %}
+						<div class="container">
 							<div class="columns">
-								<div class="column is-12">
+								<div class="column is-12 scroll">
 									<table id="nofeatures" class="table is-striped is-bordered" cellspacing="0" width="100%">
 								        <thead>
 								            <tr>
@@ -110,10 +116,11 @@
 									</table>
 								</div>
 							</div>
-						{% endfor %}		
-					{% endfor %}				
-				{% endif %}
-			</div>
+						</div>
+					{% endfor %}	
+					<p><br/></p>	
+				{% endfor %}				
+			{% endif %}
 		</div>
 		<br/>
 	</section>
