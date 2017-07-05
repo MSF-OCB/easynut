@@ -38,13 +38,17 @@
 				$("#lastIdClick").click(function () {
 					alert("Last ID used: {{ lastId }}");
 				});
-				$(".datepicker-doudou").datepicker({
-					language: 'en',
-					dateFormat: 'yyyy-mm-dd',			       
-					todayButton: new Date(),
-					autoClose: true
-				});
-					
+				var ua = navigator.userAgent.toLowerCase();
+				var isAndroid = ua.indexOf("android") > -1;
+				
+				if (!isAndroid){	
+					$(".datepicker-doudou").datepicker({
+						language: 'en',
+						dateFormat: 'yyyy-mm-dd',			       
+						todayButton: new Date(),
+						autoClose: true
+					});
+				}
 				$('.numbersOnly').children(":first").keyup(function () { 
 				    this.value = this.value.replace(/[^0-9\.]/g,'');
 				});

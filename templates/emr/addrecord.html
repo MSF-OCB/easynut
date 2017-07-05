@@ -24,9 +24,9 @@
 										<td width="30%"><b>{{ field.3 }}</b></td>
 										<td>
 											{% if field.1 == 0 %}
-												<input type="text" class="datepicker-doudou" name="{{ field.0 }}"/>
+												<input type="date" class="datepicker-doudou" name="{{ field.0 }}"/>
 											{% elif field.1 == 1 %}
-												<div class="numbersOnly"><input type="text" name="{{ field.0 }}" {% if field.0 == related_record_field %}value="{{ related_record_entry }}"{% endif %}/> (number only)</div>
+												<div class="numbersOnly"><input type="number" name="{{ field.0 }}" {% if field.0 == related_record_field %}value="{{ related_record_entry }}"{% endif %}/> (number only)</div>
 											{% elif field.1 == 2 %}
 												{% if field.3 == 'MSF ID' and recordform.0 != '1' %}<div class="numbersOnly" style="display: none;">{% endif %} 
 													<input type="text" class="input" 
