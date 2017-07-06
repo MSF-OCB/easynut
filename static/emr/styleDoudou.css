@@ -6,7 +6,7 @@ Stylesheet from Doudou
 input[type="text"].searchbox{
 	display: flex;
   	background-color:   #ffffff;
-  	font-size: 1rem;
+  	font-size: 1.2em;
 	border-radius: 40px;
 	opacity: 1;
 	curser: pointer;
@@ -22,9 +22,7 @@ input[type="text"]:hover
 
 input[type="password"].searchbox{
 	display: flex;
-	height: 50%;
-	width: 50%;
-	font-size: 100%;
+  	font-size: 1.2em;
   	background-color:   #ffffff;
 	border-radius: 40px;
 	opacity: 1;
@@ -41,9 +39,7 @@ input[type="password"]:hover
 
 input[type="submit"].searchnow{
 	display: flex;
-	height: 30%;
-	width: 30%;
-	font-size: 100%;
+	font-size: 1.2em;
   	background-color:   #0099ff;
 	border-radius: 40px;
 	opacity: 0.5;
@@ -68,10 +64,11 @@ input[type="submit"]:hover
 }
 
 .button.is-doudou{
-	text-align: center;	
 	display: flex;
-	width: 30%;
+	font-size: 1.2em;
+	text-align: center;	
   	border-radius: 30px;
+  	max-width: 30%;
 	color: #fff;
 	text-transform: uppercase;
 	color: #000000;
