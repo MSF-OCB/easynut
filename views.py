@@ -24,7 +24,7 @@ def loginview(request):
         if user:
             if user.is_active:
                 login(request, user)
-                return HttpResponseRedirect('/emr/')
+                return HttpResponseRedirect('/nut/')
             else:
                 return render(request, 'emr/login.html', {'wrongcrendentials' : 'Your account is disabled.'})
         else:

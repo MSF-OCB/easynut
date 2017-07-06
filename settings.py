@@ -110,7 +110,7 @@ AUTH_PASSWORD_VALIDATORS = [
 ]
 
 # Where do we send the user to after successfully loging in
-LOGIN_REDIRECT_URL = '/emr'
+LOGIN_REDIRECT_URL = '/nut'
 
 # Internationalization
 # https://docs.djangoproject.com/en/1.11/topics/i18n/

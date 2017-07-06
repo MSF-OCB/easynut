@@ -5,10 +5,8 @@ Stylesheet from Doudou
 
 input[type="text"].searchbox{
 	display: flex;
-	height: 50%;
-	width: 50%;
-	font-size: 100%;
   	background-color:   #ffffff;
+  	font-size: 1rem;
 	border-radius: 40px;
 	opacity: 1;
 	curser: pointer;
