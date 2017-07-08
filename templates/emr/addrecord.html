@@ -28,10 +28,10 @@
 											{% elif field.1 == 1 %}
 												<div class="numbersOnly"><input type="number" name="{{ field.0 }}" {% if field.0 == related_record_field %}value="{{ related_record_entry }}"{% endif %}/> (number only)</div>
 											{% elif field.1 == 2 %}
-												{% if field.3 == 'MSF ID' and recordform.0 != '1' %}<div class="numbersOnly" style="display: none;">{% endif %} 
+												{% if field.3 == 'MSF ID' and recordform.0 != '1' %}<div class="numbersOnly">{% endif %} 
 													<input type="text" class="input" 
 													{% if field.0 == related_record_field %}value="{{ related_record_entry }}"{% endif %} 
-													{% if field.3 == 'MSF ID' %} class="numbersOnly"{% endif %}
+													{% if field.3 == 'MSF ID' %} class="numbersOnly" disabled='disabled'{% endif %}
 													name="{{ field.0 }}">
 												{% if field.3 == 'MSF ID' %}</div>{% endif %} 
 											{% elif field.1 == 3 %}
