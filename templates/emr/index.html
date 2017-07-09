@@ -4,9 +4,10 @@
 	<section class="hero is-fullheight">
 		<br/>
 		<div align="center" class="specialAndroid">
-			<a href="zxing://scan/?ret=http%3A%2F%2F192.168.8.102/nut/results/?searchstring%7BCODE%7D&search=SEARCH" class="button is-doudou go">Scan</a>
+			<a href="zxing://scan/?ret=http%3A%2F%2F192.168.8.102/nut/results/?searchstring=%7BCODE%7D&search=SEARCH" class="button is-doudou go">Scan</a>
+			<h1 class="title has-text-centered is-doudou">or</h1>	
 		</div>
-		<br/>nut/results/?searchstring=000001&search=SEARCH
+		<br/>
 		<div align="center">
 			<form action="{% url 'emr:results' %}" type="get">
 				<table>
