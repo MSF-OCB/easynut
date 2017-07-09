@@ -414,8 +414,7 @@ class DAO(object):
                 os.remove(os.path.join(exportDir, f))
         shutil.make_archive(zipPath + filename, 'zip', toZip)
         c.close()
-        return zipPath + filename 
-    
+        return zipPath + filename     
     
     def setEasyUser(self, user):
         # User groups (careful, this has to be linked with the Django group table)
@@ -433,26 +432,25 @@ class DAO(object):
         user_tables = {}
         
         for tclk, tclv in self.tables_config_lite:
-            user_tables[tclk] = {
+            user_tables[str(tclk)] = {
                 'view_table': False,
                 'add_table': False,
                 'edit_table': False,
                 'delete_table': False
                 }
-        
-        for role in easy_roles:
+            
+        for role in easy_roles:            
             for group in user.groups.all():
                 if group.id == role[0]:
                     for utk, utv in user_tables[str(role[1])].iteritems():
                         if utk == 'view_table' and utv == False and role[2] == 1:
-                            user_tables[role[1]][utk] = True
+                            user_tables[str(role[1])][str(utk)] = True                            
                         if utk == 'add_table' and utv == False and role[3] == 1:
-                            user_tables[role[1]][utk] = True                        
+                            user_tables[str(role[1])][str(utk)] = True                        
                         if utk == 'edit_table' and utv == False and role[4] == 1:
-                            user_tables[role[1]][utk] = True
+                            user_tables[str(role[1])][str(utk)] = True
                         if utk == 'delete_table' and utv == False and role[5] == 1:
-                            user_tables[role[1]][utk] = True
-        
+                            user_tables[str(role[1])][str(utk)] = True                            
         canExport = False
         canLastId = False
         
@@ -460,7 +458,7 @@ class DAO(object):
             canExport = True
             canLastId = True
             for tclk, tclv in self.tables_config_lite:
-                user_tables[tclk] = {
+                user_tables[str(tclk)] = {
                     'view_table': True,
                     'add_table': True,
                     'edit_table': True,
@@ -491,7 +489,4 @@ class DAO(object):
     def launchSingleExternalFields(self, results):
         extF = ExternalFields()
         return extF.addSingleFields(results, self.tables_config)        
-        
-        
-        
         
