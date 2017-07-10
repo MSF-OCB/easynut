@@ -190,15 +190,16 @@ class DAO(object):
     
     def insertrecord(self, table_id, fieldstoadd):
         record_id = None
+        if table_id == '1':
+            for field in fieldstoadd:
+                if field[0] == 'campo_1':
+                    field[1] = self.getNewId('tabla_1', 'campo_1')
         for tablec in self.tables_config:
             if tablec.id == table_id:
-                # insert into {table} (<fields>) values (<values>)
                 fields = []
                 values = []
-
                 for field in fieldstoadd:
                     fields.append(field[0])
-
                     if field[1] == '' or field[1] is None:
                         values.append('NULL')
                     elif field[2] == 1:
@@ -207,7 +208,6 @@ class DAO(object):
                         values.append('STR_TO_DATE("{}", "%Y-%m-%d")'.format(field[1]))
                     else:
                         values.append('\'{}\''.format(field[1]))
-
                 query = 'insert into {} ({}) values ({})'.format(tablec.sql_table_config_name,
                                                                  ', '.join(fields),
                                                                  ', '.join(values))

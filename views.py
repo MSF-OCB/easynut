@@ -141,7 +141,6 @@ def addrecord(request, table_id, related_record_entry):
     daoobject.setEasyUser(request.user)
     if daoobject.backEndUserRolesCheck(table_id, 'add_table'):
         if (related_record_entry == '0') and (table_id == '1'):
-            related_record_entry = daoobject.getNewId('tabla_1', 'campo_1')
             related_record_field = 'campo_1'
         else:
             related_record_field = 'campo_2'

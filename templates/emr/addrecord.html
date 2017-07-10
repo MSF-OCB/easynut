@@ -20,40 +20,42 @@
 						<div class="column is-12 scroll">
 							<table id="nofeatures" class="table is-striped is-bordered" cellspacing="0" width="100%">
 								{% for field in recordform.2 %}
-									<tr>
-										<td width="30%"><b>{{ field.3 }}</b></td>
-										<td>
-											{% if field.1 == 0 %}
-												<input type="date" class="datepicker-doudou" name="{{ field.0 }}"/>
-											{% elif field.1 == 1 %}
-												<div class="numbersOnly"><input type="number" name="{{ field.0 }}" {% if field.0 == related_record_field %}value="{{ related_record_entry }}"{% endif %}/> (number only)</div>
-											{% elif field.1 == 2 %}
-												{% if field.3 == 'MSF ID' and recordform.0 != '1' %}<div class="numbersOnly">{% endif %} 
-													<input type="text" class="input" 
-													{% if field.0 == related_record_field %}value="{{ related_record_entry }}"{% endif %} 
-													{% if field.3 == 'MSF ID' %} class="numbersOnly" disabled='disabled'{% endif %}
-													name="{{ field.0 }}">
-												{% if field.3 == 'MSF ID' %}</div>{% endif %} 
-											{% elif field.1 == 3 %}
-											<span class="select is-fullwidth">
-												<select class="select" name="{{ field.0 }}">
-													{% for choice in field.4 %}
-														<option value="{{ choice }}">{{ choice }}</option>
-													{% endfor %}				
-												</select>						
-											</span>				
-											{% elif field.1 == 5 %}
-												<div class="radiosection">
-													{% for choice in field.4 %}												
-														<input id="{{ field.0 }}{{ choice }}" name="{{ field.0 }}" type="radio" value="{{ choice }}"/>
-														<label for="{{ field.0 }}{{ choice }}" class="side-label">{{ choice }}</label>												
-													{% endfor %}
-												</div>						
-											{% elif field.1 == 4 %}
-												<div class="textdiv"><textarea  class="textarea" name="{{ field.0 }}"></textarea></div>
-											{% endif %}
-										</td>
-									</tr>							
+									{% if field.3 != 'MSF ID' or recordform.0 != '1' %}
+										<tr>
+											<td width="30%"><b>{{ field.3 }}</b></td>
+											<td>
+												{% if field.1 == 0 %}
+													<input type="date" class="datepicker-doudou" name="{{ field.0 }}"/>
+												{% elif field.1 == 1 %}
+													<div class="numbersOnly"><input type="number" name="{{ field.0 }}" {% if field.0 == related_record_field %}value="{{ related_record_entry }}"{% endif %}/> (number only)</div>
+												{% elif field.1 == 2 %}
+													{% if field.3 == 'MSF ID' %}<div class="numbersOnly">{% endif %} 
+														<input type="text" class="input" 
+														{% if field.0 == related_record_field %}value="{{ related_record_entry }}"{% endif %} 
+														{% if field.3 == 'MSF ID' %} disabled='disabled'{% endif %}
+														name="{{ field.0 }}">
+													{% if field.3 == 'MSF ID' %}</div>{% endif %} 
+												{% elif field.1 == 3 %}
+													<span class="select is-fullwidth">
+														<select class="select" name="{{ field.0 }}">
+															{% for choice in field.4 %}
+																<option value="{{ choice }}">{{ choice }}</option>
+															{% endfor %}				
+														</select>						
+													</span>				
+												{% elif field.1 == 5 %}
+													<div class="radiosection">
+														{% for choice in field.4 %}												
+															<input id="{{ field.0 }}{{ choice }}" name="{{ field.0 }}" type="radio" value="{{ choice }}"/>
+															<label for="{{ field.0 }}{{ choice }}" class="side-label">{{ choice }}</label>												
+														{% endfor %}
+													</div>						
+												{% elif field.1 == 4 %}
+													<div class="textdiv"><textarea  class="textarea" name="{{ field.0 }}"></textarea></div>
+												{% endif %}
+											</td>									
+										</tr>	
+									{% endif %}
 								{% endfor %}
 							</table>
 						</div>
