@@ -32,7 +32,7 @@
 													{% if field.3 == 'MSF ID' %}<div class="numbersOnly">{% endif %} 
 														<input type="text" class="input" 
 														{% if field.0 == related_record_field %}value="{{ related_record_entry }}"{% endif %} 
-														{% if field.3 == 'MSF ID' %} disabled='disabled'{% endif %}
+														{% if field.3 == 'MSF ID' %} readonly='true'{% endif %}
 														name="{{ field.0 }}">
 													{% if field.3 == 'MSF ID' %}</div>{% endif %} 
 												{% elif field.1 == 3 %}
