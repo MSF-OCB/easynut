@@ -30,8 +30,8 @@
 			{% if relatedrecords %}
 				<br/>
 				{% for relatedrecord in relatedrecords %}
-					{% for tableresults in relatedrecord.1.1 %}				
-						{% with table_id=tableresults.1 table_id2=tableresults.1 related_record_entry=relatedrecord.1.0.0 related_record_field=relatedrecord.0 %}
+					{% for tableresults in relatedrecord.1 %}				
+						{% with table_id=tableresults.1 table_id2=tableresults.1 related_record_entry=relatedrecord.0.0 %}
 							<div class="container">
 								<table>
 									<tr>
@@ -39,7 +39,7 @@
 										{% for k,v in easyUser.tables.items %}
 											{% if k == table_id and v.add_table %}
 												<td width='5%'>
-													<a href="{% url 'emr:addrecord' table_id related_record_entry related_record_field %}" class="button is-mei go">
+													<a href="{% url 'emr:addrecord' table_id related_record_entry %}" class="button is-mei go">
 														Add
 													</a>
 												</td>

@@ -74,7 +74,7 @@ def patient(request, record_id):
     daoobject.setEasyUser(request.user)
     return render(request, template_name, {
         'record': daoobject.get_record_with_type('1', record_id, True), 
-        'relatedrecords' : daoobject.get_related_records('1', record_id),
+        'relatedrecords' : daoobject.get_related_records(record_id),
         'lastId' : daoobject.getLastId('tabla_1', 'campo_1'),
         'easyUser': daoobject.easy_user
         })
@@ -84,12 +84,10 @@ def detail(request, table_id, record_id):
     template_name = 'emr/detail.html'
     daoobject = DAO()
     daoobject.set_tables_config()
-    daoobject.set_tables_relationships()
     daoobject.setEasyUser(request.user)
     if daoobject.backEndUserRolesCheck(table_id, 'view_table'):
         return render(request, template_name, {
             'record': daoobject.get_record_with_type(table_id, record_id, False), 
-            'relatedrecords' : daoobject.get_related_records(table_id, record_id),
             'lastId' : daoobject.getLastId('tabla_1', 'campo_1'),
             'easyUser': daoobject.easy_user
             })
@@ -135,7 +133,7 @@ def save(request):
     return patient(request, patientId)
 
 @login_required
-def addrecord(request, table_id, related_record_entry, related_record_field):
+def addrecord(request, table_id, related_record_entry):
     template_name = 'emr/addrecord.html'
     daoobject = DAO()
     daoobject.set_tables_config()
@@ -145,6 +143,8 @@ def addrecord(request, table_id, related_record_entry, related_record_field):
         if (related_record_entry == '0') and (table_id == '1'):
             related_record_entry = daoobject.getNewId('tabla_1', 'campo_1')
             related_record_field = 'campo_1'
+        else:
+            related_record_field = 'campo_2'
         if table_id != "0":
             return render(request, template_name, {
                 'recordform': daoobject.getrecordform(table_id),

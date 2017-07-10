@@ -326,27 +326,16 @@ class DAO(object):
 
         return ', '.join(['_id'] + map(lambda f: f.field, fields))
     
-    def get_related_records(self, table_id, record_id):
+    def get_related_records(self, record_id):
         c = self.db.cursor()   
         relatedrecords = []
-        for relationship in self.tables_relationships:
-            if self.easy_user['tables'][relationship[0]]['view_table'] and self.easy_user['tables'][relationship[2]]['view_table']:  
-                if (relationship[0] == table_id) or (relationship[2] == table_id):
-                    sqlquery = 'SELECT {} FROM {} WHERE _id = {}'
-                    if relationship[0] == table_id:
-                        fieldtosearch = relationship[1]
-                        relatedtable = relationship[2]
-                        relatedfield = relationship[3]
-                    elif relationship[2] == table_id:       
-                        fieldtosearch = relationship[3]
-                        relatedtable = relationship[0]
-                        relatedfield = relationship[1]                    
-                    for tablec in self.tables_config:
-                        if tablec.id == table_id:
-                            tabletosearch = tablec.sql_table_config_name
-                    params = [fieldtosearch, tabletosearch, record_id]
-                    c.execute(sqlquery.format(*params))
-                    relatedrecords.append((relatedfield, self.search(c.fetchone()[0], relatedtable)))
+        for tablec in self.tables_config:
+            if self.easy_user['tables'][tablec.id]['view_table'] and tablec.id != '1':  
+                asd = tablec.id
+                sqlquery = 'SELECT campo_1 FROM tabla_1 WHERE _id = {}'
+                params = [record_id]
+                c.execute(sqlquery.format(*params))
+                relatedrecords.append(self.search(c.fetchone()[0], tablec.id))
         c.close()
         return relatedrecords
         

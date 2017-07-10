@@ -22,8 +22,8 @@
 		{% if easyUser.tables.1.add_table %}
 			<h1 class="title has-text-centered is-doudou">or</h1>	
 			<div align="center">
-				{% with table_id='1' related_record_entry='0' related_record_field='0' %}
-					<a href="{% url 'emr:addrecord' table_id related_record_entry related_record_field %}" class="button is-doudou go">Add patient</a>
+				{% with table_id='1' related_record_entry='0' %}
+					<a href="{% url 'emr:addrecord' table_id related_record_entry %}" class="button is-doudou go">Add patient</a>
 				{% endwith %}		
 			</div>
 			<p></p>
