@@ -56,14 +56,24 @@ def results(request):
     daoobject = DAO()
     daoobject.set_tables_config()    
     daoobject.setEasyUser(request.user)
-    if daoobject.doesIdExist(search_query):
-        return patient(request, daoobject.doesIdExist(search_query))    
-    else:
-        return render(request, template_name, {
-            'searchresults': daoobject.search(search_query, '1'), 
-            'lastId' : daoobject.getLastId('tabla_1', 'campo_1'),
-            'easyUser': daoobject.easy_user
-            })
+    regularsearch = render(request, template_name, {
+        'searchresults': daoobject.search(search_query, '1'), 
+        'lastId' : daoobject.getLastId('tabla_1', 'campo_1'),
+        'easyUser': daoobject.easy_user
+        })
+    try:
+        searchInt = int(search_query)
+        searchStr = str(searchInt)
+        zerosToAdd = 6-len(searchStr)
+        IdToReturn = ''
+        for i in xrange(zerosToAdd):
+            IdToReturn = IdToReturn + '0'
+        if daoobject.doesIdExist(IdToReturn + searchStr):
+            return patient(request, daoobject.doesIdExist(IdToReturn + searchStr))    
+        else:
+            return regularsearch
+    except ValueError:
+        return regularsearch
 
 @login_required
 def patient(request, record_id):
