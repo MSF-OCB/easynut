@@ -329,14 +329,22 @@ class DAO(object):
     def get_related_records(self, record_id):
         c = self.db.cursor()   
         relatedrecords = []
+        templist = []
         for tablec in self.tables_config:
             if self.easy_user['tables'][tablec.id]['view_table'] and tablec.id != '1':  
                 asd = tablec.id
                 sqlquery = 'SELECT campo_1 FROM tabla_1 WHERE _id = {}'
                 params = [record_id]
                 c.execute(sqlquery.format(*params))
-                relatedrecords.append(self.search(c.fetchone()[0], tablec.id))
+                msfId = c.fetchone()[0]
+                sqlquery = 'SELECT registros FROM tablas WHERE tabla_id = {}'
+                params = [tablec.id]
+                c.execute(sqlquery.format(*params))
+                position = c.fetchone()[0]
+                templist.append([self.search(msfId, tablec.id),int(position)])
         c.close()
+        for recordsList in sorted(templist, key=itemgetter(1)):
+            relatedrecords.append(recordsList[0])
         return relatedrecords
         
     def getLastId(self, table_id, column_name):
