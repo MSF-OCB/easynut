@@ -7,7 +7,7 @@
 			<div class="container">
 				<table>
 					<tr>
-						<td><span class="title">Create new {{ recordform.1 }} record</span></td>
+						<td><span class="title">Create new {{ recordform.1 }}</span></td>
 						<td width="5%"><a href="javascript:history.back()" class="button is-mei careful" onclick="return confirm('The changes made are not going to be saved. Are you sure?')">Back</a></td>
 					</tr>
 				</table>
@@ -27,7 +27,7 @@
 												{% if field.1 == 0 %}
 													<input type="date" class="datepicker-doudou" name="{{ field.0 }}"/>
 												{% elif field.1 == 1 %}
-													<div class="numbersOnly"><input type="number" name="{{ field.0 }}" {% if field.0 == related_record_field %}value="{{ related_record_entry }}"{% endif %}/> (number only)</div>
+													<div class="numbersOnly"><input type="number" step='0.1' name="{{ field.0 }}" {% if field.0 == related_record_field %}value="{{ related_record_entry }}"{% endif %}/> (number only)</div>
 												{% elif field.1 == 2 %}
 													{% if field.3 == 'MSF ID' %}<div class="numbersOnly">{% endif %} 
 														<input type="text" class="input" 
