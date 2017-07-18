@@ -23,7 +23,7 @@
 										<td width="30%"><b>{{ field.3 }}</b></td>
 										<td>
 											{% if field.1 == 0 %}
-												<input type="date" class="datepicker-doudou" name="{{ field.0 }}" {% if field.4 != None %}value="{{ field.4 }}"{% endif %}/>
+												<input type="date" class="datepicker-doudou" name="{{ field.0 }}" {% if field.4 != None and field.4 != "None" %}value="{{ field.4 }}"{% endif %}/>
 											{% elif field.1 == 1 %}
 												<div class="numbersOnly"><input type="number" step='0.1' {% if field.4 != None %}value="{{ field.4 }}"{% endif %} name="{{ field.0 }}"> (number only)</div>
 											{% elif field.1 == 2 %}

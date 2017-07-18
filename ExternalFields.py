@@ -69,7 +69,7 @@ class ExternalFields(object):
             params = [msfId,]
             c.execute(sql_query.format(*params))
             date = c.fetchone()
-            if bool(date):
+            if bool(date) and date[0] != None:
                 datetime_object = datetime.datetime.strptime(date[0], '%Y-%m-%d')
                 lastStep = [0, 0, listLength+1, 'Next visit', datetime_object.strftime('%A %d %B %Y'), '']
             else:

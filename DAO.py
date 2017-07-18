@@ -232,19 +232,26 @@ class DAO(object):
             if counter == 0:
                 if field[2] == 1:
                     sqlquery = sqlquery + ' {} = {}'
-                elif field[2] == 0 and field[1] != 'NULL':
-                    sqlquery = sqlquery + ' {} = STR_TO_DATE("{}", "%Y-%m-%d")'
+                elif field[2] == 0:
+                    if field[1] != 'NULL':
+                        sqlquery = sqlquery + ' {} = STR_TO_DATE("{}", "%Y-%m-%d")'
                 else:
                     sqlquery = sqlquery + ' {} = "{}"'
             else:
                 if field[2] == 1:
                     sqlquery = sqlquery + ', {} = {}'
-                elif field[2] == 0 and field[1] != 'NULL':
-                    sqlquery = sqlquery + ', {} = STR_TO_DATE("{}", "%Y-%m-%d")'
+                elif field[2] == 0:
+                    if field[1] != 'NULL':
+                        sqlquery = sqlquery + ', {} = STR_TO_DATE("{}", "%Y-%m-%d")'
                 else:
                     sqlquery = sqlquery + ', {} = "{}"'
-            params.append(field[0])
-            params.append(field[1])            
+            if field[2] == 0:
+                if field[1] != 'NULL':            
+                    params.append(field[0])
+                    params.append(field[1])            
+            else:
+                params.append(field[0])
+                params.append(field[1])            
         sqlquery = sqlquery + ' WHERE _id = {}'
         params.append(record_id)
         c.execute(sqlquery.format(*params))
