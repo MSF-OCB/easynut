@@ -235,6 +235,8 @@ class DAO(object):
                 elif field[2] == 0:
                     if field[1] != 'NULL':
                         sqlquery = sqlquery + ' {} = STR_TO_DATE("{}", "%Y-%m-%d")'
+                    else:
+                        sqlquery = sqlquery + ' campo_1 = NULL'
                 else:
                     sqlquery = sqlquery + ' {} = "{}"'
             else:
