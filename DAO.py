@@ -227,8 +227,9 @@ class DAO(object):
             if tablec.id == table_id:
                 params = [tablec.sql_table_config_name, ]
         for counter, field in enumerate(fieldstochange):
-            value1 = field[1].replace("'", "")
-            value2 = value1.replace('"', '')
+            if field[1]:
+                value1 = field[1].replace("'", "")
+                value2 = value1.replace('"', '')
             if value2 == '':
                 field[1] = 'NULL'
             if counter == 0:
