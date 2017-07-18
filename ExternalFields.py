@@ -65,7 +65,7 @@ class ExternalFields(object):
                 msfId = field[4]
         listLength = len(results[3])
         if msfId:
-            sql_query = 'SELECT campo_7 FROM tabla_8 WHERE campo_7 IS NOT NULL AND campo_2 = {} ORDER BY timestamp DESC LIMIT 1'
+            sql_query = 'SELECT campo_30 FROM tabla_8 WHERE campo_7 IS NOT NULL AND campo_2 = {} ORDER BY timestamp DESC LIMIT 1'
             params = [msfId,]
             c.execute(sql_query.format(*params))
             date = c.fetchone()
