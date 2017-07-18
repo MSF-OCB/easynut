@@ -227,13 +227,15 @@ class DAO(object):
             if tablec.id == table_id:
                 params = [tablec.sql_table_config_name, ]
         for counter, field in enumerate(fieldstochange):
-            if field[1] == '':
+            value1 = field[1].replace("'", "")
+            value2 = value1.replace('"', '')
+            if value2 == '':
                 field[1] = 'NULL'
             if counter == 0:
                 if field[2] == 1:
                     sqlquery = sqlquery + ' {} = {}'
                 elif field[2] == 0:
-                    if field[1] != 'NULL':
+                    if value2 != 'NULL':
                         sqlquery = sqlquery + ' {} = STR_TO_DATE("{}", "%Y-%m-%d")'
                     else:
                         sqlquery = sqlquery + ' campo_1 = NULL'
@@ -243,17 +245,17 @@ class DAO(object):
                 if field[2] == 1:
                     sqlquery = sqlquery + ', {} = {}'
                 elif field[2] == 0:
-                    if field[1] != 'NULL':
+                    if value2 != 'NULL':
                         sqlquery = sqlquery + ', {} = STR_TO_DATE("{}", "%Y-%m-%d")'
                 else:
                     sqlquery = sqlquery + ', {} = "{}"'
             if field[2] == 0:
-                if field[1] != 'NULL':            
+                if value2 != 'NULL':            
                     params.append(field[0])
-                    params.append(field[1])            
+                    params.append(value2)            
             else:
                 params.append(field[0])
-                params.append(field[1])            
+                params.append(value2)            
         sqlquery = sqlquery + ' WHERE _id = {}'
         params.append(record_id)
         c.execute(sqlquery.format(*params))
