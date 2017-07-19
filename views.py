@@ -141,8 +141,7 @@ def save(request):
             record_id = daoobject.insertrecord(table_id, fieldstochange)
             if table_id == '1':
                 patientId = record_id
-    return patient(request, patientId)
-    #return reverse('patient', args=[request,patientId,])
+    return HttpResponseRedirect(reverse('emr:patient', args=(patientId,)))
 
 @login_required
 def addrecord(request, table_id, related_record_entry):
