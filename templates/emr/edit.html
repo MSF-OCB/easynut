@@ -29,7 +29,7 @@
 											{% elif field.1 == 2 %}
 												{% if field.3 == 'MSF ID' %}<div class="numbersOnly">{% endif %} 
 													<input type="text" class="input" 
-													{% if field.4 != None %}value="{{ field.4 }}"{% endif %} 
+													{% if field.4 != None and field.4 != 'NULL' %}value="{{ field.4 }}"{% endif %} 
 													{% if field.3 == 'MSF ID' %}readonly="true"{% endif %} 
 													name="{{ field.0 }}">
 												{% if field.3 == 'MSF ID' %}</div>{% endif %} 
@@ -49,7 +49,7 @@
 													{% endfor %}
 												</div>						
 											{% elif field.1 == 4 %}
-												<div class="textdiv"><textarea  class="textarea" name="{{ field.0 }}">{% if field.4 != None %}{{ field.4 }}{% endif %}</textarea></div>
+												<div class="textdiv"><textarea  class="textarea" name="{{ field.0 }}">{% if field.4 != None and field.4 != 'NULL' %}{{ field.4 }}{% endif %}</textarea></div>
 											{% endif %}
 										</td>
 									</tr>

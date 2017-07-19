@@ -65,8 +65,11 @@
 	  			</a>
 				</div>
 				<div class="nav-right">
-					{% if easyUser.canLastId %}<a class="nav-item is-tab" href="#" accesskey="1" id="lastIdClick" class="btn">Last ID</a>{% endif %}
-					{% if easyUser.canExport %}<a class="nav-item" href="{% url 'emr:downloadexport' %}" accesskey="2" class="btn">Export</a>{% endif %}
+					{% if easyUser.canExport %}
+						<a class="nav-item" href="{% url 'emr:downloadabsents' %}" accesskey="2" class="btn">Absents</a>
+						<a class="nav-item" href="{% url 'emr:downloaddefaulters' %}" accesskey="2" class="btn">Defaulters</a>						
+						<a class="nav-item" href="{% url 'emr:downloadexport' %}" accesskey="2" class="btn">Export</a>
+					{% endif %}
 					<a class="nav-item" href="{% url 'emr:logoutbutton' %}" accesskey="3" class="btn">Log out: {{ user.username }}</a>									
 				</div>				
 			</div>	

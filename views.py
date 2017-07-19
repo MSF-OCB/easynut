@@ -9,6 +9,7 @@ from operator import itemgetter
 from django.template.context_processors import request
 from DAO import *
 from EasyDBObjects import *
+from ExternalExport import *
 from django.utils.encoding import smart_str
 from django.http import *
 from django.contrib.auth.decorators import login_required
@@ -190,4 +191,30 @@ def downloadexport(request):
     else:
         return index(request)
 
-           
+@login_required
+def downloadabsents(request):
+    extE = ExternalExport()
+    if request.user.groups.filter(id=2).exists():
+        csv = extE.getAbsents()
+        if os.path.exists(csv):
+            with open(csv, 'rb') as fh:
+                response = HttpResponse(fh.read(), content_type="text/csv")
+                response['Content-Disposition'] = 'inline; filename=' + os.path.basename(csv)
+                return response
+        raise Http404
+    else:
+        return index(request)
+
+@login_required
+def downloaddefaulters(request):
+    extE = ExternalExport()
+    if request.user.groups.filter(id=2).exists():
+        csv = extE.getDefaulters()
+        if os.path.exists(csv):
+            with open(csv, 'rb') as fh:
+                response = HttpResponse(fh.read(), content_type="text/csv")
+                response['Content-Disposition'] = 'inline; filename=' + os.path.basename(csv)
+                return response
+        raise Http404
+    else:
+        return index(request)           

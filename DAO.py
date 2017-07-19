@@ -427,6 +427,13 @@ class DAO(object):
         c.close()
         return zipPath + filename     
     
+    def getAbsents(self):
+        c = self.db.cursor()
+        exportDir = os.path.join(settings.BASE_DIR, 'export/')
+        zippath = '.home/doudou/Documents/www/Django/export'
+        return zippath   
+    
+     
     def setEasyUser(self, user):
         # User groups (careful, this has to be linked with the Django group table)
         group_reg = 1
@@ -500,4 +507,8 @@ class DAO(object):
     def launchSingleExternalFields(self, results):
         extF = ExternalFields()
         return extF.addSingleFields(results, self.tables_config)        
+        
+    def launchExternalExport(self):
+        extE = ExternalExport()
+        return extE.addCSVs()
         
