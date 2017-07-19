@@ -230,8 +230,10 @@ class DAO(object):
             if field[1]:
                 value1 = field[1].replace("'", "")
                 value2 = value1.replace('"', '')
+            else:
+                value2 = field[1]
             if value2 == '':
-                field[1] = 'NULL'
+                value2 = 'NULL'
             if counter == 0:
                 if field[2] == 1:
                     sqlquery = sqlquery + ' {} = {}'

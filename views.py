@@ -142,6 +142,7 @@ def save(request):
             if table_id == '1':
                 patientId = record_id
     return patient(request, patientId)
+    #return reverse('patient', args=[request,patientId,])
 
 @login_required
 def addrecord(request, table_id, related_record_entry):
