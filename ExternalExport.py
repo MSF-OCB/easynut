@@ -101,7 +101,8 @@ class ExternalExport(object):
                                         reducedLists[absent[0]] = [absent[1],absent[2],absent[3]]        
         exportDir = os.path.join(settings.BASE_DIR, 'export/')
         with open(exportDir+'Absents'+'.csv', 'wb') as mycsv:
-            wr = csv.writer(mycsv, quoting=csv.QUOTE_ALL)                
+            wr = csv.writer(mycsv, quoting=csv.QUOTE_ALL)   
+            wr.writerow(['MSF ID','Name','Phone number','Last expected visit'])
             for k,v in reducedLists.iteritems():
                 wr.writerow([k,v[0],v[1],v[2]])
         c.close()
@@ -110,10 +111,9 @@ class ExternalExport(object):
     def getDefaulters(self):
         c = self.db.cursor()
         listOfAbsents = []
-        sql_select = ("SELECT bd.campo_1,bd.campo_2,bd.campo_14,c.campo_30 "
+        sql_select = ("SELECT bd.campo_1,bd.campo_2,c.campo_30 "
                       "FROM tabla_1 bd LEFT JOIN tabla_8 c ON (bd.campo_1 = c.campo_2) "
-                      "WHERE bd.campo_14 IS NOT NULL AND bd.campo_14 <> 'NULL' "
-                      "AND c.campo_30 IS NOT NULL AND c.campo_30 <> 'NULL' "
+                      "WHERE c.campo_30 IS NOT NULL AND c.campo_30 <> 'NULL' "
                       "ORDER BY c.campo_1 "
                       )
         c.execute(sql_select)
@@ -121,7 +121,7 @@ class ExternalExport(object):
         reducedLists = {}
         today = datetime.datetime.now()
         for absent in listOfAbsents:
-            visitdate = datetime.datetime.strptime(absent[3], '%Y-%m-%d')
+            visitdate = datetime.datetime.strptime(absent[2], '%Y-%m-%d')
             visitDate14 = visitdate + datetime.timedelta(days=14)
             if today >= visitDate14:
                 sql_query = ('SELECT campo_1 FROM tabla_8 '
@@ -182,16 +182,17 @@ class ExternalExport(object):
                             
                             if canContinue:
                                 if absent[0] not in reducedLists:
-                                    reducedLists[absent[0]] = [absent[1],absent[2],absent[3]]
+                                    reducedLists[absent[0]] = [absent[1],absent[2]]
                                 else:
-                                    compaDate = datetime.datetime.strptime(reducedLists[absent[0]][2], '%Y-%m-%d')
-                                    newDate = datetime.datetime.strptime(absent[3], '%Y-%m-%d')
+                                    compaDate = datetime.datetime.strptime(reducedLists[absent[0]][1], '%Y-%m-%d')
+                                    newDate = datetime.datetime.strptime(absent[2], '%Y-%m-%d')
                                     if newDate > compaDate:
-                                        reducedLists[absent[0]] = [absent[1],absent[2],absent[3]]        
+                                        reducedLists[absent[0]] = [absent[1],absent[2]]        
         exportDir = os.path.join(settings.BASE_DIR, 'export/')
         with open(exportDir+'Defaulters'+'.csv', 'wb') as mycsv:
             wr = csv.writer(mycsv, quoting=csv.QUOTE_ALL)                
+            wr.writerow(['MSF ID','Name','Last expected visit'])
             for k,v in reducedLists.iteritems():
-                wr.writerow([k,v[0],v[1],v[2]])
+                wr.writerow([k,v[0],v[1]])
         c.close()
         return exportDir + 'Defaulters.csv'
