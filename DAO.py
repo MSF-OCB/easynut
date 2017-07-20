@@ -207,7 +207,7 @@ class DAO(object):
                     elif field[2] == 0 and field[1] != 'NULL':
                         values.append('STR_TO_DATE("{}", "%Y-%m-%d")'.format(field[1]))
                     else:
-                        values.append('\'{}\''.format(field[1]))
+                        values.append('\'{}\''.format(self.datacleansingle(field[1])))
                 query = 'insert into {} ({}) values ({})'.format(tablec.sql_table_config_name,
                                                                  ', '.join(fields),
                                                                  ', '.join(values))
@@ -255,10 +255,10 @@ class DAO(object):
             if field[2] == 0:
                 if value2 != 'NULL':            
                     params.append(field[0])
-                    params.append(value2)            
+                    params.append(self.datacleansingle(value2))            
             else:
                 params.append(field[0])
-                params.append(value2)            
+                params.append(self.datacleansingle(value2))            
         sqlquery = sqlquery + ' WHERE _id = {}'
         params.append(record_id)
         c.execute(sqlquery.format(*params))
@@ -529,4 +529,9 @@ class DAO(object):
             returnedRow.append(field3)
         return returnedRow
         
-        
+    def datacleansingle(self, field):
+        returnedRow = []
+        if field:
+            return re.sub('[^a-zA-Z0-9-_.\s]', '', field)
+        else:
+            return ""
