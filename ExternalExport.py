@@ -104,7 +104,7 @@ class ExternalExport(object):
             wr = csv.writer(mycsv, quoting=csv.QUOTE_ALL)   
             wr.writerow(['MSF ID','Name','Phone number','Last expected visit'])
             for k,v in reducedLists.iteritems():
-                wr.writerow([k,v[0],v[1],v[2]])
+                wr.writerow(self.dataclean([k,v[0],v[1],v[2]]))
         c.close()
         return exportDir + 'Absents.csv'
     
@@ -193,6 +193,18 @@ class ExternalExport(object):
             wr = csv.writer(mycsv, quoting=csv.QUOTE_ALL)                
             wr.writerow(['MSF ID','Name','Last expected visit'])
             for k,v in reducedLists.iteritems():
-                wr.writerow([k,v[0],v[1]])
+                wr.writerow(self.dataclean([k,v[0],v[1]]))
         c.close()
         return exportDir + 'Defaulters.csv'
+    
+    def dataclean(self, row):
+        returnedRow = []
+        for field in row:
+            if field:
+                field1 = str(field).replace(',',' ')
+                field2 = field1.replace('"','')
+                field3 = field2.replace("'","")
+            else:
+                field3 = ""
+            returnedRow.append(field3)
+        return returnedRow

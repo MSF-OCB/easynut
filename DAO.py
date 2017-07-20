@@ -405,18 +405,23 @@ class DAO(object):
                 sqlquery= 'SELECT '
                 params = []
                 for counter, field in enumerate(tablec.fields):
-                    if counter == 0:
-                        sqlquery = sqlquery + ' {}' 
+                    if counter == (len(tablec.fields) - 1):
+                        sqlquery = sqlquery + ', user, timestamp'
                     else:
-                        sqlquery = sqlquery + ', {}'
-                    params.append(field.field_id)
-                    columns.append(str(field.name))
+                        if counter == 0:
+                            sqlquery = sqlquery + ' {}'
+                        else:
+                            sqlquery = sqlquery + ', {}'
+                        params.append(field.field_id)
+                        columns.append(str(field.name))
+                columns.append('User')
+                columns.append('Timestamp')
                 sqlquery = sqlquery + ' FROM {}'
                 params.append(tablec.sql_table_config_name)
-                wr.writerow(columns)
+                wr.writerow(self.dataclean(columns))
                 c.execute(sqlquery.format(*params))
                 for row in c.fetchall():
-                    wr.writerow(row)
+                    wr.writerow(self.dataclean(row))
         filename = 'EasyNutExport'+date.today().strftime('%d%b%Y')
         zipPath = exportDir
         toZip = exportDir+'CSVFiles'
@@ -511,4 +516,17 @@ class DAO(object):
     def launchExternalExport(self):
         extE = ExternalExport()
         return extE.addCSVs()
+    
+    def dataclean(self, row):
+        returnedRow = []
+        for field in row:
+            if field:
+                field1 = str(field).replace(',',' ')
+                field2 = field1.replace('"','')
+                field3 = field2.replace("'","")
+            else:
+                field3 = ""
+            returnedRow.append(field3)
+        return returnedRow
+        
         
