@@ -95,7 +95,7 @@ class ExternalFields(object):
             for counter2, fieldr in enumerate(result):
                 newIndResult.append(fieldr)
                 if counter2 == weightInd + 1:
-                    if counter1 != (len(results[3])-1):
+                    if counter1 != (len(results[3])-1) and results[3][counter1][weightInd+1] and results[3][counter1+1][weightInd+1]:
                         newIndResult.append(results[3][counter1][weightInd+1] - results[3][counter1+1][weightInd+1])
                     else:
                         newIndResult.append('')
