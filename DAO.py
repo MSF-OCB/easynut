@@ -355,12 +355,35 @@ class DAO(object):
                 params = [tablec.id]
                 c.execute(sqlquery.format(*params))
                 position = c.fetchone()[0]
-                templist.append([self.search(msfId, tablec.id),int(position)])
+                templist.append([self.getRelatedSearch(msfId, tablec.id),int(position)])
         c.close()
         for recordsList in sorted(templist, key=itemgetter(1)):
             relatedrecords.append(recordsList[0])
         return relatedrecords
-        
+    
+    def getRelatedSearch(self, entry, table_id):
+        c = self.db.cursor()   
+        usersearch = [entry,]
+        returnList = []
+        all_results = []
+        search_query = ''
+        for tablec in self.tables_config:
+            if table_id == tablec.id:
+                usersearch.append(tablec.name)
+                search_query = 'SELECT _id'
+                for field in tablec.fields:
+                    if field.list == True:
+                        relatedrecords = [tablec.name, tablec.id] + [map(lambda f: f.name, filter(lambda f: f.list, tablec.fields))]
+                        search_query += ','+field.field_id
+                search_query += ' FROM '+ tablec.sql_table_config_name +' WHERE campo_2 = "'+entry+'" ORDER BY campo_1 DESC'
+        if search_query != '':
+            c.execute(search_query)
+            relatedrecords.append(c.fetchall())
+            all_results.append(self.launchExternalFields(relatedrecords))
+            returnList.append(usersearch)
+            returnList.append(all_results)
+        return returnList
+    
     def getLastId(self, table_id, column_name):
         c = self.db.cursor()
         sqlquery = 'SELECT MAX({}) FROM {}'
