@@ -555,6 +555,6 @@ class DAO(object):
     def datacleansingle(self, field):
         returnedRow = []
         if field:
-            return re.sub('[^a-zA-Z0-9-_<>.\s]', '', field)
+            return re.sub('[^a-zA-Z0-9-+_<>.\s]', '', field)
         else:
             return ""
