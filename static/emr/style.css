@@ -20,6 +20,251 @@
   }
 }
 
+input[type="text"].searchbox{
+	display: flex;
+	height: 50%;
+	width: 50%;
+	font-size: 100%;
+  	background-color:   #ffffff;
+	border-radius: 40px;
+	opacity: 1;
+	curser: pointer;
+	font-weight: 800;
+	text-align: center;	
+    vertical-align: middle;
+    padding: 10px 10px;
+}
+input[type="text"]:hover
+{
+	opacity: 1;
+}
+
+input[type="password"].searchbox{
+	display: flex;
+	height: 50%;
+	width: 50%;
+	font-size: 100%;
+  	background-color:   #ffffff;
+	border-radius: 40px;
+	opacity: 1;
+	curser: pointer;
+	font-weight: 800;
+	text-align: center;	
+    vertical-align: middle;
+    padding: 10px 10px;
+}
+input[type="password"]:hover
+{
+	opacity: 1;
+}
+
+input[type="submit"].searchnow{
+	display: flex;
+	height: 30%;
+	width: 30%;
+	font-size: 100%;
+  	background-color:   #009933;
+	border-radius: 40px;
+	opacity: 0.5;
+	color: #000000;
+	curser: pointer;
+	font-weight: 800;
+	text-align: center;	
+    vertical-align: middle;
+    padding: 10px 10px;
+}
+input[type="submit"]:hover
+{
+	opacity: 1;
+}
+
+.hero.doudoucolor{
+  background-color: whitesmoke;	
+}
+
+.section.doudoucolor{
+  background-color: whitesmoke;	
+}
+
+.button.is-doudou{
+	text-align: center;	
+	display: flex;
+	width: 30%;
+  	border-radius: 30px;
+	color: #fff;
+	text-transform: uppercase;
+	color: #000000;
+	opacity: 0.5;
+	font-weight: 800;
+    vertical-align: middle;
+	box-shadow: 0 0 20px rgba(0, 0, 0, .2);
+}
+
+.button.is-mei{
+	text-align: center;	
+	display: flex;
+  	border-radius: 30px;
+	color: #fff;
+	text-transform: uppercase;
+	color: #000000;
+	opacity: 0.5;
+    box-shadow: 0 0 20px rgba(0, 0, 0, .2);
+    vertical-align: middle;
+}
+
+.button.is-doudou:hover
+{
+    box-shadow: 0 0 20px rgba(0, 0, 0, .6);
+	opacity: 1;
+}
+.button.is-mei:hover
+{
+    box-shadow: 0 0 20px rgba(0, 0, 0, .6);
+	opacity: 1;
+}
+
+.button.go{
+	background-color: #009933;
+}
+
+.button.careful{
+	background-color: #FE9A2E;
+}
+
+.button.dangerous{
+	background-color: #FF0000;
+}
+
+
+
+.title.is-doudou{
+	font-weight: 800;
+	opacity: 0.5;
+	text-transform: uppercase;
+	font-size: 20px;
+}
+
+.radiosection {
+  padding: 0;
+  margin: 0;
+  list-style: none;
+  flex-wrap: wrap;
+  -ms-box-orient: horizontal;
+  display: -webkit-box;
+  display: -moz-box;
+  display: -ms-flexbox;
+  display: -moz-flex;
+  display: -webkit-flex;
+  -webkit-flex-wrap: wrap;
+  display: flex;  
+}
+
+.radiosection::after {
+  content: '';
+  clear: both;
+}
+
+input[type="checkbox"], input[type="radio"] {
+  position: absolute;
+  left: -9999px;
+}
+
+.side-label {
+	width: 200px;
+  margin: 20px;
+  padding: 15px 30px 15px 62px;
+  border: 3px solid #fff;
+  border-radius: 100px;
+  opacity: 0.5;
+  background-color: whitesmoke;
+  box-shadow: 0 0 20px rgba(0, 0, 0, .2);
+  cursor: pointer;
+  user-select: none;
+  transition: background-color .2s, box-shadow .2s;
+}
+
+.side-label::before {
+  content: '';
+  top: 10px;
+  bottom: 10px;
+  left: 10px;
+  border: 3px solid #fff;
+  border-radius: 100px;
+  transition: background-color .2s;
+}
+
+.side-label:hover, input:focus + label {
+  opacity: 1;
+  box-shadow: 0 0 20px rgba(0, 0, 0, .6);
+}
+
+
+input:checked + .side-label {
+    color: #fff;
+	background-color: #009933;
+}
+
+input:checked + .side-label::before {
+  color: #050000;
+  background-color: #fff;
+}
+
+
+input[type="radio"] + .side-label::before,
+input[type="radio"] + .side-label::after {
+	visibility: hidden;
+	border-radius: 50%;
+}
+
+.side-label::before {
+  border: 2px solid #fff;  
+}
+
+input[type="radio"]:focus + .side-label::before {
+  border-color: #9ab593;
+}
+
+.side-label::after {
+  display: none;
+  background-color: #9ab593;
+}
+
+
+
+
+
+input[type="text"].datepicker-doudou {
+  -moz-appearance: none;
+  -webkit-appearance: none;
+  -webkit-box-align: center;
+      -ms-flex-align: center;
+          align-items: center;
+  border: 1px solid transparent;
+  border-radius: 3px;
+  box-shadow: none;
+  display: -webkit-inline-box;
+  display: -ms-inline-flexbox;
+  display: inline-flex;
+  font-size: 1rem;
+  height: 2.25em;
+  -webkit-box-pack: start;
+      -ms-flex-pack: start;
+          justify-content: flex-start;
+  line-height: 1.5;
+  padding-bottom: calc(0.375em - 1px);
+  padding-left: calc(0.625em - 1px);
+  padding-right: calc(0.625em - 1px);
+  padding-top: calc(0.375em - 1px);
+  position: relative;
+  vertical-align: top;
+  background-color: white;
+  border-color: #dbdbdb;
+  color: #363636;
+  box-shadow: inset 0 1px 2px rgba(10, 10, 10, 0.1);
+  max-width: 100%;
+  width: 100%;    
+}
+
 /*! minireset.css v0.0.2 | MIT License | github.com/jgthms/minireset.css */
 html,
 body,
@@ -149,7 +394,7 @@ body {
 }
 
 a {
-  color: #0099ff;
+  color: #009933;
   cursor: pointer;
   text-decoration: none;
   -webkit-transition: none 86ms ease-out;

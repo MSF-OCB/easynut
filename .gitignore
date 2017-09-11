@@ -2,3 +2,6 @@
 *.sqlite
 /migrations/
 .idea
+venv
+settings.py
+
