@@ -3,5 +3,5 @@
 /migrations/
 .idea
 venv
-settings.py
+.env
 
