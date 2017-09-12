@@ -17,8 +17,12 @@ SET time_zone = "+00:00";
 /*!40101 SET NAMES utf8mb4 */;
 
 --
--- Database: `easynutdataempty`
+-- Database: `easynutdata`
 --
+
+DROP DATABASE IF EXISTS `easynutdata`;
+
+CREATE DATABASE IF NOT EXISTS `easynutdata`;
 
 -- --------------------------------------------------------
 
