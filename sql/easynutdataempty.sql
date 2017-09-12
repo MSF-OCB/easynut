@@ -24,6 +24,8 @@ DROP DATABASE IF EXISTS `easynutdata`;
 
 CREATE DATABASE IF NOT EXISTS `easynutdata`;
 
+USE `easynutdata`;
+
 -- --------------------------------------------------------
 
 --
