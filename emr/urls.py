@@ -21,6 +21,7 @@ urlpatterns = [
 	url(r'^save/$', views.save, name='save'),
 	url(r'^(?P<table_id>[0-9]+)/(?P<record_id>[0-9]+)/deleterecord/$', views.deleterecord, name='deleterecord'),	
 	url(r'^downloadexport/$', views.downloadexport, name='downloadexport'),
+	url(r'^downloadbackup/$', views.downloadbackup, name='downloadbackup'),
 	url(r'^downloadabsents/$', views.downloadabsents, name='downloadabsents'),	
 	url(r'^downloaddefaulters/$', views.downloaddefaulters, name='downloaddefaulters'),		
 ]

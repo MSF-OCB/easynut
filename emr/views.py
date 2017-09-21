@@ -192,6 +192,22 @@ def downloadexport(request):
         return index(request)
 
 @login_required
+def downloadbackup(request):
+    daoobject = DAO()
+    daoobject.set_tables_config()
+    daoobject.setEasyUser(request.user)
+    if request.user.groups.filter(id=2).exists():
+        file = u'/opt/shared/backup.gc.enc'
+        if os.path.exists(file):
+            with open(file, 'rb') as fh:
+                response = HttpResponse(fh.read(), content_type="application/zip")
+                response['Content-Disposition'] = 'inline; filename=' + os.path.basename(file)
+                return response
+        raise Http404
+    else:
+        return index(request)
+
+@login_required
 def downloadabsents(request):
     extE = ExternalExport()
     if request.user.groups.filter(id=2).exists():
