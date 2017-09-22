@@ -197,7 +197,7 @@ def downloadbackup(request):
     daoobject.set_tables_config()
     daoobject.setEasyUser(request.user)
     if request.user.groups.filter(id=2).exists():
-        file = u'/opt/shared/backup.gc.enc'
+        file = u'/opt/shared/backup.gz.enc'
         if os.path.exists(file):
             with open(file, 'rb') as fh:
                 response = HttpResponse(fh.read(), content_type="application/zip")
