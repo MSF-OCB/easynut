@@ -1,3 +1,5 @@
+# Not used so far
+# Was planned for future android app
 import re
 
 import DAO

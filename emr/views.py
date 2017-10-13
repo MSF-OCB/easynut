@@ -16,6 +16,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth import authenticate, login, logout
 from django.utils.decorators import method_decorator
 
+# Display log in page
 def loginview(request):
     context = RequestContext(request)
     if request.method == 'POST':
@@ -33,23 +34,27 @@ def loginview(request):
     else:
         return render(request, 'emr/login.html', {'wrongcrendentials' : ''})
 
-
+# Log out
 def logoutbutton(request):
     logout(request)    
     return render(request, 'emr/login.html', {'wrongcrendentials' : ''})
-    
+
+# Home page
 @login_required
 def index(request):
     template_name = 'emr/index.html'
     daoobject = DAO()
     daoobject.set_tables_config()
     daoobject.setEasyUser(request.user)
+    #*TBC*#
+    # Last ID not used anymore
     return render(request, template_name, {
         'edbtables': daoobject.tables_config_lite, 
         'lastId' : daoobject.getLastId('tabla_1', 'campo_1'),
         'easyUser': daoobject.easy_user
         })
 
+# Display search results
 @login_required
 def results(request):
     template_name = 'emr/results.html'
@@ -76,6 +81,7 @@ def results(request):
     except ValueError:
         return regularsearch
 
+# Display patient summary
 @login_required
 def patient(request, record_id):
     template_name = 'emr/patient.html'    
@@ -89,7 +95,8 @@ def patient(request, record_id):
         'lastId' : daoobject.getLastId('tabla_1', 'campo_1'),
         'easyUser': daoobject.easy_user
         })
-    
+
+# View a specific record
 @login_required
 def detail(request, table_id, record_id):
     template_name = 'emr/detail.html'
@@ -104,6 +111,7 @@ def detail(request, table_id, record_id):
             })
     return index(request)
 
+# Edit a record
 @login_required
 def edit(request, table_id, record_id):
     template_name = 'emr/edit.html'
@@ -118,6 +126,7 @@ def edit(request, table_id, record_id):
             })
     return index(request)
 
+# Save a record
 @login_required
 def save(request):
     record_id = request.GET.get('record_id')
@@ -127,6 +136,8 @@ def save(request):
     daoobject.setEasyUser(request.user)
     fieldstochange = []
     patientId = 0
+    #*TBC*#
+    # Lost of nested loops
     for tablec in daoobject.tables_config:
         if tablec.id == table_id:
             for fieldc in tablec.fields:
@@ -144,6 +155,7 @@ def save(request):
                 patientId = record_id
     return HttpResponseRedirect(reverse('emr:patient', args=(patientId,)))
 
+# Add a new record
 @login_required
 def addrecord(request, table_id, related_record_entry):
     template_name = 'emr/addrecord.html'
@@ -166,6 +178,7 @@ def addrecord(request, table_id, related_record_entry):
                 })
     return index(request)
 
+# Delete a record
 @login_required
 def deleterecord(request, table_id, record_id):
     daoobject = DAO()
@@ -175,6 +188,7 @@ def deleterecord(request, table_id, record_id):
         daoobject.delete(table_id, record_id)
     return index(request)
 
+# Download raw export
 @login_required
 def downloadexport(request):
     daoobject = DAO()
@@ -191,6 +205,7 @@ def downloadexport(request):
     else:
         return index(request)
 
+# Download backup
 @login_required
 def downloadbackup(request):
     daoobject = DAO()
@@ -207,6 +222,9 @@ def downloadbackup(request):
     else:
         return index(request)
 
+# Download list of absents
+#*TBC*#
+# This is a specific customization for a health center. Should not be here
 @login_required
 def downloadabsents(request):
     extE = ExternalExport()
@@ -221,6 +239,8 @@ def downloadabsents(request):
     else:
         return index(request)
 
+#*TBC*#
+# Same as up
 @login_required
 def downloaddefaulters(request):
     extE = ExternalExport()

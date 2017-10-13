@@ -1,3 +1,11 @@
+#*TBC*#
+# Allow to add some customization
+# But this should not be hardcoded
+# A better system to add cusomization features should be found
+# An idea could be to to enter SQL queries in the DB via a user interface for the admin
+# But not sure how to avoid knowing perfectly the DB (having to know the table name and field name),
+# or if we could obtain such a precision
+
 from __future__ import unicode_literals
 from django.conf import settings
 import MySQLdb

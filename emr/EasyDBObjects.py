@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+# Define the objects of the DB: or a table (form), or a field
 from __future__ import unicode_literals
 
 class TableConfig(object):
@@ -33,6 +34,8 @@ class TableConfig(object):
 class FieldConfig(object):
     
     # Declare field types
+    #*TBC*#
+    # Stupid conversion because the original DB was in spanish...
     field_type_date = 0
     field_type_int = 1
     field_type_str = 2
@@ -56,6 +59,8 @@ class FieldConfig(object):
         }
     
     # Dictionary of field'attributes to check in sql and related to here
+    #*TBC*#
+    # Same here, stupid conversion due to the change of DB
     attributes = {
         '_id' : 'id',
         'campo' : 'field',
@@ -73,6 +78,8 @@ class FieldConfig(object):
         'relacionado' : 'relationship',
         }
     
+    #*TBC*#
+    # Few attributes are not used
     def __init__(self):
         self.id = 0
         self.field = ''
