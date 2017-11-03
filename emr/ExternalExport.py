@@ -162,9 +162,10 @@ class ExternalExport(object):
         with open(exportDir+'Defaulters'+'.csv', 'wb') as mycsv:
             wr = csv.writer(mycsv, quoting=csv.QUOTE_ALL)                
             wr.writerow(['MSF ID','Name','Last expected visit'])
-            wr.writerows(listOfAbsents)
+            for k in listOfAbsents:
+                wr.writerow(self.dataclean([k[0],k[1],k[2]]))
         c.close()
-	return exportDir + 'Defaulters.csv'
+        return exportDir + 'Defaulters.csv'
     
     def dataclean(self, row):
         returnedRow = []
