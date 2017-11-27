@@ -129,8 +129,8 @@ def edit(request, table_id, record_id):
 # Save a record
 @login_required
 def save(request):
-    record_id = request.GET.get('record_id')
-    table_id = request.GET.get('table_id')
+    record_id = request.POST.get('record_id')
+    table_id = request.POST.get('table_id')
     daoobject = DAO()
     daoobject.set_tables_config()
     daoobject.setEasyUser(request.user)
@@ -142,8 +142,8 @@ def save(request):
         if tablec.id == table_id:
             for fieldc in tablec.fields:
                 if fieldc.name == 'MSF ID':
-                    patientId = daoobject.getPatientIdFromMsfId(request.GET.get(fieldc.field_id))
-                fieldstochange.append([fieldc.field_id, request.GET.get(fieldc.field_id), fieldc.type])
+                    patientId = daoobject.getPatientIdFromMsfId(request.POST.get(fieldc.field_id))
+                fieldstochange.append([fieldc.field_id, request.POST.get(fieldc.field_id), fieldc.type])
             fieldstochange.append(['user', request.user.username, '2'])            
     if record_id != "0":
         if daoobject.backEndUserRolesCheck(table_id, 'edit_table'):
