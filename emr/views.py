@@ -15,6 +15,10 @@ from django.http import *
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import authenticate, login, logout
 from django.utils.decorators import method_decorator
+import logging
+
+from graphos.renderers import flot
+from graphos.sources.simple import SimpleDataSource
 
 # Display log in page
 def loginview(request):
@@ -84,14 +88,28 @@ def results(request):
 # Display patient summary
 @login_required
 def patient(request, record_id):
-    template_name = 'emr/patient.html'    
+    template_name = 'emr/patient.html'
     daoobject = DAO()
     daoobject.set_tables_config()
     daoobject.set_tables_relationships()
+    daoobject.set_graphs(record_id)
     daoobject.setEasyUser(request.user)
+
+    # Initialise graphos chart objects
+    charts = [];
+    for graph in daoobject.graphs: charts.append( [ graph[0], flot.LineChart(SimpleDataSource(data=graph[3]), options={
+        'title': graph[2] + ' / ' + graph[1], 
+	'xaxis': {'mode': "time", 'timezone': 'browser'},
+	'bars': {'barWidth': 86400000},
+	'legend': {'show': False, 'position': 'sw'},
+	'grid': { 'borderWidth': {'top': 0, 'right': 0, 'bottom': 2, 'left': 2}, 'borderColor': {'bottom': "#999", 'left': "#999"}, 'hoverable': True },
+	'tooltip': { 'show': True, 'content': '%x: %y', },
+    })])
     return render(request, template_name, {
         'record': daoobject.get_record_with_type('1', record_id, True), 
         'relatedrecords' : daoobject.get_related_records(record_id),
+	    'charts': charts,
+        'graphs': daoobject.graphs,
         'lastId' : daoobject.getLastId('tabla_1', 'campo_1'),
         'easyUser': daoobject.easy_user
         })
@@ -196,6 +214,23 @@ def downloadexport(request):
     daoobject.setEasyUser(request.user)
     if request.user.groups.filter(id=2).exists():
         zip = daoobject.generateExport()+'.zip'
+        if os.path.exists(zip):
+            with open(zip, 'rb') as fh:
+                response = HttpResponse(fh.read(), content_type="application/zip")
+                response['Content-Disposition'] = 'inline; filename=' + os.path.basename(zip)
+                return response
+        raise Http404
+    else:
+        return index(request)
+
+# Download single-file export
+@login_required
+def downloadsfexport(request):
+    daoobject = DAO()
+    daoobject.set_tables_config()
+    daoobject.setEasyUser(request.user)
+    if request.user.groups.filter(id=2).exists():
+        zip = daoobject.generateSingleFileExport()+'.zip'
         if os.path.exists(zip):
             with open(zip, 'rb') as fh:
                 response = HttpResponse(fh.read(), content_type="application/zip")

@@ -17,7 +17,10 @@ import csv
 import os, re
 import shutil
 from MySQLdb import converters
-
+import logging
+from collections import defaultdict
+from os.path import basename
+import zipfile
 
 class DAO(object):
 
@@ -30,11 +33,13 @@ class DAO(object):
         self.tables_relationships = []
         # Dictionnary of the user permissions
         self.easy_user = {}
-        
+        # graphs
+        self.graphs = []
+
         # Initiate DB
-        conv=converters.conversions.copy()
-        conv[246]=float    # convert decimals to floats
-        conv[10]=str       # convert dates
+        conv = converters.conversions.copy()
+        conv[246] = float  # convert decimals to floats
+        conv[10] = str  # convert dates
         self.db = MySQLdb.connect(settings.DATABASES['data']['HOST'],
                                   settings.DATABASES['data']['USER'],
                                   settings.DATABASES['data']['PASSWORD'],
@@ -48,7 +53,7 @@ class DAO(object):
         c.execute(sql_tables)
         self.tables_config_lite = c.fetchall()
         # Loop through them to prepare the list
-        for k,v in self.tables_config_lite:
+        for k, v in self.tables_config_lite:
             # Initiate form object and get its respective fields 
             tablec = TableConfig()
             tablec.set_id(k)
@@ -66,7 +71,7 @@ class DAO(object):
                     params = (attributek, tablec.sql_table_field_config_name, field_id[0],)
                     c.execute(sql_field_config.format(*params))
                     sqlresult = c.fetchone()[0]
-                    #*TBC*#
+                    # *TBC*#
                     # Convert the attributes for the field object
                     # This stupid conversion is due to a change of DB model
                     # Needs to be cleaned
@@ -89,7 +94,26 @@ class DAO(object):
         c.close()
         return
     
-    #*TBC*#
+    # Get graphos-ready data for graphed fields 
+    def set_graphs(self, record_id):
+        c = self.db.cursor()   
+        graphlist = []
+
+        for tb in self.tables_config:
+            for fi in tb.fields:
+                if not ( fi.type == FieldConfig.field_type_int and fi.select and 'grafico:' in fi.select[0]): continue; # only int fields with select
+
+                (xaxisfield, xaxisname, yaxisfield, yaxisname) = (fi.select[0][8:], [fix.name for fix in tb.fields if fix.field == fi.select[0][8:]][0], fi.field, fi.name)
+                (sqlquery, params) = ( 'SELECT 1000 * UNIX_TIMESTAMP({}), {} FROM {} WHERE campo_2 IN ( SELECT campo_1 FROM tabla_1 WHERE _id = {} ) ORDER BY ' + xaxisfield, [xaxisfield, yaxisfield, tb.sql_table_config_name, record_id] )
+                c.execute(sqlquery.format(*params))
+
+                graphlist = [[xaxisname, yaxisname]] # first row contains column names, per django-graphos convention
+                for rec in c.fetchall(): graphlist.append(list(rec)) # add rest of data columns
+                self.graphs.append([tb.id, xaxisname, yaxisname, graphlist]); # add graph
+        c.close()
+        return graphlist
+
+    # *TBC*#
     # Defines the replationships between the tables
     # Not sure if it is still useful... Now it is always the same one: 
     # All forms linked by the MSF ID towards Bio Data ('tabla_1')
@@ -104,18 +128,18 @@ class DAO(object):
     # Search function
     def search(self, entry, tablesearch):
         c = self.db.cursor()
-        usersearch = [entry,]
+        usersearch = [entry, ]
         returnList = []
         all_results = []
         filtered_tables = []
-        #*TBC*#
+        # *TBC*#
         # Prepare list of tables to search in. 0 means all.
         # However it searches always only in the bio data.
         # The other tables are now searched with the function "get related records"
         if tablesearch != '0':
             for tablec in self.tables_config:
                 if tablec.id == tablesearch:
-                    filtered_tables = [tablec,]
+                    filtered_tables = [tablec, ]
                     usersearch.append(tablec.name)
         else:
             filtered_tables = self.tables_config
@@ -123,9 +147,9 @@ class DAO(object):
         # To keep memory of the search entry
         returnList.append(usersearch)
         # Clean and split then entry to search in possible multiple keywords
-        entryClean = re.sub(' +',' ',entry)
+        entryClean = re.sub(' +', ' ', entry)
         entryList = entryClean.split(' ')
-        #*TBC*#
+        # *TBC*#
         # No need of the loop anymore
         for tablec in filtered_tables:
             query = self.search_query(entryList, tablec) + ' ORDER BY campo_1 DESC, timestamp DESC limit 100'
@@ -181,10 +205,10 @@ class DAO(object):
     # Gest a specific record (form answers) with additional info
     def get_record_with_type(self, table_id, record_id, listFields):
         c = self.db.cursor()
-        record = [table_id, record_id,]
+        record = [table_id, record_id, ]
         recorddetails = []
         patientId = '0'
-        #*TBC*#
+        # *TBC*#
         # Lot of nested loops. Ugly
         for tablec in self.tables_config:
             if tablec.id == table_id:
@@ -198,17 +222,17 @@ class DAO(object):
                         if fieldc.name == 'MSF ID':
                             patientId = self.getPatientIdFromMsfId(result)
                         recorddetails.append([
-                            fieldc.field_id, 
+                            fieldc.field_id,
                             fieldc.type,
                             fieldc.pos,
-                            fieldc.name, 
+                            fieldc.name,
                             result,
                             fieldc.select,
                             ])
         record.append(sorted(recorddetails, key=itemgetter(2)))
         record.append(patientId)
         c.close()
-        #*TBC*#
+        # *TBC*#
         # If this is not a form but just displaying the data,
         # launch the custom calculations.
         # There might be a much better way to have custom calculations...
@@ -233,7 +257,7 @@ class DAO(object):
     # Insert a record (answers from a form)
     def insertrecord(self, table_id, fieldstoadd):
         record_id = None
-        #*TBC*#
+        # *TBC*#
         # The MSF ID is not at the same position in the table 1, Bio data (first position)
         # and the other tables (second position).
         # stupid 
@@ -241,7 +265,7 @@ class DAO(object):
             for field in fieldstoadd:
                 if field[0] == 'campo_1':
                     field[1] = self.getNewId('tabla_1', 'campo_1')
-        #*TBC*#
+        # *TBC*#
         # Lost of nested loops
         for tablec in self.tables_config:
             if tablec.id == table_id:
@@ -273,12 +297,12 @@ class DAO(object):
     def editrecord(self, table_id, record_id, fieldstochange):
         sqlquery = 'UPDATE {} SET'
         c = self.db.cursor()
-        #*TBC*#
+        # *TBC*#
         # Loop just to obtain the name of the table in the DB
         for tablec in self.tables_config:
             if tablec.id == table_id:
                 params = [tablec.sql_table_config_name, ]
-        #*TBC*#
+        # *TBC*#
         # According to the type of the field.
         # There should be a proper way to handle that
         for counter, field in enumerate(fieldstochange):
@@ -328,14 +352,14 @@ class DAO(object):
         fields = []
         for tablec in self.tables_config:
             if tablec.id == table_id:
-                recordform = [tablec.id, tablec.name,]
+                recordform = [tablec.id, tablec.name, ]
                 for fieldc in tablec.fields:
                     fields.append([
-                        fieldc.field_id, 
+                        fieldc.field_id,
                         fieldc.type,
                         fieldc.pos,
-                        fieldc.name, 
-                        fieldc.select,                    
+                        fieldc.name,
+                        fieldc.select,
                         ])
         recordform.append(sorted(fields, key=itemgetter(2)))
         return recordform
@@ -366,7 +390,6 @@ class DAO(object):
                     result = dict(zip(fields, record))
                     c.close()
                     return result
-
     
     @staticmethod
     def select_string(table_config, showall):
@@ -377,7 +400,7 @@ class DAO(object):
 
         return ', '.join(['_id'] + map(lambda f: f.field, fields))
     
-    #*TBC*#
+    # *TBC*#
     # Get the records of a specific patient that are not bio data
     def get_related_records(self, record_id):
         c = self.db.cursor()   
@@ -385,7 +408,6 @@ class DAO(object):
         templist = []
         for tablec in self.tables_config:
             if self.easy_user['tables'][tablec.id]['view_table'] and tablec.id != '1':  
-                asd = tablec.id
                 sqlquery = 'SELECT campo_1 FROM tabla_1 WHERE _id = {}'
                 params = [record_id]
                 c.execute(sqlquery.format(*params))
@@ -394,16 +416,16 @@ class DAO(object):
                 params = [tablec.id]
                 c.execute(sqlquery.format(*params))
                 position = c.fetchone()[0]
-                templist.append([self.getRelatedSearch(msfId, tablec.id),int(position)])
+                templist.append([self.getRelatedSearch(msfId, tablec.id), int(position)])
         c.close()
         for recordsList in sorted(templist, key=itemgetter(1)):
             relatedrecords.append(recordsList[0])
         return relatedrecords
     
-    # See up 
+    # See up
     def getRelatedSearch(self, entry, table_id):
         c = self.db.cursor()   
-        usersearch = [entry,]
+        usersearch = [entry, ]
         returnList = []
         all_results = []
         search_query = ''
@@ -414,8 +436,8 @@ class DAO(object):
                 for field in tablec.fields:
                     if field.list == True:
                         relatedrecords = [tablec.name, tablec.id] + [map(lambda f: f.name, filter(lambda f: f.list, tablec.fields))]
-                        search_query += ','+field.field_id
-                search_query += ' FROM '+ tablec.sql_table_config_name +' WHERE campo_2 = "'+entry+'" ORDER BY campo_1 DESC'
+                        search_query += ',' + field.field_id
+                search_query += ' FROM ' + tablec.sql_table_config_name + ' WHERE campo_2 = "' + entry + '" ORDER BY campo_1 DESC'
         if search_query != '':
             c.execute(search_query)
             relatedrecords.append(c.fetchall())
@@ -442,7 +464,7 @@ class DAO(object):
         lastId = self.getLastId(table_id, column_name)
         newIdInt = int(lastId) + 1
         newIdStr = str(newIdInt)
-        zerosToAdd = 6-len(newIdStr)
+        zerosToAdd = 6 - len(newIdStr)
         IdToReturn = ''
         for i in xrange(zerosToAdd):
             IdToReturn = IdToReturn + '0'
@@ -465,41 +487,46 @@ class DAO(object):
     def generateExport(self):
         c = self.db.cursor()
         exportDir = os.path.join(settings.BASE_DIR, 'export/')
+        alldata = defaultdict(tuple)
         for tablec in self.tables_config:
-            with open(exportDir+'CSVFiles/'+re.sub('[^\w\-_\. ]', '', tablec.name)+'.csv', 'wb') as mycsv:
-                wr = csv.writer(mycsv, quoting=csv.QUOTE_ALL)                
-                columns = []
-                sqlquery= 'SELECT '
-                params = []
-                for counter, field in enumerate(tablec.fields):
-                    if counter == (len(tablec.fields) - 1):
-                        sqlquery = sqlquery + ', user, timestamp'
-                    else:
-                        if counter == 0:
-                            sqlquery = sqlquery + ' {}'
-                        else:
-                            sqlquery = sqlquery + ', {}'
-                        params.append(field.field_id)
-                        columns.append(str(field.name))
-                columns.append('User')
-                columns.append('Timestamp')
-                sqlquery = sqlquery + ' FROM {}'
-                params.append(tablec.sql_table_config_name)
+            with open(exportDir + 'CSVFiles/' + re.sub('[^\w\-_\. ]', '', tablec.name) + '.csv', 'wb') as mycsv:
+                wr = csv.writer(mycsv, quoting=csv.QUOTE_ALL)
+                columns = [field.name for field in tablec.fields] + ['User', 'Timestamp'] 
                 wr.writerow(self.dataclean(columns))
-                c.execute(sqlquery.format(*params))
+
+                c.execute('SELECT ' + ", ".join([field.field_id for field in tablec.fields] + ['user', 'timestamp']) + ' FROM ' + tablec.sql_table_config_name)
                 for row in c.fetchall():
                     wr.writerow(self.dataclean(row))
-        filename = 'EasyNutExport'+date.today().strftime('%d%b%Y')
+                    if tablec.id == '1':
+                        alldata[row[0]] = self.dataclean(row) + (len(self.tables_config) - 1) * ['']
+                        allcolumns = columns
+
+        c.close()
+        c = self.db.cursor()
+
+        for tablec in self.tables_config:
+            if tablec.id == '1': continue
+            allcolumns.append(tablec.name) 
+            c.execute('SELECT ' + ", ".join([field.field_id for field in tablec.fields] + ['user', 'timestamp']) + ' FROM ' + tablec.sql_table_config_name + ' ORDER BY campo_1 DESC')
+            for row in c.fetchall():
+                alldata[row[1]][20 + int(tablec.id)] += re.sub(",,", ",-n/r-,", re.sub( "," + row[1] + ",", ",", ",".join(self.dataclean(row)) ) ) + "\n"
+
+        with open(exportDir + 'CSVFiles/fullDB.csv', 'wb') as indexcsv:
+                wr = csv.writer(indexcsv, quoting=csv.QUOTE_ALL, delimiter=";".encode('utf-8') )
+                wr.writerow(allcolumns)
+                for i in alldata:
+                    wr.writerow(alldata[i])
+
+        filename = 'EasyNutExport' + date.today().strftime('%d%b%Y')
         zipPath = exportDir
-        toZip = exportDir+'CSVFiles'
+        toZip = exportDir + 'CSVFiles'
         for f in os.listdir(exportDir):
             if re.search('^EasyNutExport([0-9a-zA-Z]+).zip', f):
                 os.remove(os.path.join(exportDir, f))
         shutil.make_archive(zipPath + filename, 'zip', toZip)
-        c.close()
-        return zipPath + filename     
-    
-    #*TBC*#
+        return zipPath + filename
+
+    # *TBC*#
     # Doesnt seem to be used anymore
     def getAbsents(self):
         c = self.db.cursor()
@@ -511,7 +538,7 @@ class DAO(object):
     def setEasyUser(self, user):
         # User groups (careful, this has to be linked with the Django group table)
         # Here it uses both DB, easynut and easynutdata
-        #*TBC*#
+        # *TBC*#
         # The groups (or "roles") should not be defined here
         group_reg = 1
         group_adm = 2
@@ -563,7 +590,7 @@ class DAO(object):
                     'edit_table': True,
                     'delete_table': True
                     }
-        #*TBC*#
+        # *TBC*#
         # Not sure if the last ID is used anymore now that the system automatically provides an ID to the patient
         if user.groups.filter(id=group_idc).exists():
             canLastId = True
@@ -578,7 +605,7 @@ class DAO(object):
 
     # Check if the user has the permission to execture a function or access a page
     def backEndUserRolesCheck(self, table_id, type):
-        for k,v in self.easy_user['tables'].iteritems():
+        for k, v in self.easy_user['tables'].iteritems():
             if k == table_id and v[type]:
                 return True    
         return False
@@ -599,15 +626,15 @@ class DAO(object):
         return extE.addCSVs()
     
     # Clean the data before saving them (or in bulk, or only one)
-    #*TBC*#
+    # *TBC*#
     # Should be the same type of cleaning, so weird to have 2 functions similar
     def dataclean(self, row):
         returnedRow = []
         for field in row:
             if field:
-                field1 = str(field).replace(',',' ')
-                field2 = field1.replace('"','')
-                field3 = field2.replace("'","")
+                field1 = str(field).replace(',', ' ')
+                field2 = field1.replace('"', '')
+                field3 = field2.replace("'", "")
             else:
                 field3 = ""
             returnedRow.append(field3)

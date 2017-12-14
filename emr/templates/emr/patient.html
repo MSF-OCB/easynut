@@ -110,7 +110,19 @@
 															{% endfor %}																												
 														{% endwith %}
 													</tr>
-												{% endfor %}			
+												{% endfor %}
+												{% for chart in charts %}
+													{% if chart.0 == tableresults.1 %} 
+													<tr>
+														<td colspan="{{ tableresults.2|length|add:'+3' }}">
+														<center><br/>
+														<strong>{{ chart.1.options.title }} diagram</strong>
+														<br/>
+														{{ chart.1.as_html }}</center>
+														</td>
+													</tr>
+													{% endif %}
+												{% endfor %}
 											{% endif %}
 										</tbody>
 									</table>
