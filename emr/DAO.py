@@ -22,6 +22,15 @@ from .ExternalFields import ExternalFields
 
 class DAO(object):
 
+    @classmethod
+    def factory(cls, user=None):
+        """Create a ready to use instance of this class."""
+        obj = cls()
+        obj.set_tables_config()
+        if user:
+            obj.setEasyUser(user)
+        return obj
+
     def __init__(self):
         # List of the configuration of each form ("table")
         self.tables_config = []

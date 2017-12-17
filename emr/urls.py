@@ -30,4 +30,6 @@ urlpatterns = [
     url(r'^downloadbackup/$', views.downloadbackup, name='downloadbackup'),
     url(r'^downloadabsents/$', views.downloadabsents, name='downloadabsents'),
     url(r'^downloaddefaulters/$', views.downloaddefaulters, name='downloaddefaulters'),
+
+    url(r'^export/excel$', views.export_excel, name='export_excel'),
 ]

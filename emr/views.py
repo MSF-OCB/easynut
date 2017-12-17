@@ -8,11 +8,13 @@ from django.http import HttpResponseRedirect, HttpResponse, Http404
 from django.shortcuts import render
 from django.urls import reverse
 
-from .DAO import DAO
-from .ExternalExport import ExternalExport
-
 from graphos.renderers import flot
 from graphos.sources.simple import SimpleDataSource
+
+from .DAO import DAO
+from .exports import ExportExcel
+from .ExternalExport import ExternalExport
+from .utils import xlsx_download_response_factory
 
 
 # Display log in page
@@ -313,3 +315,21 @@ def downloaddefaulters(request):
         raise Http404
     else:
         return index(request)
+
+
+@login_required
+def export_excel(request):
+    """Export of all data, returned as an Excel file to download."""
+    # User must be in group "Admin".
+    if not request.user.groups.filter(id=2).exists():
+        return index(request)
+
+    dao = DAO.factory(user=request.user)
+    export = ExportExcel(dao)
+    excel_book = export.generate()
+
+    # Create download response and write workbook data to response.
+    response = xlsx_download_response_factory(export.filename)
+    excel_book.save(response)
+
+    return response

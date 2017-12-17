@@ -139,3 +139,6 @@ STATIC_ROOT = 'static'
 SESSION_EXPIRE_AT_BROWSER_CLOSE = True
 SESSION_COOKIE_AGE = 20 * 60
 SESSION_SAVE_EVERY_REQUEST = True
+
+# Exports
+EXPORT_TEMPLATES_DIR = os.path.join(BASE_DIR, "static", "emr", "exports")
