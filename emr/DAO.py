@@ -99,15 +99,23 @@ class DAO(object):
 
         for tb in self.tables_config:
             for fi in tb.fields:
-                if not ( fi.type == FieldConfig.field_type_int and fi.select and 'grafico:' in fi.select[0]): continue; # only int fields with select
+                if not (fi.type == FieldConfig.field_type_int and fi.select and 'grafico:' in fi.select[0]):
+                    continue  # only int fields with select
 
-                (xaxisfield, xaxisname, yaxisfield, yaxisname) = (fi.select[0][8:], [fix.name for fix in tb.fields if fix.field == fi.select[0][8:]][0], fi.field, fi.name)
-                (sqlquery, params) = ( 'SELECT 1000 * UNIX_TIMESTAMP({}), {} FROM {} WHERE campo_2 IN ( SELECT campo_1 FROM tabla_1 WHERE _id = {} ) ORDER BY ' + xaxisfield, [xaxisfield, yaxisfield, tb.sql_table_config_name, record_id] )
+                xaxisfield = fi.select[0][8:]
+                xaxisname = [fix.name for fix in tb.fields if fix.field == fi.select[0][8:]][0]
+                yaxisfield = fi.field
+                yaxisname = fi.name
+                sqlquery = 'SELECT 1000 * UNIX_TIMESTAMP({}), {} FROM {} ' \
+                           'WHERE campo_2 IN ( SELECT campo_1 FROM tabla_1 WHERE _id = {} ) ' \
+                           'ORDER BY ' + xaxisfield
+                params = [xaxisfield, yaxisfield, tb.sql_table_config_name, record_id]
                 c.execute(sqlquery.format(*params))
 
-                graphlist = [[xaxisname, yaxisname]] # first row contains column names, per django-graphos convention
-                for rec in c.fetchall(): graphlist.append(list(rec)) # add rest of data columns
-                self.graphs.append([tb.id, xaxisname, yaxisname, graphlist]); # add graph
+                graphlist = [[xaxisname, yaxisname]]  # first row contains column names, per django-graphos convention
+                for rec in c.fetchall():
+                    graphlist.append(list(rec))  # add rest of data columns
+                self.graphs.append([tb.id, xaxisname, yaxisname, graphlist])  # add graph
         c.close()
         return graphlist
 
