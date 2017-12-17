@@ -10,9 +10,10 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/1.11/ref/settings/
 """
 
-from decouple import config
 import os
-import logging
+
+from decouple import config
+
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -112,7 +113,7 @@ AUTH_PASSWORD_VALIDATORS = [
 ]
 
 # Where do we send the user to after successfully loging in
-LOGIN_URL= '/nut/login'
+LOGIN_URL = '/nut/login'
 LOGIN_REDIRECT_URL = '/nut'
 
 # Internationalization
@@ -138,4 +139,3 @@ STATIC_ROOT = 'static'
 SESSION_EXPIRE_AT_BROWSER_CLOSE = True
 SESSION_COOKIE_AGE = 20 * 60
 SESSION_SAVE_EVERY_REQUEST = True
-

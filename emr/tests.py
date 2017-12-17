@@ -1,11 +1,9 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
-
-# Create your tests here.
 import datetime
 
-from django.utils import timezone
 from django.test import TestCase
+from django.utils import timezone
 
 from .models import Question
 

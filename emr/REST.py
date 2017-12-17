@@ -2,10 +2,10 @@
 # Was planned for future android app
 import re
 
-import DAO
-from EasyDBObjects import FieldConfig
-
 from rest_framework import serializers
+
+from .DAO import DAO
+from .EasyDBObjects import FieldConfig
 
 
 class Record(object):
@@ -57,7 +57,9 @@ class RecordSerializer(serializers.Serializer):
         print(validated_data)
         to_edit = []
         for field_def in self.table_config.fields:
-            if field_def.field_id in validated_data and validated_data[field_def.field_id] is not None and validated_data[field_def.field_id] != '':
+            if (field_def.field_id in validated_data and
+                    validated_data[field_def.field_id] is not None and
+                    validated_data[field_def.field_id] != ''):
                 to_edit.append([field_def.field_id, validated_data[field_def.field_id], field_def.type])
         self.daoobject.editrecord(self.table_config.id, instance._id, to_edit)
         return Record(self.table_config, **self.daoobject.select_from_record_id(self.table_config.id, instance._id))

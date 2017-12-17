@@ -1,7 +1,10 @@
-*.pyc
-*.sqlite
-/migrations/
-.idea
-venv
 .env
 
+/migrations/
+export/*
+venv
+*.sqlite
+
+.idea
+*.log
+*.pyc

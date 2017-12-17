@@ -1,0 +1,39 @@
+# Define coding styles for editors.
+# See: https://editorconfig.org/#file-format-details
+# See: https://github.com/editorconfig/editorconfig/wiki/EditorConfig-Properties
+
+root = true
+
+[*]
+charset = utf-8
+end_of_line = lf
+indent_size = 2
+indent_style = space
+insert_final_newline = true
+max_line_length = 119
+trim_trailing_whitespace = true
+
+[*.csv]  # For tab-separated files.
+indent_size = 50
+indent_style = tab
+
+[*.{diff,patch}]  # Diff files.
+indent_size = 4
+trim_trailing_whitespace = false
+
+[{*.ini,.coveragerc,setup.cfg}]  # INI files.
+indent_size = 4
+
+[*.md]
+indent_size = 4
+trim_trailing_whitespace = false
+
+[*.py]
+indent_size = 4
+
+[*.rst]
+indent_size = 4
+
+[Makefile]
+indent_size = 4
+indent_style = tab

@@ -1,12 +1,14 @@
+# -*- coding: utf-8 -*-
 from __future__ import print_function
+
 from rest_framework import status
-from rest_framework.views import APIView
 from rest_framework.authentication import SessionAuthentication, BasicAuthentication
 from rest_framework.exceptions import APIException
 from rest_framework.response import Response
+from rest_framework.views import APIView
 
-import DAO
-from REST import Record, RecordSerializer
+from .DAO import DAO
+from .REST import Record, RecordSerializer
 
 
 class CsrfExemptSessionAuthentication(SessionAuthentication):
@@ -15,7 +17,7 @@ class CsrfExemptSessionAuthentication(SessionAuthentication):
         return  # Do not perform CSRF check for the REST API
 
 
-class Utils:
+class Utils(object):
     def __init__(self):
         pass
 
@@ -98,7 +100,12 @@ class RecordDetail(APIView):
             if tablec.id == table_id:
                 result = self.daoobject.select_from_record_id(table_id, pk, showall=Utils.only_viewable(request))
                 if result is not None:
-                    serializer = RecordSerializer(table_config=tablec, instance=Record(tablec, **result), many=False, showall=Utils.only_viewable(request))
+                    serializer = RecordSerializer(
+                        table_config=tablec,
+                        instance=Record(tablec, **result),
+                        many=False,
+                        showall=Utils.only_viewable(request)
+                    )
                     return Response(serializer.data)
         return Response(status=status.HTTP_404_NOT_FOUND)
 

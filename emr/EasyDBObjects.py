@@ -34,7 +34,7 @@ class TableConfig(object):
 class FieldConfig(object):
     
     # Declare field types
-    #*TBC*#
+    # *TBC*#
     # Stupid conversion because the original DB was in spanish...
     field_type_date = 0
     field_type_int = 1
@@ -59,7 +59,7 @@ class FieldConfig(object):
         }
     
     # Dictionary of field'attributes to check in sql and related to here
-    #*TBC*#
+    # *TBC*#
     # Same here, stupid conversion due to the change of DB
     attributes = {
         '_id' : 'id',
@@ -78,7 +78,7 @@ class FieldConfig(object):
         'relacionado' : 'relationship',
         }
     
-    #*TBC*#
+    # *TBC*#
     # Few attributes are not used
     def __init__(self):
         self.id = 0
