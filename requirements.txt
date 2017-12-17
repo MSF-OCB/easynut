@@ -1,11 +1,19 @@
 Django==1.11.5
 djangorestframework==3.6.4
+
+# Database
 MySQL-python==1.2.5
+
+# Utilities
+django-graphos==0.3.41
+lxml==4.1.1
+pillow==4.3.0
 python-decouple==3.1
-uWSGI==2.0.15
 pytz==2017.2
-django-graphos=0.3.41
-lxml=4.1.1
-pillow=4.3.0
-openpyxl=2.4.9
-django-wkhtmltopdf=3.1.0
+
+# Documents
+django-wkhtmltopdf==3.1.0
+openpyxl==2.4.9
+
+# Server
+uWSGI==2.0.15
