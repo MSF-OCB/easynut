@@ -2,6 +2,7 @@
 # Data access object for the easynutdata DB and controller of the app
 
 from __future__ import print_function, unicode_literals
+from collections import defaultdict
 from datetime import date
 from operator import itemgetter
 import csv
