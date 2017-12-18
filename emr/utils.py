@@ -1,7 +1,16 @@
 # -*- coding: utf-8 -*-
+import re
+
+from django.conf import settings
 from django.http import HttpResponse
 from django.utils import timezone
 
+import MySQLdb
+import MySQLdb.converters
+import MySQLdb.cursors
+
+
+RE_CLEAN_SQL = re.compile("[ \n]+", re.MULTILINE)
 
 # See: https://developer.mozilla.org/en-US/docs/Web/HTTP/Basics_of_HTTP/MIME_types/Complete_list_of_MIME_types
 CONTENT_TYPE_CSV = "text/csv"
@@ -17,6 +26,59 @@ def now_for_filename():
 
 def today_for_filename():
     return timezone.now().strftime("%y%m%d")
+
+
+# DATABASE ====================================================================
+
+def get_db():
+    conv = MySQLdb.converters.conversions.copy()
+    conv[246] = float  # convert decimals to floats
+    conv[10] = str  # convert dates
+
+    db = MySQLdb.connect(
+        settings.DATABASES['data']['HOST'],
+        settings.DATABASES['data']['USER'],
+        settings.DATABASES['data']['PASSWORD'],
+        settings.DATABASES['data']['NAME'],
+        conv=conv,
+        cursorclass=MySQLdb.cursors.DictCursor,
+    )
+    return db
+
+
+def clean_sql(sql):
+    return RE_CLEAN_SQL.sub(" ", sql).strip()
+
+
+# CAST VALUES =================================================================
+
+class Cast(object):
+
+    @staticmethod
+    def bool(value):
+        return value == "true"
+
+    @staticmethod
+    def int(value):
+        return int(value)
+
+    @staticmethod
+    def csv(values):
+        if values:
+            return [v.strip() for v in values.split(",")]
+        return None
+
+    @staticmethod
+    def field_kind(kind):
+        mapping = {
+            "fecha": "date",
+            "entero": "int",
+            "texto": "text",
+            "select": "select",
+            "notes": "notes",
+            "radio": "radio",
+        }
+        return mapping[kind] if kind in mapping else kind
 
 
 # HTTP RESPONSES ==============================================================
@@ -43,3 +105,7 @@ def pdf_download_response_factory(filename, content="", *args, **kwargs):
     kwargs["content_type"] = CONTENT_TYPE_PDF
     response = download_response_factory(filename, content=content, *args, **kwargs)
     return response
+
+
+# Default instance of connection to the "data" database.
+DATA_DB = get_db()
