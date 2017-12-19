@@ -1,51 +1,121 @@
 # -*- coding: utf-8 -*-
-from collections import OrderedDict
+from collections import OrderedDict, Iterable
 
 from .utils import DATA_DB, Cast, clean_sql
 
 
+DB_DATA_TABLE_NAME_PATTERN = "tabla_{}"
+DB_CONFIG_TABLE_NAME_PATTERN = "tabla_{}_des"
+DB_FIELD_NAME_PATTERN = "campo_{}"
+
+
 class DynamicField(object):
-    """Dynamic field of a dynamic model (configured in a ``tabla_X_des`` row)."""
+    """Dynamic field of a dynamic model (configured in a row of the model "config table")."""
 
     def __init__(self, attrs):
+        self.value = None
+
+        # Define field attributes.
         for k, v in attrs.iteritems():
             setattr(self, k, v)
+
+
+class DynamicManager(object):
+
+    def __init__(self, model=None):
+        self.model = model  # The model registered with this manager.
+
+    def all(self):
+        """Return all records."""
+        raise NotImplemented()  # @TODO
+
+    def filter(self, **kwargs):
+        """Return all records matching the given parameters."""
+        raise NotImplemented()  # @TODO
+
+    def get(self, **kwargs):
+        """Return a single record matching the given parameters."""
+        raise NotImplemented()  # @TODO
+
+    def _build_sql(self, **kwargs):
+        """Build a SQL query based on the given parameters."""
+        raise NotImplemented()  # @TODO
+
+    def _execute_sql(self, sql):
+        """Execute the given SQL query."""
+        raise NotImplemented()  # @TODO
 
 
 class DynamicModel(object):
-    """Dynamic model (configured in the ``tabla_X_des`` table)."""
+    """Dynamic model (configured in its model "config table")."""
 
-    def __init__(self, attrs):
+    def __init__(self, attrs, data=None):
+        # Define model attributes.
         for k, v in attrs.iteritems():
             setattr(self, k, v)
 
-        # DB tables containing the data and the fields config.
-        self._data_table = "tabla_{}".format(self.id)
-        self._config_table = "tabla_{}_des".format(self.id)
+        # DB tables containing the model data and the fields config.
+        self._db_data_table = DB_DATA_TABLE_NAME_PATTERN.format(self.id)
+        self._db_config_table = DB_CONFIG_TABLE_NAME_PATTERN.format(self.id)
 
+        # Create an instance of the manager and register ourself with it.
+        self.objects = DynamicManager(self)
+
+        # Initialize the fields registry.
         self._fields = OrderedDict()
-        self._init_fields()
+        self._load_fields()
 
-    def _init_fields(self):
+        # Load initial data.
+        if data is not None:
+            self._load_data(data)
+
+    def get_field(self, id):
+        """Get a given dynamic field, loading it if not already available."""
+        return self._fields[id]
+
+    def save(self):
+        """Save this record in DB (using an INSERT or UPDATE)."""
+        raise NotImplemented()  # @TODO
+
+    def delete(self):
+        """Delete this record from DB ."""
+        raise NotImplemented()  # @TODO
+
+    def _load_fields(self):
         """Initialize model fields."""
+        # Build the query to retrieve the fields config.
         sql = clean_sql("""
             SELECT campo_id AS fieldname, presentador AS name, tipo AS kind, varios AS values_list,
                 listado AS has_list, detalle AS has_detail, buscar AS has_find, usar AS has_use,
                 nuevaLinea AS has_new_line, editable AS is_editable, pos AS position
             FROM {table}
             ORDER BY pos
-        """.format(table=self._config_table))
+        """.format(table=self._db_config_table))
 
+        # Execute the query.
         c = DATA_DB.cursor()
         c.execute(sql)
+
+        # If no record found, raise Exception.
+        if c.num_rows() == 0:
+            if ids is None:
+                raise RuntimeError("No dynamic models found in database.")
+            else:
+                raise AttributeError("No dynamic model found matching '{}'.".format(ids))
+
+        # Loop over records.
         for row in c.fetchall():
+            # Apply data conversion.
             self._cast_field_config_row(row)
             key = row["id"]
+            # Create an instance of ``DynamicField`` and store it in the fields registry.
             self._fields[key] = DynamicField(row)
+
+        # Close the DB cursor.
         c.close()
 
     def _cast_field_config_row(self, row):
-        row["id"] = Cast.int(row["fieldname"].replace("campo_", ""))
+        """Apply data conversion on the given field config."""
         row["kind"] = Cast.field_kind(row["kind"])
         row["values_list"] = Cast.csv(row["values_list"])
         row["has_list"] = Cast.bool(row["has_list"])
@@ -56,29 +126,77 @@ class DynamicModel(object):
         row["is_editable"] = Cast.bool(row["is_editable"])
         row["position"] = Cast.int(row["position"])
 
+        # /!\ Dangerous use of ``DB_FIELD_NAME_PATTERN``.
+        row["id"] = Cast.int(row["fieldname"].replace(DB_FIELD_NAME_PATTERN.format(""), ""))
+
 
 class DynamicRegistry(object):
     """Registry of available dynamic models (registered in the ``tablas`` table)."""
 
     def __init__(self):
+        # Initialize the models registry.
         self._models = OrderedDict()
-        self._init_models()
 
-    def _init_models(self):
-        """Initialize all available dynamic models."""
+    def load_models(self, ids=None):
+        """Initialize all available dynamic models, or given ones."""
+        # Build the query to retrieve the models config.
         sql = clean_sql("""
             SELECT CAST(tabla_id AS UNSIGNED) AS id, presentador AS name
             FROM tablas
+            {where}
             ORDER BY id
-        """)
+        """.format(where=self._build_models_where(ids)))
 
+        # Execute the query.
         c = DATA_DB.cursor()
         c.execute(sql)
+
+        # If no record found, raise Exception.
+        if c.num_rows() == 0:
+            if ids is None:
+                raise RuntimeError("No dynamic models found in database.")
+            else:
+                raise AttributeError("No dynamic model found matching '{}'.".format(ids))
+
+        # Loop over records.
         for row in c.fetchall():
+            # Apply data conversion.
             self._cast_model_config_row(row)
+            # Create an instance of ``DynamicModel`` and store it in the models registry.
             key = row["id"]
             self._models[key] = DynamicModel(row)
+
+        # Close the DB cursor.
         c.close()
 
+    def get_model(self, id):
+        """Get a given dynamic model, loading it if not already available."""
+        # If not yet available, load it.
+        if id not in self._models:
+            self.load_models(id)
+        return self._models[id]
+
+    def _build_models_where(self, ids):
+        """Build the WHERE clause to retrieve dynamic models config as requested."""
+        if ids is None:
+            return ""
+        where = "WHERE id"
+        if isinstance(ids, Iterable):
+            where += " IN ({})".format(", ".join(ids))
+        else:
+            where += "={}".format(ids)
+        return where
+
     def _cast_model_config_row(self, row):
+        """Apply data conversion on the given model config."""
         row["id"] = Cast.int(row["id"])
+
+    @staticmethod
+    def get_db_table_name(model_id):
+        """Return the name of the DB data table for the given ID."""
+        return DB_DATA_TABLE_NAME_PATTERN.format(model_id)
+
+    @staticmethod
+    def get_db_field_name(field_id):
+        """Return the name of the DB field for the given ID."""
+        return DB_FIELD_NAME_PATTERN.format(field_id)
