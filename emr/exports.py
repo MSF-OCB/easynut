@@ -40,20 +40,6 @@ class AbstractExportExcel(object):
         if self.book is None:
             raise Exception("No template loaded.")
 
-        # Loop over sheets to populate.
-        for sheet, col, row, columns in self._sheets_iterator():
-            # To start the loops with the increment, easier to read.
-            col -= 1; row -= 1  # NOQA
-
-            # Loop over data records.
-            for item in data.iteritems():
-                row += 1
-
-                # Loop over columns to populate.
-                for mapping in columns:
-                    sheet.cell(column=col, row=row).value = "test"
-                    col += 1
-
     def save(self):
         """Save the Excel file."""
         if self.book is None:
@@ -133,6 +119,23 @@ class ExportExcelList(AbstractExportExcel):
 
     DEFAULT_FILENAME = "default-list.xlsx"
 
+    def populate(self, data):
+        """Populate the template with the given data."""
+        super(ExportExcelList, self).populate(data)
+
+        # Loop over sheets to populate.
+        for sheet, col, row, columns in self._sheets_iterator():
+            # To start the loops with the increment, easier to read.
+            col -= 1; row -= 1  # NOQA
+
+            # Loop over data records.
+            for model in data.iteritems():
+                row += 1
+                # Loop over columns to populate.
+                for field_slug in columns:
+                    col += 1
+                    sheet.cell(column=col, row=row).value = model.get_value_from_slug(field_slug)
+
     def _init_config(self):
         """
         Read the template config.
@@ -196,7 +199,9 @@ class ExportExcelDetail(ExportExcel):
 
     DEFAULT_FILENAME = "default-detail.xlsx"
 
-    def __init__(self):
+    def populate(self, data):
+        """Populate the template with the given data."""
+        super(ExportExcelList, self).populate(data)
         raise NotImplemented()  # @TODO
 
     def _init_config(self):
