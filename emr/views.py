@@ -12,7 +12,7 @@ from graphos.renderers import flot
 from graphos.sources.simple import SimpleDataSource
 
 from .DAO import DAO
-from .exports import ExportExcel
+from .exports import ExportExcelList
 from .ExternalExport import ExternalExport
 from .utils import xlsx_download_response_factory
 

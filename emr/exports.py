@@ -194,7 +194,7 @@ class ExportExcelList(AbstractExportExcel):
                 self._update_db_tables(field_slug)
 
 
-class ExportExcelDetail(ExportExcel):
+class ExportExcelDetail(AbstractExportExcel):
     """Excel export for templates containing the data of a single record."""
 
     DEFAULT_FILENAME = "default-detail.xlsx"
