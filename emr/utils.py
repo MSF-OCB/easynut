@@ -3,7 +3,7 @@ import re
 
 from django.conf import settings
 from django.http import HttpResponse
-from django.utils import timezone
+from django.utils import six, timezone
 
 import MySQLdb
 import MySQLdb.converters
@@ -18,6 +18,14 @@ CONTENT_TYPE_XLS = "application/vnd.ms-excel"
 CONTENT_TYPE_XLSX = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
 CONTENT_TYPE_PDF = "application/pdf"
 CONTENT_TYPE_ZIP = "application/zip"
+
+
+def force_list(value, string_separator=","):
+    if isinstance(value, six.string_types) and string_separator is not None:
+        return value.split(string_separator)
+    if type(value) not in (list, tuple):
+        return [value]
+    return value
 
 
 def now_for_filename():

@@ -2,12 +2,14 @@
 from collections import OrderedDict, Iterable
 import re
 
-from .utils import DataDb, Cast, clean_sql
+from .utils import DataDb, Cast, clean_sql, force_list
 
 
 DB_DATA_TABLE_NAME_FORMAT = "tabla_{}"
 DB_CONFIG_TABLE_NAME_FORMAT = "tabla_{}_des"
 DB_FIELD_NAME_FORMAT = "campo_{}"
+RE_DB_FIELD_NAME_VALIDATION = re.compile(r"^campo_[0-9]+$")
+NON_DYNAMIC_DB_FIELD_NAMES = ("_id", "user", "timestamp")
 
 RE_DATA_SLUG_VALIDATION = re.compile(r"^[0-9]{2}#[0-9]{2}$")
 DATA_SLUG_SEPARATOR = "#"
@@ -16,6 +18,62 @@ DATA_SLUG_FORMAT = "{table_id:02d}#{field_id:02d}"
 MSF_ID = "id"
 MSF_ID_FIELD_NAME = "MSF ID"
 
+
+class DynamicManager(object):
+
+    def __init__(self, model_config):
+        self.model_config = model_config  # The model config registered with this manager.
+
+    def all(self):
+        """Return all records."""
+        sql = self.model_config.build_sql()
+        print "SQL:", sql  # @DEBUG
+        return self._generate_models(sql)
+
+    def filter(self, **kwargs):
+        """Return all records matching the given parameters."""
+        raise NotImplemented()  # @TODO
+
+    def get(self, **kwargs):
+        """Return a single record matching the given parameters."""
+        raise NotImplemented()  # @TODO
+
+    def _generate_models(self, sql):
+        """Generate models list using the given SQL query."""
+        models = []
+        with DataDb.execute(sql) as c:
+            for row in c.fetchall():
+                print "row:", row  # @DEBUG
+                model = self.model_config.model_factory(row)
+                models.append(model)
+        return models
+
+
+class DynamicModel(object):
+
+    def __init__(self, table_id):
+        self.table_id = table_id
+
+        self._model_config = DynamicRegistry.get_model_config(table_id)
+        self.fields = OrderedDict()
+
+        for fieldname in NON_DYNAMIC_DB_FIELD_NAMES:
+            setattr(self, fieldname, None)
+
+    def get_field_config(self, id):
+        return self._model_config.fields_config[id]
+
+    def get_field(self, id):
+        return self.fields[id]
+
+    def load_data(self, data):
+        for fieldname, value in data.iteritems():
+            if fieldname in NON_DYNAMIC_DB_FIELD_NAMES:
+                setattr(self, fieldname, value)
+            else:
+                field_id = self._model_config.get_field_id_from_name(fieldname)
+                if field_id in self._model_config.fields_config:
+                    self.fields[field_id] = value
 
 
 class DynamicFieldConfig(object):
@@ -52,10 +110,32 @@ class DynamicModelConfig(object):
         self.fields_config = OrderedDict()
         self._load_fields_config()
 
+        # Create an instance of the manager and register ourself with it.
+        self.objects = DynamicManager(self)
+
         # Load initial data.
         if data is not None:
             self._load_data(data)
 
+    def model_factory(self, row):
+        model = DynamicModel(self.id)
+        model.load_data(row)
+        return model
+
+    def build_sql(self, fields=["*"], where=None, **kwargs):
+        """Build a SQL query based on the given parameters."""
+        where_clause = "" if where is None else "WHERE " + where
+        sql = clean_sql("""
+            SELECT {fields}
+            FROM {table}
+            {where_clause}
+        """.format(
+            fields=", ".join(force_list(fields)),
+            table=self._db_data_table,
+            where_clause=where_clause,
+        ))
+        sql += " LIMIT 10"  # @DEBUG
+        return sql
 
     def get_field_id_from_name(self, fieldname):
         # /!\ Dangerous use of ``DB_FIELD_NAME_FORMAT``.
@@ -200,41 +280,3 @@ class DynamicRegistry(object):
 
 # Singleton: Override class with its instance.
 DynamicRegistry = DynamicRegistry()
-
-
-# MODELS ======================================================================
-
-class DynamicManager(object):
-
-    def set_model(self, model):
-        """Register the dynamic model with this manager."""
-        self.model = model
-
-    def all(self):
-        """Return all records."""
-        raise NotImplemented()  # @TODO
-
-    def filter(self, **kwargs):
-        """Return all records matching the given parameters."""
-        raise NotImplemented()  # @TODO
-
-    def get(self, **kwargs):
-        """Return a single record matching the given parameters."""
-        raise NotImplemented()  # @TODO
-
-    def _build_sql(self, **kwargs):
-        """Build a SQL query based on the given parameters."""
-        raise NotImplemented()  # @TODO
-
-    def _execute_sql(self, sql):
-        """Execute the given SQL query."""
-        raise NotImplemented()  # @TODO
-
-
-class DynamicModel(object):
-
-    objects = DynamicManager()
-
-    def __init__(self, model=None):
-        # Register this model with its manager.
-        self.objects.set_model(self)
