@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import os
 
 from django.conf import settings
@@ -6,9 +7,6 @@ from openpyxl import load_workbook, Workbook
 from openpyxl.utils import coordinate_from_string, column_index_from_string
 
 from .utils import today_for_filename
-
-
-FIELD_SLUG_SEPARATOR = "#"
 
 
 class AbstractExportExcel(object):
@@ -101,20 +99,16 @@ class AbstractExportExcel(object):
         # Insert "today" between the filename and the extension.
         self.filename = "{}.{}{}".format(filename, today_for_filename(), ext)
 
-    def _update_db_tables(self, field_slug):
+    def _update_db_tables(self, data_slug):
         """Register the table and field."""
-        # Split the field slug into ``(table_id, field_id)``.
-        table_id, field_id = self._split_field_slug(field_slug)
+        # Split the data slug into ``(table_id, field_id)``.
+        table_id, field_id = self._split_data_slug(data_slug)
 
         # Register
         if table_id not in self._db_tables:
             self._db_tables[table_id] = []
         if field_id not in self._db_tables[table_id]:
             self._db_tables[table_id].append(field_id)
-
-    def _split_field_slug(self, field_slug):
-        """Split the field slug into ``(table_id, field_id)``."""
-        return [int(v) for v in field_slug.split(FIELD_SLUG_SEPARATOR)]
 
 
 class ExportExcelList(AbstractExportExcel):
@@ -135,9 +129,9 @@ class ExportExcelList(AbstractExportExcel):
             for model in data.iteritems():
                 row += 1
                 # Loop over columns to populate.
-                for field_slug in columns:
+                for data_slug in columns:
                     col += 1
-                    sheet.cell(column=col, row=row).value = model.get_value_from_slug(field_slug)
+                    sheet.cell(column=col, row=row).value = model.get_value_from_slug(data_slug)
 
     def _init_config(self):
         """
@@ -189,12 +183,12 @@ class ExportExcelList(AbstractExportExcel):
             col -= 1  # To start the loop with the increment, easier to read.
             while True:
                 col += 1
-                # Get the field slug. E.g. ``03#15`` (= ``tabla_3.campo_15``).
-                field_slug = sheet.cell(column=col, row=row).value
-                if not field_slug:
+                # Get the data slug.
+                data_slug = sheet.cell(column=col, row=row).value
+                if not data_slug:
                     break
-                self._config[index]["columns"].append(field_slug)
-                self._update_db_tables(field_slug)
+                self._config[index]["columns"].append(data_slug)
+                self._update_db_tables(data_slug)
 
 
 class ExportExcelDetail(AbstractExportExcel):

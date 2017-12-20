@@ -8,6 +8,9 @@ DB_DATA_TABLE_NAME_FORMAT = "tabla_{}"
 DB_CONFIG_TABLE_NAME_FORMAT = "tabla_{}_des"
 DB_FIELD_NAME_FORMAT = "campo_{}"
 
+RE_DATA_SLUG_VALIDATION = re.compile(r"^[0-9]{2}#[0-9]{2}$")
+DATA_SLUG_SEPARATOR = "#"
+DATA_SLUG_FORMAT = "{table_id:02d}#{field_id:02d}"
 
 
 # MODELS CONFIG ===============================================================
@@ -195,6 +198,11 @@ class DynamicRegistry(object):
     def get_db_field_name(field_id):
         """Return the name of the DB field for the given ID."""
         return DB_FIELD_NAME_FORMAT.format(field_id)
+
+    @staticmethod
+    def split_data_slug(data_slug):
+        """Split the data slug into ``(table_id, field_id)``."""
+        return [int(v) for v in data_slug.split(DATA_SLUG_SEPARATOR)]
 
 
 # Singleton: Override class with its instance.
