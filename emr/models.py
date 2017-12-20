@@ -126,7 +126,8 @@ class DynamicModel(object):
 
 
 class DynamicRegistry(object):
-    """Registry of available dynamic models (registered in the ``tablas`` table)."""
+    """Registry of available dynamic models (registered in the ``tablas`` table). This is a ``Singleton``."""
+    # Singleton pattern: See right after this class definition for the ``Singleton`` implementation.
 
     def __init__(self):
         # Initialize the models registry.

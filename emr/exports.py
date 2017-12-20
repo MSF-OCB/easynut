@@ -19,6 +19,8 @@ class AbstractExportExcel(object):
         self._dao = dao
         self.template = template
         self.filename = filename
+
+        # The workbook.
         self.book = None
 
         # Config of the loaded template.
