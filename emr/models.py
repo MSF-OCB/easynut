@@ -9,11 +9,14 @@ DB_CONFIG_TABLE_NAME_FORMAT = "tabla_{}_des"
 DB_FIELD_NAME_FORMAT = "campo_{}"
 
 
-class DynamicField(object):
+
+# MODELS CONFIG ===============================================================
+
+class DynamicFieldConfig(object):
     """Dynamic field of a dynamic model (configured in a row of the model "config table")."""
 
-    def __init__(self, attrs):
-        self.value = None
+    def __init__(self, model_config, attrs):
+        self.model_config = model_config
 
         # Define field attributes.
         for k, v in attrs.iteritems():
@@ -44,10 +47,11 @@ class DynamicManager(object):
     def _execute_sql(self, sql):
         """Execute the given SQL query."""
         raise NotImplemented()  # @TODO
+        self.value = None
 
 
-class DynamicModel(object):
-    """Dynamic model (configured in its model "config table")."""
+class DynamicModelConfig(object):
+    """Config of a dynamic model (configured in its model "config table")."""
 
     def __init__(self, attrs, data=None):
         # Define model attributes.
