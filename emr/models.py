@@ -28,7 +28,6 @@ class DynamicFieldConfig(object):
         for k, v in attrs.iteritems():
             setattr(self, k, v)
 
-        self.value = None
     @property
     def data_slug(self):
         if self.name == MSF_ID_FIELD_NAME:
