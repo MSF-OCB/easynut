@@ -31,8 +31,10 @@ class AbstractExportExcel(object):
         if self.template:
             self.load_template(template)
 
-    def load_template(self, file_path):
+    def load_template(self, file_path=None):
         """Create the workbook from a template file (located in ``EXPORT_TEMPLATES_DIR``)."""
+        if file_path is None:
+            file_path = self.DEFAULT_FILENAME
         self.book = load_workbook(os.path.join(settings.EXPORT_TEMPLATES_DIR, file_path))
         self._init_config()
 
