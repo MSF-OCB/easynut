@@ -14,7 +14,6 @@ DATA_SLUG_SEPARATOR = "#"
 DATA_SLUG_FORMAT = "{table_id:02d}#{field_id:02d}"
 
 
-# MODELS CONFIG ===============================================================
 
 class DynamicFieldConfig(object):
     """Dynamic field of a dynamic model (configured in a row of the model "config table")."""
@@ -41,17 +40,14 @@ class DynamicModelConfig(object):
         self._db_data_table = DB_DATA_TABLE_NAME_FORMAT.format(self.id)
         self._db_config_table = DB_CONFIG_TABLE_NAME_FORMAT.format(self.id)
 
-        # Initialize the fields registry.
-        self.fields = OrderedDict()
-        self._load_fields()
+        # Initialize the fields config registry.
+        self.fields_config = OrderedDict()
+        self._load_fields_config()
 
         # Load initial data.
         if data is not None:
             self._load_data(data)
 
-    def get_field(self, id):
-        """Get a given dynamic field, loading it if not already available."""
-        return self.fields[id]
 
     def save(self):
         """Save this record in DB (using an INSERT or UPDATE)."""
@@ -61,8 +57,8 @@ class DynamicModelConfig(object):
         """Delete this record from DB ."""
         raise NotImplemented()  # @TODO
 
-    def _load_fields(self):
-        """Initialize model fields."""
+    def _load_fields_config(self):
+        """Initialize model fields config."""
         # Build the query to retrieve the fields config.
         sql = clean_sql("""
             SELECT campo_id AS fieldname, presentador AS name, tipo AS kind, varios AS values_list,
@@ -86,8 +82,8 @@ class DynamicModelConfig(object):
                 # Apply data conversion.
                 self._cast_field_config_row(row)
                 key = row["id"]
-                # Create an instance of ``DynamicFieldConfig`` and store it in the fields registry.
-                self.fields[key] = DynamicFieldConfig(self, row)
+                # Create an instance of ``DynamicFieldConfig`` and store it in the fields config registry.
+                self.fields_config[key] = DynamicFieldConfig(self, row)
 
     def _cast_field_config_row(self, row):
         """Apply data conversion on the given field config."""
@@ -106,22 +102,22 @@ class DynamicModelConfig(object):
 
 
 class DynamicRegistry(object):
-    """Registry of available dynamic models (registered in the ``tablas`` table). This is a ``Singleton``."""
+    """Registry of available dynamic models config (registered in the ``tablas`` table). This is a ``Singleton``."""
     # Singleton pattern: See right after this class definition for the ``Singleton`` implementation.
 
     def __init__(self):
-        # Initialize the models registry.
-        self.models = OrderedDict()
+        # Initialize the models config registry.
+        self.models_config = OrderedDict()
 
-    def load_models(self, ids=None):
-        """Initialize all available dynamic models, or given ones."""
+    def load_models_config(self, ids=None):
+        """Initialize all available dynamic models config, or given ones."""
         # Build the query to retrieve the models config.
         sql = clean_sql("""
             SELECT CAST(tabla_id AS UNSIGNED) AS id, presentador AS name
             FROM tablas
             {where}
             ORDER BY id
-        """.format(where=self._build_models_where(ids)))
+        """.format(where=self._build_models_config_where(ids)))
 
         # Execute the query.
         with DataDb.execute(sql) as c:
@@ -136,18 +132,18 @@ class DynamicRegistry(object):
             for row in c.fetchall():
                 # Apply data conversion.
                 self._cast_model_config_row(row)
-                # Create an instance of ``DynamicModelConfig`` and store it in the models registry.
+                # Create an instance of ``DynamicModelConfig`` and store it in the models config registry.
                 key = row["id"]
-                self.models[key] = DynamicModelConfig(row)
+                self.models_config[key] = DynamicModelConfig(row)
 
-    def get_model(self, id):
+    def get_model_config(self, id):
         """Get a given dynamic model, loading it if not already available."""
         # If not yet available, load it.
-        if id not in self.models:
-            self.load_models(id)
-        return self.models[id]
+        if id not in self.models_config:
+            self.load_models_config(id)
+        return self.models_config[id]
 
-    def _build_models_where(self, ids):
+    def _build_models_config_where(self, ids):
         """Build the WHERE clause to retrieve dynamic models config as requested."""
         if ids is None:
             return ""
