@@ -13,6 +13,9 @@ RE_DATA_SLUG_VALIDATION = re.compile(r"^[0-9]{2}#[0-9]{2}$")
 DATA_SLUG_SEPARATOR = "#"
 DATA_SLUG_FORMAT = "{table_id:02d}#{field_id:02d}"
 
+MSF_ID = "id"
+MSF_ID_FIELD_NAME = "MSF ID"
+
 
 
 class DynamicFieldConfig(object):
@@ -26,6 +29,11 @@ class DynamicFieldConfig(object):
             setattr(self, k, v)
 
         self.value = None
+    @property
+    def data_slug(self):
+        if self.name == MSF_ID_FIELD_NAME:
+            return MSF_ID
+        return DATA_SLUG_FORMAT.format(table_id=self.model_config.id, field_id=self.id)
 
 
 class DynamicModelConfig(object):
@@ -39,6 +47,7 @@ class DynamicModelConfig(object):
         # DB tables containing the model data and the fields config.
         self._db_data_table = DB_DATA_TABLE_NAME_FORMAT.format(self.id)
         self._db_config_table = DB_CONFIG_TABLE_NAME_FORMAT.format(self.id)
+        self._msf_id_field_config = None
 
         # Initialize the fields config registry.
         self.fields_config = OrderedDict()
@@ -84,6 +93,10 @@ class DynamicModelConfig(object):
                 key = row["id"]
                 # Create an instance of ``DynamicFieldConfig`` and store it in the fields config registry.
                 self.fields_config[key] = DynamicFieldConfig(self, row)
+
+                # Register MSF ID field config.
+                if row["name"] == MSF_ID_FIELD_NAME:
+                    self._msf_id_field_config = self.fields_config[key]
 
     def _cast_field_config_row(self, row):
         """Apply data conversion on the given field config."""
