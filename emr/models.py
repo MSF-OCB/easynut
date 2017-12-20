@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from collections import OrderedDict, Iterable
+import re
 
 from .utils import DataDb, Cast, clean_sql
 
