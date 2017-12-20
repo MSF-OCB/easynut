@@ -9,6 +9,65 @@ from openpyxl.utils import coordinate_from_string, column_index_from_string
 from .utils import now_for_filename
 
 
+class ExportDataModel(object):
+    """Create an Excel file containing a list of all tables and fields with their data slug."""
+
+    DEFAULT_FILENAME = "easynut-data-model.{}.xlsx"
+
+    def __init__():
+        self.book = None
+
+    def generate(self):
+        self.book = Workbook()
+        sheet = book.active
+        self._write_headings(sheet)
+        self._write_data(sheet)
+        return self.book
+
+    def save(self, filename=None):
+        """Save as Excel file."""
+        if self.book is None:
+            self.generate()
+        if not filename:
+            filename = DEFAULT_FILENAME.format(now_for_filename())
+        self.book.save(self.filename)
+
+    def _write_headings(self, sheet):
+        headings = ["Data Name", "Data Slug", None, "Table ID", "Table Name", "Field ID", "Field Name"]
+        col = 0
+        for value in headings:
+            col += 1
+            if value is not None:
+                sheet.cell(column=col, row=1).value = value
+
+    def _write_data(self, sheet):
+        DynamicRegistry.load_models_config()
+        row = 1
+
+        # Loop over all models and fields config.
+        for model_id, model_config in DynamicRegistry.models_config.iteritems():
+            for field_id, field_config in model_config.fields_config.iteritems():
+                row += 1
+
+                # Build values.
+                values = [
+                    "{}: {}".format(model_config.name, field_config.name),
+                    field_config.data_slug,
+                    None,
+                    model_id,
+                    model_config.name,
+                    field_id,
+                    field_config.name,
+                ]
+
+                # Write values.
+                col = 0
+                for value in values:
+                    col += 1
+                    if value is not None:
+                        sheet.cell(column=col, row=row).value = value
+
+
 class AbstractExportExcel(object):
 
     DEFAULT_FILENAME = None

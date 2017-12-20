@@ -32,4 +32,5 @@ urlpatterns = [
     url(r'^downloaddefaulters/$', views.downloaddefaulters, name='downloaddefaulters'),
 
     url(r'^export/excel$', views.export_excel, name='export_excel'),
+    url(r'^export/data-model$', views.export_data_model, name='export_data_model'),
 ]

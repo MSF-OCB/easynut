@@ -321,6 +321,21 @@ def downloaddefaulters(request):
 
 
 @login_required
+def export_data_model(request):
+    """Export a list of all tables and fields with their data slug, returned as an Excel file to download."""
+    is_admin_or_redirect(request)
+
+    export = ExportDataModel()
+    book = export.generate()
+
+    # Create download response and write workbook data to response.
+    response = xlsx_download_response_factory(export.filename)
+    excel_book.save(response)
+
+    return response
+
+
+@login_required
 def export_excel(request):
     """Export of all data, returned as an Excel file to download."""
     is_admin_or_redirect(request)
