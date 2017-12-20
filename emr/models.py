@@ -4,9 +4,9 @@ from collections import OrderedDict, Iterable
 from .utils import DATA_DB, Cast, clean_sql
 
 
-DB_DATA_TABLE_NAME_PATTERN = "tabla_{}"
-DB_CONFIG_TABLE_NAME_PATTERN = "tabla_{}_des"
-DB_FIELD_NAME_PATTERN = "campo_{}"
+DB_DATA_TABLE_NAME_FORMAT = "tabla_{}"
+DB_CONFIG_TABLE_NAME_FORMAT = "tabla_{}_des"
+DB_FIELD_NAME_FORMAT = "campo_{}"
 
 
 class DynamicField(object):
@@ -55,11 +55,11 @@ class DynamicModel(object):
             setattr(self, k, v)
 
         # DB tables containing the model data and the fields config.
-        self._db_data_table = DB_DATA_TABLE_NAME_PATTERN.format(self.id)
-        self._db_config_table = DB_CONFIG_TABLE_NAME_PATTERN.format(self.id)
 
         # Create an instance of the manager and register ourself with it.
         self.objects = DynamicManager(self)
+        self._db_data_table = DB_DATA_TABLE_NAME_FORMAT.format(self.id)
+        self._db_config_table = DB_CONFIG_TABLE_NAME_FORMAT.format(self.id)
 
         # Initialize the fields registry.
         self.fields = OrderedDict()
@@ -121,8 +121,8 @@ class DynamicModel(object):
         row["is_editable"] = Cast.bool(row["is_editable"])
         row["position"] = Cast.int(row["position"])
 
-        # /!\ Dangerous use of ``DB_FIELD_NAME_PATTERN``.
-        row["id"] = Cast.int(row["fieldname"].replace(DB_FIELD_NAME_PATTERN.format(""), ""))
+        # /!\ Dangerous use of ``DB_FIELD_NAME_FORMAT``.
+        row["id"] = Cast.int(row["fieldname"].replace(DB_FIELD_NAME_FORMAT.format(""), ""))
 
 
 class DynamicRegistry(object):
@@ -185,12 +185,12 @@ class DynamicRegistry(object):
     @staticmethod
     def get_db_table_name(model_id):
         """Return the name of the DB data table for the given ID."""
-        return DB_DATA_TABLE_NAME_PATTERN.format(model_id)
+        return DB_DATA_TABLE_NAME_FORMAT.format(model_id)
 
     @staticmethod
     def get_db_field_name(field_id):
         """Return the name of the DB field for the given ID."""
-        return DB_FIELD_NAME_PATTERN.format(field_id)
+        return DB_FIELD_NAME_FORMAT.format(field_id)
 
 
 # Singleton: Override class with its instance.
