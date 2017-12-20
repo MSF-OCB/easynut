@@ -6,7 +6,7 @@ from django.conf import settings
 from openpyxl import load_workbook, Workbook
 from openpyxl.utils import coordinate_from_string, column_index_from_string
 
-from .utils import today_for_filename
+from .utils import now_for_filename
 
 
 class AbstractExportExcel(object):
@@ -97,7 +97,7 @@ class AbstractExportExcel(object):
         # Split filename and extension. /!\ The extension contains the/starts with a ".".
         filename, ext = os.path.splitext(os.path.basename(self.template))
         # Insert "today" between the filename and the extension.
-        self.filename = "{}.{}{}".format(filename, today_for_filename(), ext)
+        self.filename = "{}.{}{}".format(filename, now_for_filename(), ext)
 
     def _update_db_tables(self, data_slug):
         """Register the table and field."""
