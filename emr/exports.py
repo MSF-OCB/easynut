@@ -15,8 +15,7 @@ class AbstractExportExcel(object):
 
     DEFAULT_FILENAME = None
 
-    def __init__(self, dao, template=None, filename=None):
-        self._dao = dao
+    def __init__(self, template=None, filename=None):
         self.template = template
         self.filename = filename
 
