@@ -12,7 +12,7 @@ from graphos.renderers import flot
 from graphos.sources.simple import SimpleDataSource
 
 from .DAO import DAO
-from .exports import ExportExcelList
+from .exports import ExportDataModel, ExportExcelList
 from .ExternalExport import ExternalExport
 from .utils import xlsx_download_response_factory
 
@@ -330,7 +330,7 @@ def export_data_model(request):
 
     # Create download response and write workbook data to response.
     response = xlsx_download_response_factory(export.filename)
-    excel_book.save(response)
+    book.save(response)
 
     return response
 
@@ -345,6 +345,6 @@ def export_excel(request):
 
     # Create download response and write workbook data to response.
     response = xlsx_download_response_factory(export.filename)
-    excel_book.save(response)
+    book.save(response)
 
     return response

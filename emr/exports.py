@@ -6,6 +6,7 @@ from django.conf import settings
 from openpyxl import load_workbook, Workbook
 from openpyxl.utils import coordinate_from_string, column_index_from_string
 
+from .models import DynamicRegistry
 from .utils import now_for_filename
 
 
@@ -14,12 +15,13 @@ class ExportDataModel(object):
 
     DEFAULT_FILENAME = "easynut-data-model.{}.xlsx"
 
-    def __init__():
+    def __init__(self):
         self.book = None
+        self.filename = self.DEFAULT_FILENAME.format(now_for_filename())
 
     def generate(self):
         self.book = Workbook()
-        sheet = book.active
+        sheet = self.book.active
         self._write_headings(sheet)
         self._write_data(sheet)
         return self.book
@@ -29,8 +31,8 @@ class ExportDataModel(object):
         if self.book is None:
             self.generate()
         if not filename:
-            filename = DEFAULT_FILENAME.format(now_for_filename())
-        self.book.save(self.filename)
+            filename = self.filename
+        self.book.save(filename)
 
     def _write_headings(self, sheet):
         headings = ["Data Name", "Data Slug", None, "Table ID", "Table Name", "Field ID", "Field Name"]
