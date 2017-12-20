@@ -200,3 +200,7 @@ class DynamicRegistry(object):
     def get_db_field_name(field_id):
         """Return the name of the DB field for the given ID."""
         return DB_FIELD_NAME_PATTERN.format(field_id)
+
+
+# Singleton: Override class with its instance.
+DynamicRegistry = DynamicRegistry()
