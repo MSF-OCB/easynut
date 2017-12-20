@@ -97,7 +97,7 @@ class DynamicModel(object):
         c.execute(sql)
 
         # If no record found, raise Exception.
-        if c.num_rows() == 0:
+        if c.rowcount == 0:
             if ids is None:
                 raise RuntimeError("No dynamic models found in database.")
             else:
@@ -152,7 +152,7 @@ class DynamicRegistry(object):
         c.execute(sql)
 
         # If no record found, raise Exception.
-        if c.num_rows() == 0:
+        if c.rowcount == 0:
             if ids is None:
                 raise RuntimeError("No dynamic models found in database.")
             else:
