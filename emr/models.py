@@ -26,31 +26,6 @@ class DynamicFieldConfig(object):
         for k, v in attrs.iteritems():
             setattr(self, k, v)
 
-
-class DynamicManager(object):
-
-    def __init__(self, model=None):
-        self.model = model  # The model registered with this manager.
-
-    def all(self):
-        """Return all records."""
-        raise NotImplemented()  # @TODO
-
-    def filter(self, **kwargs):
-        """Return all records matching the given parameters."""
-        raise NotImplemented()  # @TODO
-
-    def get(self, **kwargs):
-        """Return a single record matching the given parameters."""
-        raise NotImplemented()  # @TODO
-
-    def _build_sql(self, **kwargs):
-        """Build a SQL query based on the given parameters."""
-        raise NotImplemented()  # @TODO
-
-    def _execute_sql(self, sql):
-        """Execute the given SQL query."""
-        raise NotImplemented()  # @TODO
         self.value = None
 
 
@@ -63,9 +38,6 @@ class DynamicModelConfig(object):
             setattr(self, k, v)
 
         # DB tables containing the model data and the fields config.
-
-        # Create an instance of the manager and register ourself with it.
-        self.objects = DynamicManager(self)
         self._db_data_table = DB_DATA_TABLE_NAME_FORMAT.format(self.id)
         self._db_config_table = DB_CONFIG_TABLE_NAME_FORMAT.format(self.id)
 
@@ -208,3 +180,41 @@ class DynamicRegistry(object):
 
 # Singleton: Override class with its instance.
 DynamicRegistry = DynamicRegistry()
+
+
+# MODELS ======================================================================
+
+class DynamicManager(object):
+
+    def set_model(self, model):
+        """Register the dynamic model with this manager."""
+        self.model = model
+
+    def all(self):
+        """Return all records."""
+        raise NotImplemented()  # @TODO
+
+    def filter(self, **kwargs):
+        """Return all records matching the given parameters."""
+        raise NotImplemented()  # @TODO
+
+    def get(self, **kwargs):
+        """Return a single record matching the given parameters."""
+        raise NotImplemented()  # @TODO
+
+    def _build_sql(self, **kwargs):
+        """Build a SQL query based on the given parameters."""
+        raise NotImplemented()  # @TODO
+
+    def _execute_sql(self, sql):
+        """Execute the given SQL query."""
+        raise NotImplemented()  # @TODO
+
+
+class DynamicModel(object):
+
+    objects = DynamicManager()
+
+    def __init__(self, model=None):
+        # Register this model with its manager.
+        self.objects.set_model(self)
