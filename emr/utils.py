@@ -53,6 +53,22 @@ def clean_sql(sql):
     return RE_CLEAN_SQL.sub(" ", sql).strip()
 
 
+class DataDb(object):
+    """Default connection to the "data" DB. This is a ``Singleton``."""
+    # Singleton pattern: See right after this class definition for the ``Singleton`` implementation.
+
+    def __init__(self):
+        self._db = get_db("data")
+
+    def __getattr__(self, name):
+        if hasattr(self._db, name):
+            return getattr(self._db, name)
+
+
+# Singleton: Override class with its instance.
+DataDb = DataDb()
+
+
 # CAST VALUES =================================================================
 
 class Cast(object):
@@ -108,7 +124,3 @@ def pdf_download_response_factory(filename, content="", *args, **kwargs):
     kwargs["content_type"] = CONTENT_TYPE_PDF
     response = download_response_factory(filename, content=content, *args, **kwargs)
     return response
-
-
-# Default instance of connection to the "data" database.
-DATA_DB = get_db()
