@@ -30,16 +30,19 @@ def today_for_filename():
 
 # DATABASE ====================================================================
 
-def get_db():
+def get_db(name="data"):
+    if name not in settings.DATABASES:
+        raise AttributeError("Database '{}' is not defined in settings.".format(name))
+
     conv = MySQLdb.converters.conversions.copy()
-    conv[246] = float  # convert decimals to floats
-    conv[10] = str  # convert dates
+    conv[246] = float  # Convert decimals to floats.
+    conv[10] = str  # Convert dates.
 
     db = MySQLdb.connect(
-        settings.DATABASES['data']['HOST'],
-        settings.DATABASES['data']['USER'],
-        settings.DATABASES['data']['PASSWORD'],
-        settings.DATABASES['data']['NAME'],
+        settings.DATABASES[name]["HOST"],
+        settings.DATABASES[name]["USER"],
+        settings.DATABASES[name]["PASSWORD"],
+        settings.DATABASES[name]["NAME"],
         conv=conv,
         cursorclass=MySQLdb.cursors.DictCursor,
     )
