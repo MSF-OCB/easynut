@@ -208,7 +208,7 @@ class DAO(object):
     # Define the sql conditions to search in
     @staticmethod
     def search_condition(fieldc, value):
-        if fieldc.type == 1:
+        if fieldc.type == 1 and value and isinstance(value, (int, long)):
             return '{} = {}'.format(fieldc.field_id, value)
         elif fieldc.type == 0 and value != 'NULL':
             return '{} = STR_TO_DATE(\'{}\', "%Y-%m-%d")'.format(fieldc.field_id, value)
