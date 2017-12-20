@@ -180,11 +180,11 @@ class DynamicRegistry(object):
         """Build the WHERE clause to retrieve dynamic models config as requested."""
         if ids is None:
             return ""
-        where = "WHERE id"
+        where = "WHERE CAST(tabla_id AS UNSIGNED) "
         if isinstance(ids, Iterable):
-            where += " IN ({})".format(", ".join(ids))
+            where += "IN ({})".format(", ".join(ids))
         else:
-            where += "={}".format(ids)
+            where += "= {}".format(ids)
         return where
 
     def _cast_model_config_row(self, row):
