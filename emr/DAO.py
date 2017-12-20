@@ -502,56 +502,38 @@ class DAO(object):
     def generateExport(self):
         c = self.db.cursor()
         exportDir = os.path.join(settings.BASE_DIR, 'export/')
-        alldata = defaultdict(tuple)
         for tablec in self.tables_config:
-            with open(exportDir+'CSVFiles/'+re.sub(r'[^\w\-_\. ]', '', tablec.name)+'.csv', 'wb') as mycsv:
-                wr = csv.writer(mycsv, quoting=csv.QUOTE_ALL)
-                columns = [field.name for field in tablec.fields] + ['User', 'Timestamp']
+            with open(exportDir+'CSVFiles/'+re.sub('[^\w\-_\. ]', '', tablec.name)+'.csv', 'wb') as mycsv:
+                wr = csv.writer(mycsv, quoting=csv.QUOTE_ALL)                
+                columns = []
+                sqlquery= 'SELECT '
+                params = []
+                for counter, field in enumerate(tablec.fields):
+                    if counter == (len(tablec.fields) - 1):
+                        sqlquery = sqlquery + ', user, timestamp'
+                    else:
+                        if counter == 0:
+                            sqlquery = sqlquery + ' {}'
+                        else:
+                            sqlquery = sqlquery + ', {}'
+                        params.append(field.field_id)
+                        columns.append(str(field.name))
+                columns.append('User')
+                columns.append('Timestamp')
+                sqlquery = sqlquery + ' FROM {}'
+                params.append(tablec.sql_table_config_name)
                 wr.writerow(self.dataclean(columns))
-
-                c.execute(
-                    'SELECT ' + ", ".join([field.field_id for field in tablec.fields] + ['user', 'timestamp']) +
-                    ' FROM ' + tablec.sql_table_config_name
-                )
+                c.execute(sqlquery.format(*params)) 
                 for row in c.fetchall():
                     wr.writerow(self.dataclean(row))
-                    if tablec.id == '1':
-                        alldata[row[0]] = self.dataclean(row) + (len(self.tables_config) - 1) * ['']
-                        allcolumns = columns
-
-        c.close()
-        c = self.db.cursor()
-
-        for tablec in self.tables_config:
-            if tablec.id == '1':
-                continue
-            allcolumns.append(tablec.name)
-            c.execute('SELECT ' + ", ".join([field.field_id for field in tablec.fields] + ['user', 'timestamp']) +
-                      ' FROM ' + tablec.sql_table_config_name + ' ORDER BY campo_1 DESC')
-            for row in c.fetchall():
-                alldata[row[1]][20 + int(tablec.id)] += re.sub(
-                    r",,",
-                    ",-n/r-,",
-                    re.sub(
-                        "," + row[1] + ",",
-                        ",",
-                        ",".join(self.dataclean(row))
-                    )
-                ) + "\n"
-
-        with open(exportDir + 'CSVFiles/fullDB.csv', 'wb') as indexcsv:
-                wr = csv.writer(indexcsv, quoting=csv.QUOTE_ALL, delimiter=";".encode('utf-8'))
-                wr.writerow(allcolumns)
-                for i in alldata:
-                    wr.writerow(alldata[i])
-
-        filename = 'EasyNutExport' + date.today().strftime('%d%b%Y')
+        filename = 'EasyNutExport'+date.today().strftime('%d%b%Y')                     
         zipPath = exportDir
         toZip = exportDir + 'CSVFiles'
         for f in os.listdir(exportDir):
             if re.search('^EasyNutExport([0-9a-zA-Z]+).zip', f):
                 os.remove(os.path.join(exportDir, f))
         shutil.make_archive(zipPath + filename, 'zip', toZip)
+        c.close()
         return zipPath + filename
 
     # *TBC*#
