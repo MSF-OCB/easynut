@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from collections import OrderedDict, Iterable
 
-from .utils import DATA_DB, Cast, clean_sql
+from .utils import DataDb, Cast, clean_sql
 
 
 DB_DATA_TABLE_NAME_FORMAT = "tabla_{}"
