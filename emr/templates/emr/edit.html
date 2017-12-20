@@ -11,7 +11,7 @@
 					</tr>
 				</table>
 				<br/>
-				<form action="{% url 'emr:save' %}" type="get">
+				<form action="{% url 'emr:save' %}" method="post">
 					{% csrf_token %}
 					<input type="hidden" name="record_id" value="{{ record.1 }}">
 					<input type="hidden" name="table_id" value="{{ record.0 }}">	
