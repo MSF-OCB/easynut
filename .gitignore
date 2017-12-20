@@ -2,6 +2,7 @@
 
 /migrations/
 export/*
+static/
 venv
 *.sqlite
 
