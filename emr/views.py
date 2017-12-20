@@ -17,6 +17,12 @@ from .ExternalExport import ExternalExport
 from .utils import xlsx_download_response_factory
 
 
+def is_admin_or_redirect(request):
+    # User must be in group "Admin".
+    if not request.user.groups.filter(id=2).exists():
+        return index(request)
+
+
 # Display log in page
 def loginview(request):
     if request.method == 'POST':
@@ -230,56 +236,55 @@ def deleterecord(request, table_id, record_id):
 # Download raw export
 @login_required
 def downloadexport(request):
+    is_admin_or_redirect(request)
+
     daoobject = DAO()
     daoobject.set_tables_config()
     daoobject.setEasyUser(request.user)
-    # If user is in group "Admin"
-    if request.user.groups.filter(id=2).exists():
-        zip = daoobject.generateExport()+'.zip'
-        if os.path.exists(zip):
-            with open(zip, 'rb') as fh:
-                response = HttpResponse(fh.read(), content_type="application/zip")
-                response['Content-Disposition'] = 'inline; filename=' + os.path.basename(zip)
-                return response
-        raise Http404
-    else:
-        return index(request)
+
+    zip = daoobject.generateExport()+'.zip'
+    if os.path.exists(zip):
+        with open(zip, 'rb') as fh:
+            response = HttpResponse(fh.read(), content_type="application/zip")
+            response['Content-Disposition'] = 'inline; filename=' + os.path.basename(zip)
+            return response
+    raise Http404
 
 
 # Download single-file export
 @login_required
 def downloadsfexport(request):
+    is_admin_or_redirect(request)
+
     daoobject = DAO()
     daoobject.set_tables_config()
     daoobject.setEasyUser(request.user)
-    if request.user.groups.filter(id=2).exists():
-        zip = daoobject.generateSingleFileExport()+'.zip'
-        if os.path.exists(zip):
-            with open(zip, 'rb') as fh:
-                response = HttpResponse(fh.read(), content_type="application/zip")
-                response['Content-Disposition'] = 'inline; filename=' + os.path.basename(zip)
-                return response
-        raise Http404
-    else:
-        return index(request)
+
+    zip = daoobject.generateSingleFileExport()+'.zip'
+    if os.path.exists(zip):
+        with open(zip, 'rb') as fh:
+            response = HttpResponse(fh.read(), content_type="application/zip")
+            response['Content-Disposition'] = 'inline; filename=' + os.path.basename(zip)
+            return response
+    raise Http404
 
 
 # Download backup
 @login_required
 def downloadbackup(request):
+    is_admin_or_redirect(request)
+
     daoobject = DAO()
     daoobject.set_tables_config()
     daoobject.setEasyUser(request.user)
-    if request.user.groups.filter(id=2).exists():
-        file = u'/opt/shared/backup.gz.enc'
-        if os.path.exists(file):
-            with open(file, 'rb') as fh:
-                response = HttpResponse(fh.read(), content_type="application/zip")
-                response['Content-Disposition'] = 'inline; filename=' + os.path.basename(file)
-                return response
-        raise Http404
-    else:
-        return index(request)
+
+    file = u'/opt/shared/backup.gz.enc'
+    if os.path.exists(file):
+        with open(file, 'rb') as fh:
+            response = HttpResponse(fh.read(), content_type="application/zip")
+            response['Content-Disposition'] = 'inline; filename=' + os.path.basename(file)
+            return response
+    raise Http404
 
 
 # Download list of absents
@@ -287,46 +292,41 @@ def downloadbackup(request):
 # This is a specific customization for a health center. Should not be here
 @login_required
 def downloadabsents(request):
+    is_admin_or_redirect(request)
+
     extE = ExternalExport()
-    if request.user.groups.filter(id=2).exists():
-        csv = extE.getAbsents()
-        if os.path.exists(csv):
-            with open(csv, 'rb') as fh:
-                response = HttpResponse(fh.read(), content_type="text/csv")
-                response['Content-Disposition'] = 'inline; filename=' + os.path.basename(csv)
-                return response
-        raise Http404
-    else:
-        return index(request)
+    csv = extE.getAbsents()
+    if os.path.exists(csv):
+        with open(csv, 'rb') as fh:
+            response = HttpResponse(fh.read(), content_type="text/csv")
+            response['Content-Disposition'] = 'inline; filename=' + os.path.basename(csv)
+            return response
+    raise Http404
 
 
 # *TBC*#
 # Same as up
 @login_required
 def downloaddefaulters(request):
+    is_admin_or_redirect(request)
+
     extE = ExternalExport()
-    if request.user.groups.filter(id=2).exists():
-        csv = extE.getDefaulters()
-        if os.path.exists(csv):
-            with open(csv, 'rb') as fh:
-                response = HttpResponse(fh.read(), content_type="text/csv")
-                response['Content-Disposition'] = 'inline; filename=' + os.path.basename(csv)
-                return response
-        raise Http404
-    else:
-        return index(request)
+    csv = extE.getDefaulters()
+    if os.path.exists(csv):
+        with open(csv, 'rb') as fh:
+            response = HttpResponse(fh.read(), content_type="text/csv")
+            response['Content-Disposition'] = 'inline; filename=' + os.path.basename(csv)
+            return response
+    raise Http404
 
 
 @login_required
 def export_excel(request):
     """Export of all data, returned as an Excel file to download."""
-    # User must be in group "Admin".
-    if not request.user.groups.filter(id=2).exists():
-        return index(request)
+    is_admin_or_redirect(request)
 
-    dao = DAO.factory(user=request.user)
-    export = ExportExcel(dao)
-    excel_book = export.generate()
+    export = ExportExcel()
+    book = export.generate()
 
     # Create download response and write workbook data to response.
     response = xlsx_download_response_factory(export.filename)
