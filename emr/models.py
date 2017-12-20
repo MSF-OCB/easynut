@@ -62,7 +62,7 @@ class DynamicModel(object):
         self.objects = DynamicManager(self)
 
         # Initialize the fields registry.
-        self._fields = OrderedDict()
+        self.fields = OrderedDict()
         self._load_fields()
 
         # Load initial data.
@@ -71,7 +71,7 @@ class DynamicModel(object):
 
     def get_field(self, id):
         """Get a given dynamic field, loading it if not already available."""
-        return self._fields[id]
+        return self.fields[id]
 
     def save(self):
         """Save this record in DB (using an INSERT or UPDATE)."""
@@ -109,7 +109,7 @@ class DynamicModel(object):
             self._cast_field_config_row(row)
             key = row["id"]
             # Create an instance of ``DynamicField`` and store it in the fields registry.
-            self._fields[key] = DynamicField(row)
+            self.fields[key] = DynamicField(row)
 
         # Close the DB cursor.
         c.close()
@@ -135,7 +135,7 @@ class DynamicRegistry(object):
 
     def __init__(self):
         # Initialize the models registry.
-        self._models = OrderedDict()
+        self.models = OrderedDict()
 
     def load_models(self, ids=None):
         """Initialize all available dynamic models, or given ones."""
@@ -164,7 +164,7 @@ class DynamicRegistry(object):
             self._cast_model_config_row(row)
             # Create an instance of ``DynamicModel`` and store it in the models registry.
             key = row["id"]
-            self._models[key] = DynamicModel(row)
+            self.models[key] = DynamicModel(row)
 
         # Close the DB cursor.
         c.close()
@@ -172,9 +172,9 @@ class DynamicRegistry(object):
     def get_model(self, id):
         """Get a given dynamic model, loading it if not already available."""
         # If not yet available, load it.
-        if id not in self._models:
+        if id not in self.models:
             self.load_models(id)
-        return self._models[id]
+        return self.models[id]
 
     def _build_models_where(self, ids):
         """Build the WHERE clause to retrieve dynamic models config as requested."""
