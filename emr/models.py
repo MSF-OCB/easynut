@@ -123,8 +123,15 @@ class DynamicRegistry(object):
         # Initialize the models config registry.
         self.models_config = OrderedDict()
 
+        # Whether all models config have been loaded.
+        self._all_models_config_loaded = False
+
     def load_models_config(self, ids=None):
         """Initialize all available dynamic models config, or given ones."""
+        # Don't reload all models config if it has already been done.
+        if ids is None and self._all_models_config_loaded:
+            return
+
         # Build the query to retrieve the models config.
         sql = clean_sql("""
             SELECT CAST(tabla_id AS UNSIGNED) AS id, presentador AS name
@@ -149,6 +156,9 @@ class DynamicRegistry(object):
                 # Create an instance of ``DynamicModelConfig`` and store it in the models config registry.
                 key = row["id"]
                 self.models_config[key] = DynamicModelConfig(row)
+
+        if ids is None:
+            self._all_models_config_loaded = True
 
     def get_model_config(self, id):
         """Get a given dynamic model, loading it if not already available."""
