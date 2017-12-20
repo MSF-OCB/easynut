@@ -93,26 +93,21 @@ class DynamicModel(object):
         """.format(table=self._db_config_table))
 
         # Execute the query.
-        c = DATA_DB.cursor()
-        c.execute(sql)
+        with DataDb.execute(sql) as c:
+            # If no record found, raise Exception.
+            if c.rowcount == 0:
+                if ids is None:
+                    raise RuntimeError("No dynamic models found in database.")
+                else:
+                    raise AttributeError("No dynamic model found matching '{}'.".format(ids))
 
-        # If no record found, raise Exception.
-        if c.rowcount == 0:
-            if ids is None:
-                raise RuntimeError("No dynamic models found in database.")
-            else:
-                raise AttributeError("No dynamic model found matching '{}'.".format(ids))
-
-        # Loop over records.
-        for row in c.fetchall():
-            # Apply data conversion.
-            self._cast_field_config_row(row)
-            key = row["id"]
-            # Create an instance of ``DynamicField`` and store it in the fields registry.
-            self.fields[key] = DynamicField(row)
-
-        # Close the DB cursor.
-        c.close()
+            # Loop over records.
+            for row in c.fetchall():
+                # Apply data conversion.
+                self._cast_field_config_row(row)
+                key = row["id"]
+                # Create an instance of ``DynamicFieldConfig`` and store it in the fields registry.
+                self.fields[key] = DynamicFieldConfig(self, row)
 
     def _cast_field_config_row(self, row):
         """Apply data conversion on the given field config."""
@@ -148,26 +143,21 @@ class DynamicRegistry(object):
         """.format(where=self._build_models_where(ids)))
 
         # Execute the query.
-        c = DATA_DB.cursor()
-        c.execute(sql)
+        with DataDb.execute(sql) as c:
+            # If no record found, raise Exception.
+            if c.rowcount == 0:
+                if ids is None:
+                    raise RuntimeError("No dynamic models found in database.")
+                else:
+                    raise AttributeError("No dynamic model found matching '{}'.".format(ids))
 
-        # If no record found, raise Exception.
-        if c.rowcount == 0:
-            if ids is None:
-                raise RuntimeError("No dynamic models found in database.")
-            else:
-                raise AttributeError("No dynamic model found matching '{}'.".format(ids))
-
-        # Loop over records.
-        for row in c.fetchall():
-            # Apply data conversion.
-            self._cast_model_config_row(row)
-            # Create an instance of ``DynamicModel`` and store it in the models registry.
-            key = row["id"]
-            self.models[key] = DynamicModel(row)
-
-        # Close the DB cursor.
-        c.close()
+            # Loop over records.
+            for row in c.fetchall():
+                # Apply data conversion.
+                self._cast_model_config_row(row)
+                # Create an instance of ``DynamicModelConfig`` and store it in the models registry.
+                key = row["id"]
+                self.models[key] = DynamicModelConfig(row)
 
     def get_model(self, id):
         """Get a given dynamic model, loading it if not already available."""

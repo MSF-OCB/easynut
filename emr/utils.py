@@ -53,6 +53,23 @@ def clean_sql(sql):
     return RE_CLEAN_SQL.sub(" ", sql).strip()
 
 
+class DbExecute(object):
+    """Allow to execute a query in a cursor using the ``with`` statement."""
+
+    def __init__(self, db, sql):
+        self._db = db
+        self._sql = sql
+        self._cursor = None
+
+    def __enter__(self):
+        self._cursor = self._db.cursor()
+        self._cursor.execute(self._sql)
+        return self._cursor
+
+    def __exit__(self, type, value, traceback):
+        self._cursor.close()
+
+
 class DataDb(object):
     """Default connection to the "data" DB. This is a ``Singleton``."""
     # Singleton pattern: See right after this class definition for the ``Singleton`` implementation.
@@ -63,6 +80,14 @@ class DataDb(object):
     def __getattr__(self, name):
         if hasattr(self._db, name):
             return getattr(self._db, name)
+
+    def execute(self, sql):
+        """
+        Execute a query on the "data DB, in a cursor, closing it afterward.
+
+        Usage: ``with DataDb.execute(sql) as c:``
+        """
+        return DbExecute(self._db, sql)
 
 
 # Singleton: Override class with its instance.
