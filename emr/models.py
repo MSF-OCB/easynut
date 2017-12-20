@@ -57,6 +57,10 @@ class DynamicModelConfig(object):
             self._load_data(data)
 
 
+    def get_field_id_from_name(self, fieldname):
+        # /!\ Dangerous use of ``DB_FIELD_NAME_FORMAT``.
+        return Cast.int(fieldname.replace(DB_FIELD_NAME_FORMAT.format(""), ""))
+
     def save(self):
         """Save this record in DB (using an INSERT or UPDATE)."""
         raise NotImplemented()  # @TODO
@@ -99,6 +103,7 @@ class DynamicModelConfig(object):
 
     def _cast_field_config_row(self, row):
         """Apply data conversion on the given field config."""
+        row["id"] = self.get_field_id_from_name(row["fieldname"])
         row["kind"] = Cast.field_kind(row["kind"])
         row["values_list"] = Cast.csv(row["values_list"])
         row["has_list"] = Cast.bool(row["has_list"])
@@ -108,9 +113,6 @@ class DynamicModelConfig(object):
         row["has_new_line"] = Cast.bool(row["has_new_line"])
         row["is_editable"] = Cast.bool(row["is_editable"])
         row["position"] = Cast.int(row["position"])
-
-        # /!\ Dangerous use of ``DB_FIELD_NAME_FORMAT``.
-        row["id"] = Cast.int(row["fieldname"].replace(DB_FIELD_NAME_FORMAT.format(""), ""))
 
 
 class DynamicRegistry(object):
