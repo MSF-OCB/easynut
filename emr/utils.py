@@ -3,6 +3,7 @@ import json
 import re
 
 from django.conf import settings
+from django.core.serializers.json import DjangoJSONEncoder
 from django.http import HttpResponse
 from django.utils import six, timezone
 
@@ -163,4 +164,7 @@ def pdf_download_response_factory(filename, content="", *args, **kwargs):
 # DEBUGGING ===================================================================
 
 def debug(label, var):
-    print label, json.dumps(var, indent=2)
+    try:
+        print label, json.dumps(var, indent=2, cls=DjangoJSONEncoder)
+    except:
+        print label, var
