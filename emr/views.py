@@ -14,7 +14,6 @@ from graphos.sources.simple import SimpleDataSource
 from .DAO import DAO
 from .exports import ExportDataModel, ExportExcelList
 from .ExternalExport import ExternalExport
-from .utils import xlsx_download_response_factory
 
 
 def is_admin_or_redirect(request):
@@ -324,27 +323,22 @@ def downloaddefaulters(request):
 def export_data_model(request):
     """Export a list of all tables and fields with their data slug, returned as an Excel file to download."""
     is_admin_or_redirect(request)
-
     export = ExportDataModel()
-    book = export.generate()
-
-    # Create download response and write workbook data to response.
-    response = xlsx_download_response_factory(export.filename)
-    book.save(response)
-
+    response = export.save_to_response()
     return response
 
 
 @login_required
-def export_excel(request):
+def export_excel_list(request):
     """Export of all data, returned as an Excel file to download."""
     is_admin_or_redirect(request)
 
-    export = ExportExcel()
-    book = export.generate()
+    export = ExportExcelList()
 
-    # Create download response and write workbook data to response.
-    response = xlsx_download_response_factory(export.filename)
-    book.save(response)
+    # Retrieve data and populate export.
+    # data = []
+    # export.populate(data)
 
+    # Get a response containing the Excel file.
+    response = export.save_to_response()
     return response

@@ -31,6 +31,6 @@ urlpatterns = [
     url(r'^downloadabsents/$', views.downloadabsents, name='downloadabsents'),
     url(r'^downloaddefaulters/$', views.downloaddefaulters, name='downloaddefaulters'),
 
-    url(r'^export/excel$', views.export_excel, name='export_excel'),
     url(r'^export/data-model$', views.export_data_model, name='export_data_model'),
+    url(r'^export/excel/list$', views.export_excel_list, name='export_excel_list'),
 ]
