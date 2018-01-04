@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import json
 import os
+from collections import OrderedDict
 
 from django.conf import settings
 
@@ -44,7 +45,7 @@ class ExportDataModel(object):
 
         response = xlsx_download_response_factory(self.filename)
         self.book.save(response)
-        return reponse
+        return response
 
     def _save_common(self):
         """Common steps for "save" methods."""
@@ -171,7 +172,7 @@ class AbstractExportExcel(object):
 
         response = xlsx_download_response_factory(self.filename)
         self.book.save(response)
-        return reponse
+        return response
 
     def _generate_filename(self):
         """Generate a filename based on the template name and "today"."""
@@ -202,7 +203,7 @@ class AbstractExportExcel(object):
     def _sheets_iterator(self, for_config=False):
         """Iterate over sheets to populate."""
         for index, config in self._config.iteritems():
-            sheet = self.get_sheet(name)
+            sheet = self.get_sheet(index)
             col, row = config["start_col"], config["start_row"]
             if for_config:  # For config purpose.
                 yield index, sheet, col, row
@@ -212,7 +213,7 @@ class AbstractExportExcel(object):
     def _update_db_tables(self, data_slug):
         """Register the table and field."""
         # Split the data slug into ``(table_id, field_id)``.
-        table_id, field_id = self._split_data_slug(data_slug)
+        table_id, field_id = DynamicRegistry.split_data_slug(data_slug)
 
         # Register
         if table_id not in self._db_tables:
