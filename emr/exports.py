@@ -97,8 +97,8 @@ class AbstractExportExcel(object):
         # Registry of DB data tables and their fields in use in the loaded template.
         self._db_tables = {}
 
-        if self.template:
-            self.load_template(template)
+        # Load the template.
+        self.load_template(template)
 
     def load_template(self, filename=None):
         """Create the workbook from a template file (located under ``EXPORTS_TEMPLATES_DIR``)."""
