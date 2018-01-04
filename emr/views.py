@@ -336,8 +336,7 @@ def export_excel_list(request):
     export = ExportExcelList()
 
     # Retrieve data and populate export.
-    # data = []
-    # export.populate(data)
+    export.populate()
 
     # Get a response containing the Excel file.
     response = export.save_to_response()
