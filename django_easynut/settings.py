@@ -143,4 +143,4 @@ SESSION_SAVE_EVERY_REQUEST = True
 
 # Exports
 EXPORTS_ROOT = os.path.join(BASE_DIR, "export")  # Where generated reports are saved.
-EXPORTS_TEMPLATES_DIR = os.path.join(STATIC_ROOT, "emr", "exports", "templates")  # Where export templates are.
+EXPORTS_TEMPLATES_DIR = os.path.join(BASE_DIR, "emr", "exports", "templates")  # Where export templates are.
