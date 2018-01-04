@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import json
 import re
 
 from django.conf import settings
@@ -157,3 +158,9 @@ def pdf_download_response_factory(filename, content="", *args, **kwargs):
     kwargs["content_type"] = CONTENT_TYPE_PDF
     response = download_response_factory(filename, content=content, *args, **kwargs)
     return response
+
+
+# DEBUGGING ===================================================================
+
+def debug(label, var):
+    print label, json.dumps(var, indent=2)
