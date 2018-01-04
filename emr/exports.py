@@ -9,7 +9,7 @@ from openpyxl import load_workbook, Workbook
 from openpyxl.utils import coordinate_from_string, column_index_from_string
 
 from .models import DynamicRegistry
-from .utils import now_for_filename, xlsx_download_response_factory
+from .utils import DataDb, now_for_filename, xlsx_download_response_factory
 
 
 DATA_SLUG_EMPTY_CELL = "#"  # Value allowing to skip a cell while continuing to read config of other columns.
@@ -154,8 +154,8 @@ class AbstractExportExcel(object):
         # Read the template config.
         self._init_config()
 
-    def populate(self, data):
-        """Populate the template with the given data."""
+    def populate(self):
+        """Populate the template with data."""
         if self.book is None:
             raise Exception("No template loaded.")
 
@@ -230,22 +230,25 @@ class ExportExcelList(AbstractExportExcel):
 
     DEFAULT_TEMPLATE = "easynut-list.xlsx"
 
-    def populate(self, data):
-        """Populate the template with the given data."""
-        super(ExportExcelList, self).populate(data)
+    def populate(self):
+        """Populate the template with data."""
+        super(ExportExcelList, self).populate()
 
         # Loop over sheets to populate.
-        for sheet, col, row, columns in self._sheets_iterator():
-            # To start the loops with the increment, easier to read.
-            col -= 1; row -= 1  # NOQA
+        for index, sheet, col, row, columns in self._sheets_iterator():
+            sql = DynamicRegistry.build_sql(self._config[index]["db_tables"])
 
-            # Loop over data records.
-            for model in data.iteritems():
-                row += 1
-                # Loop over columns to populate.
-                for data_slug in columns:
-                    col += 1
-                    sheet.cell(column=col, row=row).value = model.get_value_from_slug(data_slug)
+            with DataDb.execute(sql) as c:
+                # To start the loops with the increment, easier to read.
+                row -= 1  # NOQA
+
+                # Loop over data records.
+                for data_row in c.fetchall():
+                    row += 1
+
+                    # Loop over columns to populate.
+                    for col, data_slug in self._config[index]["columns"].iteritems():
+                        sheet.cell(column=col, row=row).value = data_row[data_slug]
 
     def _init_config(self):
         """
