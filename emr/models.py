@@ -88,8 +88,8 @@ class DynamicFieldConfig(object):
 
     @property
     def data_slug(self):
-        if self.name == MSF_ID_FIELD_NAME:
-            return MSF_ID
+        # if self.name == MSF_ID_FIELD_NAME:
+        #     return MSF_ID
         return DATA_SLUG_FORMAT.format(table_id=self.model_config.id, field_id=self.id)
 
 
