@@ -223,6 +223,9 @@ class DynamicRegistry(object):
     @classmethod
     def build_sql(cls, tables_fields):
         """Build a SQL query based on the given parameters."""
+        if len(tables_fields) == 0:
+            raise Exception("tables_fields is empty.")
+
         select_fields = []
         from_clause = ""
         main_table = None

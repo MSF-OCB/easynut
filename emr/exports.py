@@ -266,7 +266,11 @@ class ExportExcelList(AbstractExportExcelTemplate):
 
         # Loop over sheets to populate.
         for index, sheet, col, row, columns in self._sheets_iterator():
-            sql = DynamicRegistry.build_sql(self._config[index]["db_tables"])
+            tables_fields = self._config[index]["db_tables"]
+            if len(tables_fields) == 0:
+                continue
+
+            sql = DynamicRegistry.build_sql(tables_fields)
 
             with DataDb.execute(sql) as c:
                 # To start the loops with the increment, easier to read.
