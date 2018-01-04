@@ -203,6 +203,9 @@ class AbstractExportExcel(object):
         if not self.filename:
             self._generate_filename()
 
+        # Set active sheet to first one.
+        self.book.active = 0
+
     def _sheets_iterator(self, for_config=False):
         """Iterate over sheets to populate."""
         for index, config in self._config.iteritems():
