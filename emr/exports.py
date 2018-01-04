@@ -34,14 +34,9 @@ class AbstractExportExcel(object):
         col = column_index_from_string(col)
         return col, row
 
-    def get_new_sheet(self, title):
+    def create_sheet(self, title):
         """Create a new sheet."""
-        if len(self.sheets) == 0:
-            sheet = self.book.active
-            sheet.title = title
-        else:
-            sheet = self.book.create_sheet(title=title)
-        return sheet
+        return self.book.create_sheet(title=title)
 
     def get_sheet(self, index):
         """Return a sheet identified by its ID."""
