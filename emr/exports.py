@@ -157,11 +157,11 @@ class AbstractExportExcel(object):
 
     def save(self, filename=None):
         """Save the Excel file (under ``EXPORTS_ROOT``)."""
-        if filename:
-            self.filename = filename
         self._save_common()
+        if not filename:
+            filename = self.filename
 
-        file_path = os.path.join(settings.EXPORTS_ROOT, self.filename)
+        file_path = os.path.join(settings.EXPORTS_ROOT, filename)
         self.book.save(file_path)
         return file_path
 
