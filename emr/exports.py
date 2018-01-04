@@ -8,7 +8,7 @@ from openpyxl import load_workbook, Workbook
 from openpyxl.utils import coordinate_from_string, column_index_from_string
 
 from .models import DynamicRegistry
-from .utils import now_for_filename
+from .utils import now_for_filename, xlsx_download_response_factory
 
 
 class ExportDataModel(object):
@@ -30,12 +30,26 @@ class ExportDataModel(object):
 
     def save(self, filename=None):
         """Save as Excel file."""
-        if self.book is None:
-            self.generate()
+        self._save_common()
         if not filename:
             filename = self.filename
+
         file_path = os.path.join(settings.EXPORTS_ROOT, filename)
         self.book.save(file_path)
+        return file_path
+
+    def save_to_response(self):
+        """Save the Excel in an HTTP response."""
+        self._save_common()
+
+        response = xlsx_download_response_factory(self.filename)
+        self.book.save(response)
+        return reponse
+
+    def _save_common(self):
+        """Common steps for "save" methods."""
+        if self.book is None:
+            self.generate()
 
     def _write_data(self, sheet):
         DynamicRegistry.load_models_config()
@@ -141,17 +155,23 @@ class AbstractExportExcel(object):
         if self.book is None:
             raise Exception("No template loaded.")
 
-    def save(self):
+    def save(self, filename=None):
         """Save the Excel file (under ``EXPORTS_ROOT``)."""
-        if self.book is None:
-            raise Exception("No template loaded.")
+        if filename:
+            self.filename = filename
+        self._save_common()
 
-        if not self.filename:
-            self._generate_filename()
         file_path = os.path.join(settings.EXPORTS_ROOT, self.filename)
         self.book.save(file_path)
+        return file_path
 
+    def save_to_response(self):
+        """Save the Excel file in an HTTP response."""
+        self._save_common()
 
+        response = xlsx_download_response_factory(self.filename)
+        self.book.save(response)
+        return reponse
 
     def _generate_filename(self):
         """Generate a filename based on the template name and "today"."""
@@ -169,6 +189,15 @@ class AbstractExportExcel(object):
         - See the concrete class for more specs.
         """
         raise NotImplemented()
+
+    def _save_common(self):
+        """Common steps for "save" methods."""
+        if self.book is None:
+            raise Exception("No template loaded.")
+
+        # Ensure the filename is defined.
+        if not self.filename:
+            self._generate_filename()
 
     def _sheets_iterator(self, for_config=False):
         """Iterate over sheets to populate."""
