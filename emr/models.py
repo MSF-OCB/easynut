@@ -140,6 +140,16 @@ class DynamicModelConfig(object):
         sql += " LIMIT 10"  # @DEBUG
         return sql
 
+    @property
+    def msf_id_db_field_name(self):
+        if self._msf_id_field_config is None:
+            return None
+        return self._msf_id_field_config.fieldname
+
+    def get_field_config(self, id):
+        """Get a given dynamic field config."""
+        return self.fields_config[id]
+
     def get_field_id_from_name(self, fieldname):
         # /!\ Dangerous use of ``DB_FIELD_NAME_FORMAT``.
         return Cast.int(fieldname.replace(DB_FIELD_NAME_FORMAT.format(""), ""))
@@ -210,6 +220,38 @@ class DynamicRegistry(object):
         # Whether all models config have been loaded.
         self._all_models_config_loaded = False
 
+    @classmethod
+    def build_sql(cls, tables_fields):
+        """Build a SQL query based on the given parameters."""
+        select_fields = []
+        from_clause = ""
+        main_table = None
+        main_pk_field = None
+
+        for model_id, field_ids in tables_fields.iteritems():
+            table_name = cls.get_db_table_name(model_id)
+            pk_field = cls.get_msf_id_db_field_name(model_id)
+            if main_table is None:
+                main_table = table_name
+                main_pk_field = pk_field
+                from_clause = "FROM {}".format(table_name)
+            else:
+                from_clause += " LEFT JOIN {table} ON {table}.{pk_field}={main_table}.{main_pk_field}".format(
+                    table=table_name, pk_field=pk_field,
+                    main_table=main_table, main_pk_field=main_pk_field,
+                )
+
+            for field_id in field_ids:
+                field_name = cls.get_db_field_name(field_id)
+                data_slug = cls.data_slug(model_id, field_id)
+                select_fields.append("{}.{} AS `{}`".format(table_name, field_name, data_slug))
+
+        sql = clean_sql("""
+            SELECT {fields}
+            {from_clause}
+        """.format(fields=", ".join(select_fields), from_clause=from_clause))
+        return sql
+
     def load_models_config(self, ids=None):
         """Initialize all available dynamic models config, or given ones."""
         # Don't reload all models config if it has already been done.
@@ -244,6 +286,11 @@ class DynamicRegistry(object):
         if ids is None:
             self._all_models_config_loaded = True
 
+    def get_field_config(self, model_id, field_id):
+        """Get a given dynamic field config."""
+        model_config = self.get_model_config(model_id)
+        return model_config.get_field_config(field_id)
+
     def get_model_config(self, id):
         """Get a given dynamic model config, loading it if not already available."""
         # If not yet available, load it.
@@ -269,12 +316,24 @@ class DynamicRegistry(object):
     @staticmethod
     def get_db_table_name(model_id):
         """Return the name of the DB data table for the given ID."""
+        # return self.models_config[model_id]._db_data_table
         return DB_DATA_TABLE_NAME_FORMAT.format(model_id)
 
     @staticmethod
     def get_db_field_name(field_id):
         """Return the name of the DB field for the given ID."""
         return DB_FIELD_NAME_FORMAT.format(field_id)
+
+    @staticmethod
+    def get_msf_id_db_field_name(model_id):
+        """Return the name of the "MSF ID" DB field for the given model ID."""
+        model_config = DynamicRegistry.get_model_config(model_id)
+        return model_config.msf_id_db_field_name
+
+    @staticmethod
+    def data_slug(model_id, field_id):
+        field_config = DynamicRegistry.get_field_config(model_id, field_id)
+        return field_config.data_slug
 
     @staticmethod
     def split_data_slug(data_slug):
