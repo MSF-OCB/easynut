@@ -21,13 +21,6 @@ class AbstractExportExcel(object):
         self.book = None
         self.filename = None
 
-    def generate(self):
-        self.book = Workbook()
-        sheet = self.book.active
-        self._write_headings(sheet)
-        self._write_data(sheet)
-        return self.book
-
     def cell_name_to_col_row(self, cell):
         """Convert a cell name into ``(col, row)`` indexes. E.g. ``B5`` => ``(2, 5)``."""
         col, row = coordinate_from_string(cell)
@@ -82,6 +75,35 @@ class ExportDataModel(AbstractExportExcel):
         super(ExportDataModel, self).__init__()
         self.filename = self.DEFAULT_FILENAME.format(now_for_filename())
 
+    def generate(self):
+        self.book = Workbook()
+        DynamicRegistry.load_models_config()
+
+        self._generate_data_slugs()
+        self._generate_tables()
+
+        return self.book
+
+    def _generate_data_slugs(self):
+        sheet = self.get_sheet(0)
+        sheet.title = "Data Slugs"
+
+        headings = ["Table Name", "Field Name", "Data Slug"]
+        if self.VERBOSE:
+            headings += [None, "Table ID", "Field ID", "Type", "Values List"]
+        self._write_headings(sheet, headings)
+
+        self._write_data_slugs(sheet)
+
+    def _generate_tables(self):
+        sheet = self.create_sheet("Tables")
+
+        headings = ["Table Name"]
+        if self.VERBOSE:
+            headings += ["Table ID"]
+        self._write_headings(sheet, headings)
+
+        self._write_data_tables(sheet)
 
     def _save_common(self):
         """Common steps for "save" methods."""
@@ -90,8 +112,22 @@ class ExportDataModel(AbstractExportExcel):
         except Exception:
             self.generate()
 
-    def _write_data(self, sheet):
-        DynamicRegistry.load_models_config()
+    def _write_data_tables(self, sheet):
+        row = 1
+
+        # Loop over all models config.
+        for model_id, model_config in DynamicRegistry.models_config.iteritems():
+            row += 1
+
+            # Build values.
+            values = [model_config.name]
+            if self.VERBOSE:
+                values += [model_id]
+
+            # Write values.
+            self._write_values(sheet, row, values)
+
+    def _write_data_slugs(self, sheet):
         row = 1
 
         # Loop over all models and fields config.
@@ -101,31 +137,33 @@ class ExportDataModel(AbstractExportExcel):
 
                 # Build values.
                 values = [
-                    "{}: {}".format(model_config.name, field_config.name),
-                    field_config.data_slug,
-                    None,
-                    model_id,
                     model_config.name,
-                    field_id,
                     field_config.name,
+                    field_config.data_slug,
                 ]
                 if self.VERBOSE:
                     values += [
+                        None,
+                        model_id,
+                        field_id,
                         field_config.kind,
                         json.dumps(field_config.values_list) if field_config.values_list else "",
                     ]
 
                 # Write values.
-                col = 0
-                for value in values:
-                    col += 1
-                    if value is not None:
-                        sheet.cell(column=col, row=row).value = value
+                self._write_values(sheet, row, values)
 
-    def _write_headings(self, sheet):
-        headings = ["Data Name", "Data Slug", None, "Table ID", "Table Name", "Field ID", "Field Name"]
-        if self.VERBOSE:
-            headings += ["Type", "Values List"]
+
+    def _write_values(self, sheet, row, values):
+        """Write values on the given row."""
+        col = 0
+        for value in values:
+            col += 1
+            if value is not None:
+                sheet.cell(column=col, row=row).value = value
+
+    def _write_headings(self, sheet, headings):
+        """Write heading row."""
         col = 0
         for value in headings:
             col += 1
