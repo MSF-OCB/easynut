@@ -32,7 +32,8 @@ class ExportDataModel(object):
             self.generate()
         if not filename:
             filename = self.filename
-        self.book.save(filename)
+        file_path = os.path.join(settings.EXPORTS_ROOT, filename)
+        self.book.save(file_path)
 
     def _write_headings(self, sheet):
         headings = ["Data Name", "Data Slug", None, "Table ID", "Table Name", "Field ID", "Field Name"]
@@ -72,7 +73,7 @@ class ExportDataModel(object):
 
 class AbstractExportExcel(object):
 
-    DEFAULT_FILENAME = None
+    DEFAULT_TEMPLATE = None
 
     def __init__(self, template=None, filename=None):
         self.template = template
@@ -90,11 +91,12 @@ class AbstractExportExcel(object):
         if self.template:
             self.load_template(template)
 
-    def load_template(self, file_path=None):
-        """Create the workbook from a template file (located in ``EXPORT_TEMPLATES_DIR``)."""
-        if file_path is None:
-            file_path = self.DEFAULT_FILENAME
-        self.book = load_workbook(os.path.join(settings.EXPORT_TEMPLATES_DIR, file_path))
+    def load_template(self, filename=None):
+        """Create the workbook from a template file (located under ``EXPORTS_TEMPLATES_DIR``)."""
+        if filename is None:
+            filename = self.DEFAULT_TEMPLATE
+        file_path = os.path.join(settings.EXPORTS_TEMPLATES_DIR, filename)
+        self.book = load_workbook(file_path)
         self._init_config()
 
     def populate(self, data):
@@ -103,13 +105,14 @@ class AbstractExportExcel(object):
             raise Exception("No template loaded.")
 
     def save(self):
-        """Save the Excel file."""
+        """Save the Excel file (under ``EXPORTS_ROOT``)."""
         if self.book is None:
             raise Exception("No template loaded.")
 
         if not self.filename:
             self._generate_filename()
-        self.book.save(self.filename)
+        file_path = os.path.join(settings.EXPORTS_ROOT, self.filename)
+        self.book.save(file_path)
 
     def get_sheet(self, index):
         """Return a sheet identified by its ID."""
@@ -175,7 +178,7 @@ class AbstractExportExcel(object):
 class ExportExcelList(AbstractExportExcel):
     """Excel export for templates containing a list of records."""
 
-    DEFAULT_FILENAME = "default-list.xlsx"
+    DEFAULT_TEMPLATE = "easynut-list.xlsx"
 
     def populate(self, data):
         """Populate the template with the given data."""
@@ -255,7 +258,7 @@ class ExportExcelList(AbstractExportExcel):
 class ExportExcelDetail(AbstractExportExcel):
     """Excel export for templates containing the data of a single record."""
 
-    DEFAULT_FILENAME = "default-detail.xlsx"
+    DEFAULT_TEMPLATE = "easynut-detail.xlsx"
 
     def populate(self, data):
         """Populate the template with the given data."""

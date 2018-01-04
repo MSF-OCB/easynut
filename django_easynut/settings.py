@@ -134,7 +134,7 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/1.11/howto/static-files/
 
 STATIC_URL = '/static/'
-STATIC_ROOT = 'static'
+STATIC_ROOT = os.path.join(BASE_DIR, "static")
 
 # Auto log out when browser close or when inactivity of 20 minutes
 SESSION_EXPIRE_AT_BROWSER_CLOSE = True
@@ -142,4 +142,5 @@ SESSION_COOKIE_AGE = 20 * 60
 SESSION_SAVE_EVERY_REQUEST = True
 
 # Exports
-EXPORT_TEMPLATES_DIR = os.path.join(BASE_DIR, "static", "emr", "exports")
+EXPORTS_ROOT = os.path.join(BASE_DIR, "export")  # Where generated reports are saved.
+EXPORTS_TEMPLATES_DIR = os.path.join(STATIC_ROOT, "emr", "exports", "templates")  # Where export templates are.
