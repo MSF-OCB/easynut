@@ -252,7 +252,11 @@ class DynamicRegistry(object):
         sql = clean_sql("""
             SELECT {fields}
             {from_clause}
-        """.format(fields=", ".join(select_fields), from_clause=from_clause))
+            ORDER BY {main_table}.{main_pk_field}
+        """.format(
+            fields=", ".join(select_fields), from_clause=from_clause,
+            main_table=main_table, main_pk_field=main_pk_field,
+        ))
         return sql
 
     def load_models_config(self, ids=None):
