@@ -12,6 +12,9 @@ from .models import DynamicRegistry
 from .utils import now_for_filename, xlsx_download_response_factory
 
 
+DATA_SLUG_EMPTY_CELL = "#"  # Value allowing to skip a cell while continuing to read config of other columns.
+
+
 class ExportDataModel(object):
     """Create an Excel file containing a list of all tables and fields with their data slug."""
 
@@ -271,7 +274,9 @@ class ExportExcelList(AbstractExportExcel):
                 data_slug = sheet.cell(column=col, row=row).value
                 if not data_slug:
                     break
-                self._config[index]["columns"].append(data_slug)
+                if data_slug == DATA_SLUG_EMPTY_CELL:
+                    continue
+                self._config[index]["columns"][col] = data_slug
                 self._update_db_tables(data_slug)
 
     def _init_config_sheets(self):
@@ -295,7 +300,7 @@ class ExportExcelList(AbstractExportExcel):
             self._config[index] = {
                 "start_col": start_col,
                 "start_row": start_row,
-                "columns": [],  # Populated here below.
+                "columns": OrderedDict(),  # Populated in ``self._init_config_columns()``.
             }
 
         # Remove the config sheet.
