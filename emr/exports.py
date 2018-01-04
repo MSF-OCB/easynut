@@ -15,6 +15,8 @@ from .utils import DataDb, now_for_filename, xlsx_download_response_factory
 DATA_SLUG_EMPTY_CELL = "#"  # Value allowing to skip a cell while continuing to read config of other columns.
 
 
+# BASE CLASSES ================================================================
+
 class AbstractExportExcel(object):
 
     def __init__(self):
@@ -64,6 +66,92 @@ class AbstractExportExcel(object):
         # Set active sheet to first one.
         self.book.active = 0
 
+
+class AbstractExportExcelTemplate(AbstractExportExcel):
+
+    DEFAULT_TEMPLATE = None
+
+    def __init__(self, template=None, filename=None):
+        super(AbstractExportExcelTemplate, self).__init__()
+        self.template = template
+        self.filename = filename
+
+        # Config of the loaded template.
+        self._config = OrderedDict()
+
+        # Registry of DB data tables and their fields in use in the loaded template.
+        self._db_tables = {}
+
+        # Load the template.
+        self.load_template(template)
+
+    def load_template(self, template=None):
+        """Create the workbook from a template file (located under ``EXPORTS_TEMPLATES_DIR``)."""
+        # Set the current template.
+        if template is None:
+            template = self.DEFAULT_TEMPLATE
+        self.template = template
+
+        # Load the template.
+        file_path = os.path.join(settings.EXPORTS_TEMPLATES_DIR, self.template)
+        self.book = load_workbook(file_path)
+
+        # Read the template config.
+        self._init_config()
+
+    def populate(self):
+        """Populate the template with data."""
+        if self.book is None:
+            raise Exception("No template loaded.")
+
+    def _generate_filename(self):
+        """Generate a filename based on the template name and "today"."""
+        # Split filename and extension. /!\ The extension contains the/starts with a ".".
+        filename, ext = os.path.splitext(os.path.basename(self.template))
+        # Insert "today" between the filename and the extension.
+        self.filename = "{}.{}{}".format(filename, now_for_filename(), ext)
+
+    def _init_config(self):
+        """
+        Read the template config.
+
+        - The config sheet must be the first sheet in the workbook.
+          It is automatically removed.
+        - See the concrete class for more specs.
+        """
+        raise NotImplemented()
+
+    def _save_common(self):
+        """Common steps for "save" methods."""
+        super(AbstractExportExcelTemplate, self)._save_common()
+
+        # Ensure the filename is defined.
+        if not self.filename:
+            self._generate_filename()
+
+    def _sheets_iterator(self, for_config=False):
+        """Iterate over sheets to populate."""
+        for index, config in self._config.iteritems():
+            sheet = self.get_sheet(index)
+            col, row = config["start_col"], config["start_row"]
+            if for_config:  # For config purpose.
+                yield index, sheet, col, row
+            else:  # For normal use.
+                yield index, sheet, col, row, config["columns"]
+
+    def _update_db_tables(self, sheet_index, data_slug):
+        """Register the tables and fields for a given sheet."""
+        # Split the data slug into ``(table_id, field_id)``.
+        table_id, field_id = DynamicRegistry.split_data_slug(data_slug)
+
+        # Register
+        if table_id not in self._config[sheet_index]["db_tables"]:
+            self._config[sheet_index]["db_tables"][table_id] = []
+        if field_id not in self._config[sheet_index]["db_tables"][table_id]:
+            self._config[sheet_index]["db_tables"][table_id].append(field_id)
+
+
+# EXPORTS =====================================================================
 
 class ExportDataModel(AbstractExportExcel):
     """Create an Excel file containing a list of all tables and fields with their data slug."""
@@ -169,90 +257,6 @@ class ExportDataModel(AbstractExportExcel):
             col += 1
             if value is not None:
                 sheet.cell(column=col, row=1).value = value
-
-
-class AbstractExportExcelTemplate(AbstractExportExcel):
-
-    DEFAULT_TEMPLATE = None
-
-    def __init__(self, template=None, filename=None):
-        super(AbstractExportExcelTemplate, self).__init__()
-        self.template = template
-        self.filename = filename
-
-        # Config of the loaded template.
-        self._config = OrderedDict()
-
-        # Registry of DB data tables and their fields in use in the loaded template.
-        self._db_tables = {}
-
-        # Load the template.
-        self.load_template(template)
-
-    def load_template(self, template=None):
-        """Create the workbook from a template file (located under ``EXPORTS_TEMPLATES_DIR``)."""
-        # Set the current template.
-        if template is None:
-            template = self.DEFAULT_TEMPLATE
-        self.template = template
-
-        # Load the template.
-        file_path = os.path.join(settings.EXPORTS_TEMPLATES_DIR, self.template)
-        self.book = load_workbook(file_path)
-
-        # Read the template config.
-        self._init_config()
-
-    def populate(self):
-        """Populate the template with data."""
-        if self.book is None:
-            raise Exception("No template loaded.")
-
-    def _generate_filename(self):
-        """Generate a filename based on the template name and "today"."""
-        # Split filename and extension. /!\ The extension contains the/starts with a ".".
-        filename, ext = os.path.splitext(os.path.basename(self.template))
-        # Insert "today" between the filename and the extension.
-        self.filename = "{}.{}{}".format(filename, now_for_filename(), ext)
-
-    def _init_config(self):
-        """
-        Read the template config.
-
-        - The config sheet must be the first sheet in the workbook.
-          It is automatically removed.
-        - See the concrete class for more specs.
-        """
-        raise NotImplemented()
-
-    def _save_common(self):
-        """Common steps for "save" methods."""
-        super(AbstractExportExcelTemplate, self)._save_common()
-
-        # Ensure the filename is defined.
-        if not self.filename:
-            self._generate_filename()
-
-    def _sheets_iterator(self, for_config=False):
-        """Iterate over sheets to populate."""
-        for index, config in self._config.iteritems():
-            sheet = self.get_sheet(index)
-            col, row = config["start_col"], config["start_row"]
-            if for_config:  # For config purpose.
-                yield index, sheet, col, row
-            else:  # For normal use.
-                yield index, sheet, col, row, config["columns"]
-
-    def _update_db_tables(self, sheet_index, data_slug):
-        """Register the tables and fields for a given sheet."""
-        # Split the data slug into ``(table_id, field_id)``.
-        table_id, field_id = DynamicRegistry.split_data_slug(data_slug)
-
-        # Register
-        if table_id not in self._config[sheet_index]["db_tables"]:
-            self._config[sheet_index]["db_tables"][table_id] = []
-        if field_id not in self._config[sheet_index]["db_tables"][table_id]:
-            self._config[sheet_index]["db_tables"][table_id].append(field_id)
 
 
 class ExportExcelList(AbstractExportExcelTemplate):
