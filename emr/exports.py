@@ -37,16 +37,6 @@ class ExportDataModel(object):
         file_path = os.path.join(settings.EXPORTS_ROOT, filename)
         self.book.save(file_path)
 
-    def _write_headings(self, sheet):
-        headings = ["Data Name", "Data Slug", None, "Table ID", "Table Name", "Field ID", "Field Name"]
-        if self.VERBOSE:
-            headings += ["Type", "Values List"]
-        col = 0
-        for value in headings:
-            col += 1
-            if value is not None:
-                sheet.cell(column=col, row=1).value = value
-
     def _write_data(self, sheet):
         DynamicRegistry.load_models_config()
         row = 1
@@ -79,6 +69,16 @@ class ExportDataModel(object):
                     if value is not None:
                         sheet.cell(column=col, row=row).value = value
 
+    def _write_headings(self, sheet):
+        headings = ["Data Name", "Data Slug", None, "Table ID", "Table Name", "Field ID", "Field Name"]
+        if self.VERBOSE:
+            headings += ["Type", "Values List"]
+        col = 0
+        for value in headings:
+            col += 1
+            if value is not None:
+                sheet.cell(column=col, row=1).value = value
+
 
 class AbstractExportExcel(object):
 
@@ -99,6 +99,28 @@ class AbstractExportExcel(object):
 
         # Load the template.
         self.load_template(template)
+
+    def cell_name_to_col_row(self, cell):
+        """Convert a cell name into ``(col, row)`` indexes. E.g. ``B5`` => ``(2, 5)``."""
+        col, row = coordinate_from_string(cell)
+        col = column_index_from_string(col)
+        return col, row
+
+    # def get_new_sheet(self, key, title):
+    #     """Create a new sheet."""
+    #     if len(self.sheets) == 0:
+    #         sheet = self.book.active
+    #         sheet.title = title
+    #     else:
+    #         sheet = self.book.create_sheet(title=title)
+    #     return sheet
+
+    def get_sheet(self, index):
+        """Return a sheet identified by its ID."""
+        return self.book.worksheets[index]
+
+    # def get_sheet_names(self):
+    #     return self.book.sheetnames
 
     def load_template(self, template=None):
         """Create the workbook from a template file (located under ``EXPORTS_TEMPLATES_DIR``)."""
@@ -129,27 +151,14 @@ class AbstractExportExcel(object):
         file_path = os.path.join(settings.EXPORTS_ROOT, self.filename)
         self.book.save(file_path)
 
-    def get_sheet(self, index):
-        """Return a sheet identified by its ID."""
-        return self.book.worksheets[index]
 
-    def cell_name_to_col_row(self, cell):
-        """Convert a cell name into ``(col, row)`` indexes. E.g. ``B5`` => ``(2, 5)``."""
-        col, row = coordinate_from_string(cell)
-        col = column_index_from_string(col)
-        return col, row
 
-    # def get_sheet_names(self):
-    #     return self.book.sheetnames
-
-    # def get_new_sheet(self, key, title):
-    #     """Create a new sheet."""
-    #     if len(self.sheets) == 0:
-    #         sheet = self.book.active
-    #         sheet.title = title
-    #     else:
-    #         sheet = self.book.create_sheet(title=title)
-    #     return sheet
+    def _generate_filename(self):
+        """Generate a filename based on the template name and "today"."""
+        # Split filename and extension. /!\ The extension contains the/starts with a ".".
+        filename, ext = os.path.splitext(os.path.basename(self.template))
+        # Insert "today" between the filename and the extension.
+        self.filename = "{}.{}{}".format(filename, now_for_filename(), ext)
 
     def _init_config(self):
         """
@@ -170,13 +179,6 @@ class AbstractExportExcel(object):
                 yield index, sheet, col, row
             else:  # For normal use.
                 yield sheet, col, row, config["columns"]
-
-    def _generate_filename(self):
-        """Generate a filename based on the template name and "today"."""
-        # Split filename and extension. /!\ The extension contains the/starts with a ".".
-        filename, ext = os.path.splitext(os.path.basename(self.template))
-        # Insert "today" between the filename and the extension.
-        self.filename = "{}.{}{}".format(filename, now_for_filename(), ext)
 
     def _update_db_tables(self, data_slug):
         """Register the table and field."""
@@ -227,6 +229,21 @@ class ExportExcelList(AbstractExportExcel):
         self._init_config_sheets()  # Read config for the sheets to populate.
         self._init_config_columns()  # Read config for the data to populate in each sheet.
 
+    def _init_config_columns(self):
+        """Read config for the data to populate in each sheet."""
+        # Loop over the sheets that must be populated to read their columns config.
+        for index, sheet, col, row in self._sheets_iterator(for_config=True):
+            # Loop over the sheet columns. Stop at the first empty cell.
+            col -= 1  # To start the loop with the increment, easier to read.
+            while True:
+                col += 1
+                # Get the data slug.
+                data_slug = sheet.cell(column=col, row=row).value
+                if not data_slug:
+                    break
+                self._config[index]["columns"].append(data_slug)
+                self._update_db_tables(data_slug)
+
     def _init_config_sheets(self):
         """Read config for the sheets to populate."""
         sheet = self.get_sheet(0)  # Get the config sheet.
@@ -253,21 +270,6 @@ class ExportExcelList(AbstractExportExcel):
 
         # Remove the config sheet.
         self.book.remove_sheet(sheet)
-
-    def _init_config_columns(self):
-        """Read config for the data to populate in each sheet."""
-        # Loop over the sheets that must be populated to read their columns config.
-        for index, sheet, col, row in self._sheets_iterator(for_config=True):
-            # Loop over the sheet columns. Stop at the first empty cell.
-            col -= 1  # To start the loop with the increment, easier to read.
-            while True:
-                col += 1
-                # Get the data slug.
-                data_slug = sheet.cell(column=col, row=row).value
-                if not data_slug:
-                    break
-                self._config[index]["columns"].append(data_slug)
-                self._update_db_tables(data_slug)
 
 
 class ExportExcelDetail(AbstractExportExcel):
