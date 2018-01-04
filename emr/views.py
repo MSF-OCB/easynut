@@ -329,6 +329,15 @@ def export_data_model(request):
 
 
 @login_required
+def export_excel_full(request):
+    """Export of all data, returned as an Excel file to download."""
+    is_admin_or_redirect(request)
+    export = ExportExcelFull()
+    response = export.save_to_response()
+    return response
+
+
+@login_required
 def export_excel_list(request):
     """Export of all data, returned as an Excel file to download."""
     is_admin_or_redirect(request)

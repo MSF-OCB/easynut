@@ -259,6 +259,52 @@ class ExportDataModel(AbstractExportExcel):
                 sheet.cell(column=col, row=1).value = value
 
 
+class ExportExcelFull(AbstractExportExcel):
+    """Create an Excel file containing an export of the whole database."""
+
+    DEFAULT_FILENAME = "easynut-full-export.{}.xlsx"
+
+    def __init__(self):
+        super(ExportExcelFull, self).__init__()
+        self.filename = self.DEFAULT_FILENAME.format(now_for_filename())
+
+    def generate(self):
+        self.book = Workbook()
+        DynamicRegistry.load_models_config()
+
+        # Loop over all models and fields config.
+        for model_id, model_config in DynamicRegistry.models_config.iteritems():
+            sheet = self.create_sheet(model_config.name)
+            field_ids = []
+
+            # Write headings.
+            col = 0
+            for field_id, field_config in model_config.fields_config.iteritems():
+                col += 1
+                sheet.cell(column=col, row=1).value = field_config.name
+                field_ids.append(field_id)
+
+            # Write values.
+            row = 1
+            for model in model_config.objects.all():
+                col = 0; row += 1  # NOQA
+                for field_id in field_ids:
+                    col += 1
+                    sheet.cell(column=col, row=row).value = model.get_field(field_id)
+
+        # Remove the first sheet.
+        self.book.remove_sheet(self.book.active)
+
+        return self.book
+
+    def _save_common(self):
+        """Common steps for "save" methods."""
+        try:
+            super(ExportDataModel, self)._save_common()
+        except Exception:
+            self.generate()
+
+
 class ExportExcelList(AbstractExportExcelTemplate):
     """Excel export for templates containing a list of records."""
 
