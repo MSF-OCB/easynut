@@ -275,6 +275,7 @@ class ExportExcelList(AbstractExportExcel):
                 col += 1
                 # Get the data slug.
                 data_slug = sheet.cell(column=col, row=row).value
+                sheet.cell(column=col, row=row).value = ""
                 if not data_slug:
                     break
                 if data_slug == DATA_SLUG_EMPTY_CELL:
