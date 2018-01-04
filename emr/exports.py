@@ -211,18 +211,18 @@ class AbstractExportExcel(object):
             if for_config:  # For config purpose.
                 yield index, sheet, col, row
             else:  # For normal use.
-                yield sheet, col, row, config["columns"]
+                yield index, sheet, col, row, config["columns"]
 
-    def _update_db_tables(self, data_slug):
+    def _update_db_tables(self, sheet_index, data_slug):
         """Register the table and field."""
         # Split the data slug into ``(table_id, field_id)``.
         table_id, field_id = DynamicRegistry.split_data_slug(data_slug)
 
         # Register
-        if table_id not in self._db_tables:
-            self._db_tables[table_id] = []
-        if field_id not in self._db_tables[table_id]:
-            self._db_tables[table_id].append(field_id)
+        if table_id not in self._config[sheet_index]["db_tables"]:
+            self._config[sheet_index]["db_tables"][table_id] = []
+        if field_id not in self._config[sheet_index]["db_tables"][table_id]:
+            self._config[sheet_index]["db_tables"][table_id].append(field_id)
 
 
 class ExportExcelList(AbstractExportExcel):
@@ -277,7 +277,7 @@ class ExportExcelList(AbstractExportExcel):
                 if data_slug == DATA_SLUG_EMPTY_CELL:
                     continue
                 self._config[index]["columns"][col] = data_slug
-                self._update_db_tables(data_slug)
+                self._update_db_tables(index, data_slug)
 
     def _init_config_sheets(self):
         """Read config for the sheets to populate."""
@@ -301,6 +301,7 @@ class ExportExcelList(AbstractExportExcel):
                 "start_col": start_col,
                 "start_row": start_row,
                 "columns": OrderedDict(),  # Populated in ``self._init_config_columns()``.
+                "db_tables": OrderedDict(),  # Populated in ``self._init_config_columns()``.
             }
 
         # Remove the config sheet.
