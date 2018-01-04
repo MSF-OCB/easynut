@@ -82,7 +82,9 @@ class DynamicFieldConfig(object):
     def __init__(self, model_config, attrs):
         self.model_config = model_config
 
-        # Define field attributes.
+        # Define field attributes: fieldname, name, position, kind, values_list,
+        #     has_list, has_detail, has_find, has_use, has_new_line, is_editable.
+        # Note: Attributes are retrieved in ``DynamicModelConfig._load_fields_config()``.
         for k, v in attrs.iteritems():
             setattr(self, k, v)
 
@@ -97,7 +99,8 @@ class DynamicModelConfig(object):
     """Config of a dynamic model (configured in its model "config table")."""
 
     def __init__(self, attrs, data=None):
-        # Define model attributes.
+        # Define model attributes: id, name.
+        # Note: Attributes are retrieved in ``DynamicRegistry.load_models_config()``.
         for k, v in attrs.iteritems():
             setattr(self, k, v)
 
@@ -153,9 +156,10 @@ class DynamicModelConfig(object):
         """Initialize model fields config."""
         # Build the query to retrieve the fields config.
         sql = clean_sql("""
-            SELECT campo_id AS fieldname, presentador AS name, tipo AS kind, varios AS values_list,
+            SELECT campo_id AS fieldname, presentador AS name,
+                pos AS position, tipo AS kind, varios AS values_list,
                 listado AS has_list, detalle AS has_detail, buscar AS has_find, usar AS has_use,
-                nuevaLinea AS has_new_line, editable AS is_editable, pos AS position
+                nuevaLinea AS has_new_line, editable AS is_editable
             FROM {table}
             ORDER BY pos
         """.format(table=self._db_config_table))
@@ -241,7 +245,7 @@ class DynamicRegistry(object):
             self._all_models_config_loaded = True
 
     def get_model_config(self, id):
-        """Get a given dynamic model, loading it if not already available."""
+        """Get a given dynamic model config, loading it if not already available."""
         # If not yet available, load it.
         if id not in self.models_config:
             self.load_models_config(id)
