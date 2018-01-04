@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import json
 import os
 
 from django.conf import settings
@@ -14,6 +15,7 @@ class ExportDataModel(object):
     """Create an Excel file containing a list of all tables and fields with their data slug."""
 
     DEFAULT_FILENAME = "easynut-data-model.{}.xlsx"
+    VERBOSE = True
 
     def __init__(self):
         self.book = None
@@ -37,6 +39,8 @@ class ExportDataModel(object):
 
     def _write_headings(self, sheet):
         headings = ["Data Name", "Data Slug", None, "Table ID", "Table Name", "Field ID", "Field Name"]
+        if self.VERBOSE:
+            headings += ["Type", "Values List"]
         col = 0
         for value in headings:
             col += 1
@@ -62,6 +66,11 @@ class ExportDataModel(object):
                     field_id,
                     field_config.name,
                 ]
+                if self.VERBOSE:
+                    values += [
+                        field_config.kind,
+                        json.dumps(field_config.values_list) if field_config.values_list else "",
+                    ]
 
                 # Write values.
                 col = 0
