@@ -291,7 +291,7 @@ class ExportExcelList(AbstractExportExcel):
             index = sheet.cell(column=1, row=row).value
             if not index:
                 break
-            index -= 1  # Adapt the index as in the code counting starts at 0.
+            index = int(index) - 1  # Adapt the index as in the code counting starts at 0 (+ force int, not long).
 
             # Convert the starting cell name into ``(col, row)`` indexes.
             start_col, start_row = self.cell_name_to_col_row(sheet.cell(column=2, row=row).value)
