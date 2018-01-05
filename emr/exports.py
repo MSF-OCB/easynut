@@ -6,7 +6,7 @@ from collections import OrderedDict
 from django.conf import settings
 
 from openpyxl import load_workbook, Workbook
-from openpyxl.utils import coordinate_from_string, column_index_from_string
+from openpyxl.utils import coordinate_from_string, column_index_from_string, get_column_letter
 
 from .models import DynamicRegistry
 from .utils import DataDb, now_for_filename, xlsx_download_response_factory
@@ -28,6 +28,11 @@ class AbstractExportExcel(object):
         col, row = coordinate_from_string(cell)
         col = column_index_from_string(col)
         return col, row
+
+    def cell_col_row_to_name(self, col, row):
+        """Convert ``(col, row)`` indexes into a cell name. E.g. ``(2, 5)`` => ``B5``."""
+        col_letter = get_column_letter(col)
+        return "{}{}".format(col_letter, row)
 
     def create_sheet(self, title):
         """Create a new sheet."""
