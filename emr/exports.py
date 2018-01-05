@@ -4,11 +4,12 @@ import os
 from collections import OrderedDict
 
 from django.conf import settings
+from django.utils.encoding import force_text
 
 from openpyxl import load_workbook, Workbook
 from openpyxl.utils import coordinate_from_string, column_index_from_string, get_column_letter
 
-from .models import DynamicRegistry
+from .models import RE_DATA_SLUG_VALIDATION, DynamicRegistry
 from .utils import DataDb, now_for_filename, xlsx_download_response_factory
 
 
@@ -441,4 +442,81 @@ class ExportExcelDetail(AbstractExportExcelTemplate):
         - See ``AbstractExportExcelTemplate`` for more specs.
         - @TODO
         """
-        raise NotImplemented()  # @TODO
+        self._config = OrderedDict()  # Reset the config.
+        self._init_config_sheets()  # Read config for the sheets to populate.
+        self._init_config_cells()  # Read config for the data to populate in each sheet.
+        debug("CONFIG:", self._config)  # @DEBUG
+
+    def _init_config_cells(self):
+        """
+        Read config for the data to populate in each sheet.
+
+        - Data are populated in configured cells.
+        - We scan every cell in the cell area for config information.
+        """
+        # Loop over the sheets that must be populated to scan for config information.
+        for sheet_index, sheet, config in self._sheets_iterator():
+            # Loop over the cell range.
+            for col in range(config["start_col"], config["end_col"]):
+                for row in range(config["start_row"], config["end_row"]):
+                    # Get cell value (potential data slug).
+                    data_slug = force_text(sheet.cell(column=col, row=row).value)
+
+                    # If it's not a config information, skip it.
+                    if RE_DATA_SLUG_VALIDATION.match(data_slug) is None:
+                        continue
+
+                    # Remove the config information from the cell.
+                    sheet.cell(column=col, row=row).value = ""
+
+                    # Register the data slug to use for this column.
+                    cell_name = self.cell_col_row_to_name(col, row)
+                    self._config[sheet_index]["cells"][cell_name] = data_slug
+
+                    # Register this table/field for this sheet.
+                    self._update_db_tables(sheet_index, data_slug)
+
+    def _init_config_sheets(self):
+        """
+        Read config for the sheets to populate.
+
+        - The first row must contain column headings, and is therefore skipped.
+        - The first column lists the index of the sheets that must be populated.
+          - The first sheet without taking into account the config sheet has the index ``1``.
+          - We stop the loop at the first empty cell in that column.
+        - The second column lists the cell range (e.g. ``A1:AN99``) to scan for config information.
+        """
+        sheet = self.get_sheet(0)  # Get the config sheet.
+
+        # Loop over rows starting from the second one (first row contains column headings).
+        row = 1
+        while True:
+            row += 1
+
+            # Get the sheet index from the first column. Stop at the first empty cell.
+            sheet_index = sheet.cell(column=1, row=row).value
+
+            # Empty cell? => stop looking for config information.
+            if not sheet_index:
+                break
+
+            # Adapt the index as in the code counting starts at 0 (+ force int, not long).
+            sheet_index = int(sheet_index) - 1
+
+            # Convert the cell range into ``(col, row)`` indexes.
+            cell_range = sheet.cell(column=2, row=row).value.split(":")
+            start_col, start_row = self.cell_name_to_col_row(cell_range[0])
+            end_col, end_row = self.cell_name_to_col_row(cell_range[1])
+
+            # Store the config for this sheet.
+            self._config[sheet_index] = {
+                "start_col": start_col,
+                "start_row": start_row,
+                "end_col": end_col,
+                "end_row": end_row,
+                "cells": OrderedDict(),  # Populated in ``self._init_config_cells()``.
+                "db_tables": OrderedDict(),  # Populated in ``self._init_config_cells()``.
+            }
+
+        # Remove the config sheet.
+        self.book.remove_sheet(sheet)
