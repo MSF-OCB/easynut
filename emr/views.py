@@ -362,7 +362,7 @@ def export_excel_detail(request, table_id, record_id):
     export = ExportExcelDetail(model)
 
     # Retrieve data and populate export.
-    # export.populate()
+    export.populate()
 
     # Get a response containing the Excel file.
     response = export.save_to_response()

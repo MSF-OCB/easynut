@@ -79,6 +79,7 @@ class DynamicModel(object):
 
         self._model_config = DynamicRegistry.get_model_config(model_id)
         self.fields = OrderedDict()
+        self.related_models = {}
 
         for fieldname in NON_DYNAMIC_DB_FIELD_NAMES:
             setattr(self, fieldname, None)
@@ -93,6 +94,20 @@ class DynamicModel(object):
     def get_field_config(self, id):
         return self._model_config.fields_config[id]
 
+    def get_related_models(self, model_id):
+        if model_id not in self.related_models:
+            self.load_related_models(model_id)
+        return self.related_models[model_id]
+
+    def get_value_from_data_slug(self, data_slug):
+        table_id, field_id = DynamicRegistry.split_data_slug(data_slug)
+        if table_id == self.model_id:
+            model = self
+        else:
+            related_models = self.get_related_models(table_id)
+            model = related_models[0]  # @TODO: Handle list of values in template.
+        return model.get_field_value(field_id)
+
     def load_data(self, data):
         for fieldname, value in data.iteritems():
             if fieldname in NON_DYNAMIC_DB_FIELD_NAMES:
@@ -101,6 +116,10 @@ class DynamicModel(object):
                 field_id = self._model_config.get_field_id_from_name(fieldname)
                 if field_id in self._model_config.fields_config:
                     self.fields[field_id] = value
+
+    def load_related_models(self, model_id):
+        model_config = DynamicRegistry.get_model_config(model_id)
+        self.related_models[model_id] = model_config.objects.filter(msf_id=self.msf_id)
 
 
 # MODELS CONFIG ===============================================================

@@ -439,6 +439,13 @@ class ExportExcelDetail(AbstractExportExcelTemplate):
         """Populate the template with data."""
         super(ExportExcelDetail, self).populate()
 
+        # Loop over sheets to populate.
+        for sheet_index, sheet, config in self._sheets_iterator():
+            # Loop over cells to populate.
+            for cell_name, data_slug in config["cells"].iteritems():
+                col, row = self.cell_name_to_col_row(cell_name)
+                sheet.cell(column=col, row=row).value = self.model.get_value_from_data_slug(data_slug)
+
     def _init_config(self):
         """
         Read the template config.
