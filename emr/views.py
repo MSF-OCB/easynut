@@ -14,6 +14,7 @@ from graphos.sources.simple import SimpleDataSource
 from .DAO import DAO
 from .exports import ExportDataModel, ExportExcelFull, ExportExcelList, ExportExcelDetail
 from .ExternalExport import ExternalExport
+from .models import DynamicRegistry
 
 
 def is_admin_or_redirect(request):
@@ -357,10 +358,11 @@ def export_excel_detail(request, table_id, record_id):
     """Export data for a given patient, returned as an Excel file to download."""
     is_admin_or_redirect(request)
 
-    export = ExportExcelDetail()
+    model = DynamicRegistry.get_model(int(table_id), pk=int(record_id))
+    export = ExportExcelDetail(model)
 
     # Retrieve data and populate export.
-    export.populate(table_id, record_id)
+    # export.populate()
 
     # Get a response containing the Excel file.
     response = export.save_to_response()
