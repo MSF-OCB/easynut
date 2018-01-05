@@ -178,7 +178,7 @@ class ExportDataModel(AbstractExportExcel):
 
         headings = ["Table Name", "Field Name", "Data Slug"]
         if self.VERBOSE:
-            headings += [None, "Table ID", "Field ID", "Type", "Values List"]
+            headings += [None, "Table ID", "Field ID", "Position", "Type", "Values List"]
         self._write_headings(sheet, headings)
 
         self._write_data_slugs(sheet)
@@ -200,21 +200,6 @@ class ExportDataModel(AbstractExportExcel):
         except Exception:
             self.generate()
 
-    def _write_data_tables(self, sheet):
-        row = 1
-
-        # Loop over all models config.
-        for model_id, model_config in DynamicRegistry.models_config.iteritems():
-            row += 1
-
-            # Build values.
-            values = [model_config.name]
-            if self.VERBOSE:
-                values += [model_id]
-
-            # Write values.
-            self._write_values(sheet, row, values)
-
     def _write_data_slugs(self, sheet):
         row = 1
 
@@ -234,12 +219,28 @@ class ExportDataModel(AbstractExportExcel):
                         None,
                         model_id,
                         field_id,
+                        field_config.position,
                         field_config.kind,
                         json.dumps(field_config.values_list) if field_config.values_list else "",
                     ]
 
                 # Write values.
                 self._write_values(sheet, row, values)
+
+    def _write_data_tables(self, sheet):
+        row = 1
+
+        # Loop over all models config.
+        for model_id, model_config in DynamicRegistry.models_config.iteritems():
+            row += 1
+
+            # Build values.
+            values = [model_config.name]
+            if self.VERBOSE:
+                values += [model_id]
+
+            # Write values.
+            self._write_values(sheet, row, values)
 
 
     def _write_values(self, sheet, row, values):
