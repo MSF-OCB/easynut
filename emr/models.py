@@ -15,7 +15,6 @@ RE_DATA_SLUG_VALIDATION = re.compile(r"^[0-9]{2}#[0-9]{2}$")
 DATA_SLUG_SEPARATOR = "#"
 DATA_SLUG_FORMAT = "{table_id:02d}#{field_id:02d}"
 
-MSF_ID = "id"
 MSF_ID_FIELD_NAME = "MSF ID"
 
 
@@ -27,7 +26,6 @@ class DynamicManager(object):
     def all(self):
         """Return all records."""
         sql = self.model_config.build_sql()
-        print "SQL:", sql  # @DEBUG
         return self._generate_models(sql)
 
     def filter(self, **kwargs):
@@ -38,14 +36,15 @@ class DynamicManager(object):
         """Return a single record matching the given parameters."""
         raise NotImplemented()  # @TODO
 
+    def _generate_model(self, data):
+        return self.model_config.model_factory(data)
+
     def _generate_models(self, sql):
         """Generate models list using the given SQL query."""
         models = []
         with DataDb.execute(sql) as c:
             for row in c.fetchall():
-                print "row:", row  # @DEBUG
-                model = self.model_config.model_factory(row)
-                models.append(model)
+                models.append(self._generate_model(row))
         return models
 
 
@@ -90,8 +89,6 @@ class DynamicFieldConfig(object):
 
     @property
     def data_slug(self):
-        # if self.name == MSF_ID_FIELD_NAME:
-        #     return MSF_ID
         return DATA_SLUG_FORMAT.format(table_id=self.model_config.id, field_id=self.id)
 
 
@@ -138,7 +135,6 @@ class DynamicModelConfig(object):
             table=self._db_data_table,
             where_clause=where_clause,
         ))
-        sql += " LIMIT 10"  # @DEBUG
         return sql
 
     def delete(self):
@@ -153,9 +149,9 @@ class DynamicModelConfig(object):
         # /!\ Dangerous use of ``DB_FIELD_NAME_FORMAT``.
         return Cast.int(fieldname.replace(DB_FIELD_NAME_FORMAT.format(""), ""))
 
-    def model_factory(self, row):
+    def model_factory(self, data):
         model = DynamicModel(self.id)
-        model.load_data(row)
+        model.load_data(data)
         return model
 
     def save(self):
@@ -245,7 +241,6 @@ class DynamicRegistry(object):
 
             for field_id in field_ids:
                 field_name = self.get_db_field_name(field_id)
-                data_slug = self.data_slug(model_id, field_id)
                 data_slug = self.get_data_slug(model_id, field_id)
                 select_fields.append("{}.{} AS `{}`".format(table_name, field_name, data_slug))
 
