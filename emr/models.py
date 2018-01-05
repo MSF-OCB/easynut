@@ -2,6 +2,8 @@
 from collections import OrderedDict, Iterable
 import re
 
+from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned
+
 from .utils import DataDb, Cast, clean_sql, force_list
 
 
@@ -15,6 +17,7 @@ RE_DATA_SLUG_VALIDATION = re.compile(r"^[0-9]{2}#[0-9]{2}$")
 DATA_SLUG_SEPARATOR = "#"
 DATA_SLUG_FORMAT = "{table_id:02d}#{field_id:02d}"
 
+PK_FIELD_NAME = "_id"
 MSF_ID_FIELD_NAME = "MSF ID"
 
 
@@ -32,9 +35,25 @@ class DynamicManager(object):
         """Return all records matching the given parameters."""
         raise NotImplemented()  # @TODO
 
-    def get(self, **kwargs):
-        """Return a single record matching the given parameters."""
-        raise NotImplemented()  # @TODO
+    def get(self, pk=None, msf_id=None):
+        """Return a single record matching the pk or MSF ID."""
+        if pk:
+            where = "{}={}".format(PK_FIELD_NAME, pk)
+        elif msf_id:
+            where = "{}='{}'".format(self.model_config.msf_id_db_field_name, msf_id)
+        else:
+            raise Exception("You must provide either a pk or MSFID.")
+
+        sql = self.model_config.build_sql(where=where)
+        with DataDb.execute(sql) as c:
+            if c.rowcount == 0:
+                raise ObjectDoesNotExist()
+            if c.rowcount > 1:
+                raise MultipleObjectsReturned()
+
+            row = c.fetchone()
+
+        return self._generate_model(row)
 
     def _generate_model(self, data):
         return self.model_config.model_factory(data)
