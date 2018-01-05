@@ -102,11 +102,10 @@ class DynamicModel(object):
     def get_value_from_data_slug(self, data_slug):
         table_id, field_id = DynamicRegistry.split_data_slug(data_slug)
         if table_id == self.model_id:
-            model = self
-        else:
-            related_models = self.get_related_models(table_id)
-            model = related_models[0]  # @TODO: Handle list of values in template.
-        return model.get_field_value(field_id)
+            return self.get_field_value(field_id)
+
+        related_models = self.get_related_models(table_id)
+        return [m.get_field_value(field_id) for m in related_models]
 
     def load_data(self, data):
         for fieldname, value in data.iteritems():

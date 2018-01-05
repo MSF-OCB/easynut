@@ -430,6 +430,11 @@ class ExportExcelDetail(AbstractExportExcelTemplate):
     """Excel export for templates containing the data of a single record."""
 
     DEFAULT_TEMPLATE = "easynut-detail.xlsx"
+    DEFAULT_LIST_CONFIG = {
+        "col_inc": 1,
+        "row_inc": 0,
+        "max_values": 10,
+    }
 
     def __init__(self, model, **kwargs):
         super(ExportExcelDetail, self).__init__(**kwargs)
@@ -444,7 +449,17 @@ class ExportExcelDetail(AbstractExportExcelTemplate):
             # Loop over cells to populate.
             for cell_name, data_slug in config["cells"].iteritems():
                 col, row = self.cell_name_to_col_row(cell_name)
-                sheet.cell(column=col, row=row).value = self.model.get_value_from_data_slug(data_slug)
+                values = self.model.get_value_from_data_slug(data_slug)
+                if type(values) not in (list, tuple):
+                    sheet.cell(column=col, row=row).value = values
+                else:
+                    list_config = config["lists_config"].get(cell_name, self.DEFAULT_LIST_CONFIG)
+                    max_values = list_config["max_values"]
+                    list_col, list_row = col, row
+                    for value in values[:max_values]:
+                        sheet.cell(column=list_col, row=list_row).value = value
+                        list_col += list_config["col_inc"]
+                        list_row += list_config["row_inc"]
 
     def _init_config(self):
         """
@@ -482,6 +497,34 @@ class ExportExcelDetail(AbstractExportExcelTemplate):
                     # Register the data slug to use for this column.
                     cell_name = self.cell_col_row_to_name(col, row)
                     self._config[sheet_index]["cells"][cell_name] = data_slug
+
+    def _init_config_lists(self, sheet):
+        """
+        Read config for lists of data.
+        """
+        START_COL = 4
+
+        # Loop over rows starting from the second one (first row contains column headings).
+        row = 1
+        while True:
+            row += 1
+
+            # Get the sheet index from the first column. Stop at the first empty cell.
+            sheet_index = sheet.cell(column=START_COL, row=row).value
+
+            # Empty cell? => stop looking for config information.
+            if not sheet_index:
+                break
+
+            # Adapt the index as in the code counting starts at 0 (+ force int, not long).
+            sheet_index = int(sheet_index) - 1
+
+            cell_name = sheet.cell(column=START_COL + 1, row=row).value
+            self._config[sheet_index]["lists_config"][cell_name] = {
+                "col_inc": int(sheet.cell(column=START_COL + 2, row=row).value),
+                "row_inc": int(sheet.cell(column=START_COL + 3, row=row).value),
+                "max_values": int(sheet.cell(column=START_COL + 4, row=row).value),
+            }
 
     def _init_config_sheets(self):
         """
@@ -522,7 +565,11 @@ class ExportExcelDetail(AbstractExportExcelTemplate):
                 "end_col": end_col,
                 "end_row": end_row,
                 "cells": OrderedDict(),  # Populated in ``self._init_config_cells()``.
+                "lists_config": {},  # Populated in ``self._init_config_cells()``.
             }
+
+        # Read config for lists of data.
+        self._init_config_lists(sheet)
 
         # Remove the config sheet.
         self.book.remove_sheet(sheet)
