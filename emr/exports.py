@@ -116,7 +116,7 @@ class AbstractExportExcelTemplate(AbstractExportExcel):
         Read the template config.
 
         - The config sheet must be the first sheet in the workbook.
-          It is automatically removed.
+        - It is automatically removed.
         - See the concrete class for more specs.
         """
         raise NotImplemented()
@@ -201,9 +201,8 @@ class ExportDataModel(AbstractExportExcel):
             self.generate()
 
     def _write_data_slugs(self, sheet):
-        row = 1
-
         # Loop over all models and fields config.
+        row = 1  # Start at 1 to skip heading row.
         for model_id, model_config in DynamicRegistry.models_config.iteritems():
             for field_id, field_config in model_config.fields_config.iteritems():
                 row += 1
@@ -228,9 +227,8 @@ class ExportDataModel(AbstractExportExcel):
                 self._write_values(sheet, row, values)
 
     def _write_data_tables(self, sheet):
-        row = 1
-
         # Loop over all models config.
+        row = 1  # Start at 1 to skip heading row.
         for model_id, model_config in DynamicRegistry.models_config.iteritems():
             row += 1
 
@@ -317,21 +315,23 @@ class ExportExcelList(AbstractExportExcelTemplate):
 
         # Loop over sheets to populate.
         for index, sheet, col, row, columns in self._sheets_iterator():
+            # Get tables and fields needed for this sheet.
             tables_fields = self._config[index]["db_tables"]
+
+            # No config for this sheet? => skip it.
             if len(tables_fields) == 0:
                 continue
 
+            # Build the SQL to get data for this sheet.
+            # @TODO: Data are not converted using raw DB queries.
             sql = DynamicRegistry.build_sql(tables_fields)
 
             with DataDb.execute(sql) as c:
-                # To start the loops with the increment, easier to read.
-                row -= 1  # NOQA
-
                 # Loop over data records.
+                row -= 1  # To start the loops with the increment, easier to read.
                 for data_row in c.fetchall():
-                    row += 1
-
                     # Loop over columns to populate.
+                    row += 1
                     for col, data_slug in self._config[index]["columns"].iteritems():
                         sheet.cell(column=col, row=row).value = data_row[data_slug]
 
@@ -339,48 +339,74 @@ class ExportExcelList(AbstractExportExcelTemplate):
         """
         Read the template config.
 
-        - See the abstract class for more specs.
-        - The first row must contain column headings, and is therefore skipped.
-        - The first column lists the index of the sheets that must be populated.
-          The first sheet without taking into account the config sheet has the index ``1``.
-          We stop the loop at the first empty cell in that column.
-        - The second column lists the starting cell, using the cell name (e.g. ``B5``).
+        - See ``AbstractExportExcelTemplate`` for more specs.
         """
-        self._config = OrderedDict()
+        self._config = OrderedDict()  # Reset the config.
         self._init_config_sheets()  # Read config for the sheets to populate.
         self._init_config_columns()  # Read config for the data to populate in each sheet.
 
     def _init_config_columns(self):
-        """Read config for the data to populate in each sheet."""
+        """
+        Read config for the data to populate in each sheet.
+
+        - Data are populated row by row starting at the "starting cell".
+        - The first row lists the data slug to populate each cell.
+          - We stop the loop at the first empty cell in that row.
+          - ``DATA_SLUG_EMPTY_CELL`` allows to leave a column empty while continuing this loop.
+        """
         # Loop over the sheets that must be populated to read their columns config.
         for index, sheet, col, row in self._sheets_iterator(for_config=True):
             # Loop over the sheet columns. Stop at the first empty cell.
             col -= 1  # To start the loop with the increment, easier to read.
             while True:
                 col += 1
+
                 # Get the data slug.
                 data_slug = sheet.cell(column=col, row=row).value
-                sheet.cell(column=col, row=row).value = ""
+
+                # Empty cell? => stop looking for config information.
                 if not data_slug:
                     break
+
+                # Remove the config information from the cell.
+                sheet.cell(column=col, row=row).value = ""
+
+                # Skip this column and continue to look for config information.
                 if data_slug == DATA_SLUG_EMPTY_CELL:
                     continue
+
+                # Register the data slug to use for this column.
                 self._config[index]["columns"][col] = data_slug
+
+                # Register this table/field for this sheet.
                 self._update_db_tables(index, data_slug)
 
     def _init_config_sheets(self):
-        """Read config for the sheets to populate."""
+        """
+        Read config for the sheets to populate.
+
+        - The first row must contain column headings, and is therefore skipped.
+        - The first column lists the index of the sheets that must be populated.
+          - The first sheet without taking into account the config sheet has the index ``1``.
+          - We stop the loop at the first empty cell in that column.
+        - The second column lists the starting cell, using the cell name (e.g. ``B5``).
+        """
         sheet = self.get_sheet(0)  # Get the config sheet.
 
         # Loop over rows starting from the second one (first row contains column headings).
         row = 1
         while True:
             row += 1
+
             # Get the sheet index from the first column. Stop at the first empty cell.
             index = sheet.cell(column=1, row=row).value
+
+            # Empty cell? => stop looking for config information.
             if not index:
                 break
-            index = int(index) - 1  # Adapt the index as in the code counting starts at 0 (+ force int, not long).
+
+            # Adapt the index as in the code counting starts at 0 (+ force int, not long).
+            index = int(index) - 1
 
             # Convert the starting cell name into ``(col, row)`` indexes.
             start_col, start_row = self.cell_name_to_col_row(sheet.cell(column=2, row=row).value)
@@ -410,7 +436,7 @@ class ExportExcelDetail(AbstractExportExcelTemplate):
         """
         Read the template config.
 
-        - See the abstract class for more specs.
+        - See ``AbstractExportExcelTemplate`` for more specs.
         - @TODO
         """
         raise NotImplemented()  # @TODO
