@@ -297,6 +297,11 @@ class DynamicRegistry(object):
         model_config = self.get_model_config(model_id)
         return model_config.get_field_config(field_id)
 
+    def get_model(self, model_id, **kwargs):
+        """Get a dynamic model populated with its data."""
+        model_config = DynamicRegistry.get_model_config(model_id)
+        return model_config.objects.get(**kwargs)
+
     def get_model_config(self, model_id):
         """Get a given dynamic model config, loading it if not already available."""
         # If not yet available, load it.
