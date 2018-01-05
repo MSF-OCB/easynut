@@ -33,9 +33,11 @@ class DynamicManager(object):
         sql = self.model_config.build_sql()
         return self._generate_models(sql)
 
-    def filter(self, **kwargs):
-        """Return all records matching the given parameters."""
-        raise NotImplemented()  # @TODO
+    def filter(self, msf_id):
+        """Return all records matching the given MSF ID."""
+        where = "{}='{}'".format(self.model_config.msf_id_db_field_name, msf_id)
+        sql = self.model_config.build_sql(where=where)
+        return self._generate_models(sql)
 
     def get(self, pk=None, msf_id=None):
         """Return a single record matching the pk or MSF ID."""
