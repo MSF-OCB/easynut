@@ -451,7 +451,6 @@ class ExportExcelDetail(AbstractExportExcelTemplate):
         Read the template config.
 
         - See ``AbstractExportExcelTemplate`` for more specs.
-        - @TODO
         """
         self._config = OrderedDict()  # Reset the config.
         self._init_config_sheets()  # Read config for the sheets to populate.
@@ -483,9 +482,6 @@ class ExportExcelDetail(AbstractExportExcelTemplate):
                     # Register the data slug to use for this column.
                     cell_name = self.cell_col_row_to_name(col, row)
                     self._config[sheet_index]["cells"][cell_name] = data_slug
-
-                    # Register this table/field for this sheet.
-                    self._update_db_tables(sheet_index, data_slug)
 
     def _init_config_sheets(self):
         """
@@ -526,7 +522,6 @@ class ExportExcelDetail(AbstractExportExcelTemplate):
                 "end_col": end_col,
                 "end_row": end_row,
                 "cells": OrderedDict(),  # Populated in ``self._init_config_cells()``.
-                "db_tables": OrderedDict(),  # Populated in ``self._init_config_cells()``.
             }
 
         # Remove the config sheet.
