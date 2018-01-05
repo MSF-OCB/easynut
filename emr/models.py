@@ -81,6 +81,10 @@ class DynamicModel(object):
         for fieldname in NON_DYNAMIC_DB_FIELD_NAMES:
             setattr(self, fieldname, None)
 
+    @property
+    def msf_id(self):
+        return self.get_field_value(self._model_config.msf_id_field_id)
+
     def get_field_value(self, id):
         return self.fields[id]
 
@@ -128,7 +132,7 @@ class DynamicModelConfig(object):
         # DB tables containing the model data and the fields config.
         self._db_data_table = DB_DATA_TABLE_NAME_FORMAT.format(self.id)
         self._db_config_table = DB_CONFIG_TABLE_NAME_FORMAT.format(self.id)
-        self._msf_id_field_config = None
+        self.msf_id_field_id = None
 
         # Initialize the fields config registry.
         self.fields_config = OrderedDict()
@@ -143,9 +147,9 @@ class DynamicModelConfig(object):
 
     @property
     def msf_id_db_field_name(self):
-        if self._msf_id_field_config is None:
+        if self.msf_id_field_id is None:
             return None
-        return self._msf_id_field_config.fieldname
+        return self.get_field_config(self.msf_id_field_id).fieldname
 
     def build_sql(self, fields=["*"], where=None, **kwargs):
         """Build a SQL query based on the given parameters."""
@@ -227,7 +231,7 @@ class DynamicModelConfig(object):
 
                 # Register MSF ID field config.
                 if row["name"] == MSF_ID_FIELD_NAME:
-                    self._msf_id_field_config = self.fields_config[key]
+                    self.msf_id_field_id = key
 
 
 class DynamicRegistry(object):
