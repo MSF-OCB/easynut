@@ -1,78 +1,89 @@
 {% extends "emr/base.html" %}
 
-{% block content %}	
-	<section class="hero doudoucolor">
-		<div align="center">
-			<br/>
-			<form action="{% url 'emr:results' %}" type="get">
-				<table>
-					<tr><input type="text" id="searchstring" placeholder="Access by ID or search patients" name="searchstring" class="searchbox"/></tr>
-					<tr>&nbsp;</tr>
-					<tr><b>&</b></tr>
-					<tr>&nbsp;</tr>
-					<tr><input type="submit" name="search" value="SEARCH" class="searchnow"/></tr>
-				</table>			
-			</form>
-		</div>	
-	</section>
-	<section class="hero is-light">
-		<div class="hero-body">
-			<br/>
-			<div class="container">
-				<h1 class="title">
-	                Patient(s) matching "{{ searchresults.0.0 }}":
-              	</h1>
-			</div>
-		</div>
-		<div class="container">
-			<div class="columns">
-				{% for tableresults in searchresults.1 %}
-					<div class="column is-12 scroll">
-						<table id="nofeatures" class="table is-striped is-bordered" cellspacing="0" width="100%">
-					        <thead>
-					            <tr>
-									{% for columnname in tableresults.2 %}
-										<th scope="col">{{ columnname }}</td>
-									{% endfor %}
-									{% if easyUser.tables.1.view_table %}<th  scope="col" width="5%">View</td>{% endif %}
-									{% if easyUser.tables.1.edit_table %}<th  scope="col" width="5%">Edit</td>{% endif %}
-									{% if easyUser.tables.1.delete_table %}<th  scope="col" width="5%">Delete</td>{% endif %}
-					            </tr>
-					        </thead>				        	
-					        <tbody>
-								{% if not tableresults.3 %}
-									<tr>
-										<td colspan="{{ tableresults.2|length|add:'+2' }}">No results found for this search</td>
-									</tr>
-								{% else %}
-									{% for records in tableresults.3 %}
-										<tr>
-											{% for record in records %}
-												{% if forloop.counter == 2 %}
-													{% with record_id=records.0 %}
-														<td><a href="{% url 'emr:patient' record_id %}" class="button is-mei go">{{ record }}</a></td>
-													{% endwith %}
-												{% elif forloop.counter != 1 %}
-													{% with record_id=records.0 %}
-														<td>{% if record == None %}Not recorded{% else %}{{ record }}{% endif %}</td>
-													{% endwith %}
-												{% endif %}
-											{% endfor %}
-											{% with record_id=records.0 table_id=tableresults.1 %}
-												{% if easyUser.tables.1.view_table %}<td width="5%"><a href="{% url 'emr:detail' table_id record_id %}" class="button is-mei go">View</a></td>{% endif %}
-												{% if easyUser.tables.1.edit_table %}<td width="5%"><a href="{% url 'emr:edit' table_id record_id %}" class="button is-mei careful">Edit</a></td>{% endif %}
-												{% if easyUser.tables.1.delete_table %}<td width="5%"><a href="{% url 'emr:deleterecord' table_id record_id %}" class="button is-mei dangerous" onclick="return confirm('Are you sure you want to delete this record?')">Delete</a></td>{% endif %}
-											{% endwith %}
-										</tr>
-									{% endfor %}			
-								{% endif %}					        
-							</tbody>
-						</table>
-					</div>
-				{% endfor %}
-			</div>
-			<p></p>
-			<i>* This version of EasyNut is limited to 100 results per table. If you reached this limit and did not find anything relevant, refine your search</i><p><br/></p>	
-		</div>
-	</section>
-{% endblock %}
+{% block content %}
+  <section class="hero doudoucolor">
+    <div align="center">
+      <br/>
+      <form action="{% url 'emr:results' %}" type="get">
+        <table>
+          <tr><input type="text" id="searchstring" placeholder="Access by ID or search patients" name="searchstring" class="searchbox" /></tr>
+          <tr>&nbsp;</tr>
+          <tr><b>&</b></tr>
+          <tr>&nbsp;</tr>
+          <tr><input type="submit" name="search" value="SEARCH" class="searchnow" /></tr>
+        </table>
+      </form>
+    </div>
+  </section>
+  <section class="hero is-light">
+    <div class="hero-body">
+      <br/>
+      <div class="container">
+        <h1 class="title">Patient(s) matching "{{ searchresults.0.0 }}":</h1>
+      </div>
+    </div>
+    <div class="container">
+      <div class="columns">
+        {% for tableresults in searchresults.1 %}
+          <div class="column is-12 scroll">
+            <table id="nofeatures" class="table is-striped is-bordered" cellspacing="0" width="100%">
+              <thead>
+                <tr>
+                  {% for columnname in tableresults.2 %}
+                    <th scope="col">{{ columnname }}</td>
+                  {% endfor %}
+                  {% if easyUser.tables.1.view_table %}<th scope="col" width="5%">View</td>{% endif %}
+                  {% if easyUser.tables.1.edit_table %}<th scope="col" width="5%">Edit</td>{% endif %}
+                  {% if easyUser.tables.1.delete_table %}<th scope="col" width="5%">Delete</td>{% endif %}
+                </tr>
+              </thead>
+              <tbody>
+                {% if not tableresults.3 %}
+                  <tr>
+                    <td colspan="{{ tableresults.2|length|add:'+2' }}">No results found for this search</td>
+                  </tr>
+                {% else %}
+                  {% for records in tableresults.3 %}
+                    <tr>
+                      {% for record in records %}
+                        {% if forloop.counter == 2 %}
+                          {% with record_id=records.0 %}
+                            <td><a href="{% url 'emr:patient' record_id %}" class="button is-mei go">{{ record }}</a></td>
+                          {% endwith %}
+                        {% elif forloop.counter != 1 %}
+                          {% with record_id=records.0 %}
+                            <td>{% if record == None %}Not recorded{% else %}{{ record }}{% endif %}</td>
+                          {% endwith %}
+                        {% endif %}
+                      {% endfor %}
+                      {% with record_id=records.0 table_id=tableresults.1 %}
+                        {% if easyUser.tables.1.view_table %}
+                          <td width="5%"><a href="{% url 'emr:detail' table_id record_id %}" class="button is-mei go">View</a></td>
+                        {% endif %}
+                        {% if easyUser.tables.1.edit_table %}
+                          <td width="5%"><a href="{% url 'emr:edit' table_id record_id %}" class="button is-mei careful">Edit</a></td>
+                        {% endif %}
+                        {% if easyUser.tables.1.delete_table %}
+                          <td width="5%">
+                            <a href="{% url 'emr:deleterecord' table_id record_id %}"
+                                class="button is-mei dangerous"
+                                onclick="return confirm('Are you sure you want to delete this record?')">
+                              Delete
+                            </a>
+                          </td>
+                        {% endif %}
+                      {% endwith %}
+                    </tr>
+                  {% endfor %}
+                {% endif %}
+              </tbody>
+            </table>
+          </div>
+        {% endfor %}
+      </div>
+      <p></p>
+      <i>* This version of EasyNut is limited to 100 results per table. If you reached this limit and did not find anything relevant, refine your search</i>
+      <p><br/></p>
+    </div>
+  </section>
+{% endblock content %}

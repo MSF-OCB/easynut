@@ -1,139 +1,158 @@
 {% extends "emr/base.html" %}
 
-{% block content %}	
-	<section class="hero is-light">
-		<div class="hero-body">
-			<br/>
-			<div class="container">
-				{% with record_id=record.1 table_id=record.0 %}	
-					<table>
-						<tr>
-							<td><span class="title">Patient #{{ record.3.0.4 }}</span></td>
-							{% if easyUser.tables.1.view_table %}<td width="5%"><a href="{% url 'emr:detail' table_id record_id %}" class="button is-mei go">View</a></td>{% endif %}
-							{% if easyUser.tables.1.edit_table %}<td width="5%"><a href="{% url 'emr:edit' table_id record_id %}" class="button is-mei careful">Edit</a></td>{% endif %}
-							{% if easyUser.tables.1.delete_table %}<td width="5%"><a href="{% url 'emr:deleterecord' table_id record_id %}" class="button is-mei dangerous" onclick="return confirm('Are you sure you want to delete this patient?')">Delete</a></td>{% endif %}				
-						</tr>
-					</table>
-				{% endwith %}
-			</div>
-			<div class="container">			
-				<br/>				
-				<table class="table">
-					{% for field in record.3 %}
-						<tr>
-							<td><b>{% if field.3 == None %}Not recorded{% else %}{{ field.3 }}{% endif %}</b></td>
-							<td>{% if field.4 == None %}Not recorded{% else %}{{ field.4 }}{% endif %}</td>
-						</tr>
-					{% endfor %}
-				</table>
-			</div>
-			{% if relatedrecords %}
-				<br/>
-				{% for relatedrecord in relatedrecords %}
-					{% for tableresults in relatedrecord.1 %}				
-						{% with table_id=tableresults.1 table_id2=tableresults.1 related_record_entry=relatedrecord.0.0 %}
-							<div class="container">
-								<table>
-									<tr>
-										<td><span class="subtitle">{{ tableresults.0 }}</span></td>
-										{% for k,v in easyUser.tables.items %}
-											{% if k == table_id and v.add_table %}
-												<td width='5%'>
-													<a href="{% url 'emr:addrecord' table_id related_record_entry %}" class="button is-mei go">
-														Add
-													</a>
-												</td>
-											{% endif %}
-										{% endfor %}
-									</tr>
-								</table>
-							</div>
-						{% endwith %}
-						<div class="container">
-							<div class="columns">
-								<div class="column is-12 scroll">
-									<table id="nofeatures" class="table is-striped is-bordered" cellspacing="0" width="100%">
-								        <thead>
-								            <tr>
-								          		{% for k,v in easyUser.tables.items %}
-													{% if k == tableresults.1 and v.view_table %}
-														<th  scope="col" width="5%">View</td>
-													{% endif %}
-												{% endfor %}														
-												{% for columnname in tableresults.2 %}
-													<th scope="col">{{ columnname }}</td>
-												{% endfor %}
-								          		{% for k,v in easyUser.tables.items %}
-													{% if k == tableresults.1 and v.edit_table %}
-														<th  scope="col" width="5%">Edit</td>
-													{% endif %}
-												{% endfor %}														
-								          		{% for k,v in easyUser.tables.items %}
-													{% if k == tableresults.1 and v.delete_table %}
-														<th  scope="col" width="5%">Delete</td>
-													{% endif %}
-												{% endfor %}														
-											</tr>
-										</thead>
-										<tbody>
-											{% if not tableresults.3 %}
-												<tr>
-													<td colspan="{{ tableresults.2|length|add:'+3' }}">No related records found</td>
-												</tr>
-											{% else %}
-												{% for records in tableresults.3 %}
-													<tr>
-														{% with record_id=records.0 table_id=tableresults.1 %}
-											          		{% for k,v in easyUser.tables.items %}
-																{% if k == tableresults.1 and v.view_table %}
-																	<td width="5%"><a href="{% url 'emr:detail' table_id record_id %}" class="button is-mei go">View</a></td>													
-																{% endif %}
-															{% endfor %}																												
-														{% endwith %}
-														{% for record in records %}
-															{% if forloop.counter != 1 %}
-																{% with record_id=records.0 table_id=tableresults.1 %}
-																	<td>{% if record == None %}Not recorded{% else %}{{ record }}{% endif %}</td>
-																{% endwith %}
-															{% endif %}
-														{% endfor %}
-														{% with record_id=records.0 table_id=tableresults.1 %}
-											          		{% for k,v in easyUser.tables.items %}
-																{% if k == tableresults.1 and v.edit_table %}														
-																	<td width="5%"><a href="{% url 'emr:edit' table_id record_id %}" class="button is-mei careful">Edit</a></td>
-																{% endif %}
-															{% endfor %}																												
-											          		{% for k,v in easyUser.tables.items %}
-																{% if k == tableresults.1 and v.delete_table %}																
-																	<td width="5%"><a href="{% url 'emr:deleterecord' table_id record_id %}" class='button is-mei dangerous' onclick="return confirm('Are you sure you want to delete this record?')">Delete</a></td>
-																{% endif %}
-															{% endfor %}																												
-														{% endwith %}
-													</tr>
-												{% endfor %}
-												{% for chart in charts %}
-													{% if chart.0 == tableresults.1 %} 
-													<tr>
-														<td colspan="{{ tableresults.2|length|add:'+3' }}">
-														<center><br/>
-														<strong>{{ chart.1.options.title }} diagram</strong>
-														<br/>
-														{{ chart.1.as_html }}</center>
-														</td>
-													</tr>
-													{% endif %}
-												{% endfor %}
-											{% endif %}
-										</tbody>
-									</table>
-								</div>
-							</div>
-						</div>
-					{% endfor %}	
-					<p><br/></p>	
-				{% endfor %}				
-			{% endif %}
-		</div>
-		<br/>
-	</section>
-{% endblock %}
+{% block content %}
+  <section class="hero is-light">
+    <div class="hero-body">
+      <br/>
+      <div class="container">
+        {% with record_id=record.1 table_id=record.0 %}
+          <table>
+            <tr>
+              <td><span class="title">Patient #{{ record.3.0.4 }}</span></td>
+              {% if easyUser.tables.1.view_table %}
+                <td width="5%"><a href="{% url 'emr:detail' table_id record_id %}" class="button is-mei go">View</a></td>
+              {% endif %}
+              {% if easyUser.tables.1.edit_table %}
+                <td width="5%"><a href="{% url 'emr:edit' table_id record_id %}" class="button is-mei careful">Edit</a></td>
+              {% endif %}
+              {% if easyUser.tables.1.delete_table %}
+                <td width="5%">
+                  <a href="{% url 'emr:deleterecord' table_id record_id %}"
+                      class="button is-mei dangerous"
+                      onclick="return confirm('Are you sure you want to delete this patient?')">
+                    Delete
+                  </a>
+                </td>
+              {% endif %}
+            </tr>
+          </table>
+        {% endwith %}
+      </div>
+      <div class="container">
+        <br/>
+        <table class="table">
+          {% for field in record.3 %}
+            <tr>
+              <td><b>{% if field.3 == None %}Not recorded{% else %}{{ field.3 }}{% endif %}</b></td>
+              <td>{% if field.4 == None %}Not recorded{% else %}{{ field.4 }}{% endif %}</td>
+            </tr>
+          {% endfor %}
+        </table>
+      </div>
+      {% if relatedrecords %}
+        <br/>
+        {% for relatedrecord in relatedrecords %}
+          {% for tableresults in relatedrecord.1 %}
+            {% with table_id=tableresults.1 table_id2=tableresults.1 related_record_entry=relatedrecord.0.0 %}
+              <div class="container">
+                <table>
+                  <tr>
+                    <td><span class="subtitle">{{ tableresults.0 }}</span></td>
+                    {% for k,v in easyUser.tables.items %}
+                      {% if k == table_id and v.add_table %}
+                        <td width='5%'>
+                          <a href="{% url 'emr:addrecord' table_id related_record_entry %}" class="button is-mei go">
+                            Add
+                          </a>
+                        </td>
+                      {% endif %}
+                    {% endfor %}
+                  </tr>
+                </table>
+              </div>
+            {% endwith %}
+            <div class="container">
+              <div class="columns">
+                <div class="column is-12 scroll">
+                  <table id="nofeatures" class="table is-striped is-bordered" cellspacing="0" width="100%">
+                    <thead>
+                      <tr>
+                        {% for k,v in easyUser.tables.items %}
+                          {% if k == tableresults.1 and v.view_table %}
+                            <th  scope="col" width="5%">View</td>
+                          {% endif %}
+                        {% endfor %}
+                        {% for columnname in tableresults.2 %}
+                          <th scope="col">{{ columnname }}</td>
+                        {% endfor %}
+                        {% for k,v in easyUser.tables.items %}
+                          {% if k == tableresults.1 and v.edit_table %}
+                            <th  scope="col" width="5%">Edit</td>
+                          {% endif %}
+                        {% endfor %}
+                        {% for k,v in easyUser.tables.items %}
+                          {% if k == tableresults.1 and v.delete_table %}
+                            <th  scope="col" width="5%">Delete</td>
+                          {% endif %}
+                        {% endfor %}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {% if not tableresults.3 %}
+                        <tr>
+                          <td colspan="{{ tableresults.2|length|add:'+3' }}">No related records found</td>
+                        </tr>
+                      {% else %}
+                        {% for records in tableresults.3 %}
+                          <tr>
+                            {% with record_id=records.0 table_id=tableresults.1 %}
+                              {% for k,v in easyUser.tables.items %}
+                                {% if k == tableresults.1 and v.view_table %}
+                                  <td width="5%"><a href="{% url 'emr:detail' table_id record_id %}" class="button is-mei go">View</a></td>
+                                {% endif %}
+                              {% endfor %}
+                            {% endwith %}
+                            {% for record in records %}
+                              {% if forloop.counter != 1 %}
+                                {% with record_id=records.0 table_id=tableresults.1 %}
+                                  <td>{% if record == None %}Not recorded{% else %}{{ record }}{% endif %}</td>
+                                {% endwith %}
+                              {% endif %}
+                            {% endfor %}
+                            {% with record_id=records.0 table_id=tableresults.1 %}
+                              {% for k,v in easyUser.tables.items %}
+                                {% if k == tableresults.1 and v.edit_table %}
+                                  <td width="5%"><a href="{% url 'emr:edit' table_id record_id %}" class="button is-mei careful">Edit</a></td>
+                                {% endif %}
+                              {% endfor %}
+                              {% for k,v in easyUser.tables.items %}
+                                {% if k == tableresults.1 and v.delete_table %}
+                                  <td width="5%">
+                                    <a href="{% url 'emr:deleterecord' table_id record_id %}"
+                                        class='button is-mei dangerous'
+                                        onclick="return confirm('Are you sure you want to delete this record?')">
+                                      Delete
+                                    </a>
+                                  </td>
+                                {% endif %}
+                              {% endfor %}
+                            {% endwith %}
+                          </tr>
+                        {% endfor %}
+                        {% for chart in charts %}
+                          {% if chart.0 == tableresults.1 %}
+                          <tr>
+                            <td colspan="{{ tableresults.2|length|add:'+3' }}">
+                              <center>
+                                <br/>
+                                <strong>{{ chart.1.options.title }} diagram</strong><br/>
+                                {{ chart.1.as_html }}
+                              </center>
+                            </td>
+                          </tr>
+                          {% endif %}
+                        {% endfor %}
+                      {% endif %}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          {% endfor %}
+          <p><br/></p>
+        {% endfor %}
+      {% endif %}
+    </div>
+    <br/>
+  </section>
+{% endblock content %}
