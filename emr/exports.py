@@ -291,7 +291,7 @@ class ExportExcelFull(AbstractExportExcel):
                 col = 0; row += 1  # NOQA
                 for field_id in field_ids:
                     col += 1
-                    sheet.cell(column=col, row=row).value = model.get_field(field_id)
+                    sheet.cell(column=col, row=row).value = model.get_field_value(field_id)
 
         # Remove the first sheet.
         self.book.remove_sheet(self.book.active)

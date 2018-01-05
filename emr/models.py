@@ -81,7 +81,7 @@ class DynamicModel(object):
         for fieldname in NON_DYNAMIC_DB_FIELD_NAMES:
             setattr(self, fieldname, None)
 
-    def get_field(self, id):
+    def get_field_value(self, id):
         return self.fields[id]
 
     def get_field_config(self, id):
