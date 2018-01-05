@@ -310,9 +310,9 @@ class ExportExcelList(AbstractExportExcelTemplate):
         super(ExportExcelList, self).populate()
 
         # Loop over sheets to populate.
-        for index, sheet, config in self._sheets_iterator():
+        for sheet_index, sheet, config in self._sheets_iterator():
             # Get tables and fields needed for this sheet.
-            tables_fields = self._config[index]["db_tables"]
+            tables_fields = self._config[sheet_index]["db_tables"]
 
             # No config for this sheet? => skip it.
             if len(tables_fields) == 0:
@@ -328,7 +328,7 @@ class ExportExcelList(AbstractExportExcelTemplate):
                 for data_row in c.fetchall():
                     # Loop over columns to populate.
                     row += 1
-                    for col, data_slug in self._config[index]["columns"].iteritems():
+                    for col, data_slug in self._config[sheet_index]["columns"].iteritems():
                         sheet.cell(column=col, row=row).value = data_row[data_slug]
 
     def _init_config(self):
@@ -351,7 +351,7 @@ class ExportExcelList(AbstractExportExcelTemplate):
           - ``DATA_SLUG_EMPTY_CELL`` allows to leave a column empty while continuing this loop.
         """
         # Loop over the sheets that must be populated to read their columns config.
-        for index, sheet, config in self._sheets_iterator():
+        for sheet_index, sheet, config in self._sheets_iterator():
             # Loop over the sheet columns. Stop at the first empty cell.
             col = config["start_col"] - 1  # To start the loop with the increment, easier to read.
             row = config["start_row"]
@@ -373,10 +373,10 @@ class ExportExcelList(AbstractExportExcelTemplate):
                     continue
 
                 # Register the data slug to use for this column.
-                self._config[index]["columns"][col] = data_slug
+                self._config[sheet_index]["columns"][col] = data_slug
 
                 # Register this table/field for this sheet.
-                self._update_db_tables(index, data_slug)
+                self._update_db_tables(sheet_index, data_slug)
 
     def _init_config_sheets(self):
         """
@@ -396,20 +396,20 @@ class ExportExcelList(AbstractExportExcelTemplate):
             row += 1
 
             # Get the sheet index from the first column. Stop at the first empty cell.
-            index = sheet.cell(column=1, row=row).value
+            sheet_index = sheet.cell(column=1, row=row).value
 
             # Empty cell? => stop looking for config information.
-            if not index:
+            if not sheet_index:
                 break
 
             # Adapt the index as in the code counting starts at 0 (+ force int, not long).
-            index = int(index) - 1
+            sheet_index = int(sheet_index) - 1
 
             # Convert the starting cell name into ``(col, row)`` indexes.
             start_col, start_row = self.cell_name_to_col_row(sheet.cell(column=2, row=row).value)
 
             # Store the config for this sheet.
-            self._config[index] = {
+            self._config[sheet_index] = {
                 "start_col": start_col,
                 "start_row": start_row,
                 "columns": OrderedDict(),  # Populated in ``self._init_config_columns()``.
