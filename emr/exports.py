@@ -133,11 +133,7 @@ class AbstractExportExcelTemplate(AbstractExportExcel):
         """Iterate over sheets to populate."""
         for index, config in self._config.iteritems():
             sheet = self.get_sheet(index)
-            col, row = config["start_col"], config["start_row"]
-            if for_config:  # For config purpose.
-                yield index, sheet, col, row
-            else:  # For normal use.
-                yield index, sheet, col, row, config["columns"]
+            yield index, sheet, config
 
     def _update_db_tables(self, sheet_index, data_slug):
         """Register the tables and fields for a given sheet."""
@@ -314,7 +310,7 @@ class ExportExcelList(AbstractExportExcelTemplate):
         super(ExportExcelList, self).populate()
 
         # Loop over sheets to populate.
-        for index, sheet, col, row, columns in self._sheets_iterator():
+        for index, sheet, config in self._sheets_iterator():
             # Get tables and fields needed for this sheet.
             tables_fields = self._config[index]["db_tables"]
 
@@ -328,7 +324,7 @@ class ExportExcelList(AbstractExportExcelTemplate):
 
             with DataDb.execute(sql) as c:
                 # Loop over data records.
-                row -= 1  # To start the loops with the increment, easier to read.
+                row = config["start_row"] - 1  # To start the loops with the increment, easier to read.
                 for data_row in c.fetchall():
                     # Loop over columns to populate.
                     row += 1
@@ -355,9 +351,10 @@ class ExportExcelList(AbstractExportExcelTemplate):
           - ``DATA_SLUG_EMPTY_CELL`` allows to leave a column empty while continuing this loop.
         """
         # Loop over the sheets that must be populated to read their columns config.
-        for index, sheet, col, row in self._sheets_iterator(for_config=True):
+        for index, sheet, config in self._sheets_iterator():
             # Loop over the sheet columns. Stop at the first empty cell.
-            col -= 1  # To start the loop with the increment, easier to read.
+            col = config["start_col"] - 1  # To start the loop with the increment, easier to read.
+            row = config["start_row"]
             while True:
                 col += 1
 
