@@ -220,8 +220,7 @@ class DynamicRegistry(object):
         # Whether all models config have been loaded.
         self._all_models_config_loaded = False
 
-    @classmethod
-    def build_sql(cls, tables_fields):
+    def build_sql(self, tables_fields):
         """Build a SQL query based on the given parameters."""
         if len(tables_fields) == 0:
             raise Exception("tables_fields is empty.")
@@ -232,8 +231,8 @@ class DynamicRegistry(object):
         main_pk_field = None
 
         for model_id, field_ids in tables_fields.iteritems():
-            table_name = cls.get_db_table_name(model_id)
-            pk_field = cls.get_msf_id_db_field_name(model_id)
+            table_name = self.get_db_table_name(model_id)
+            pk_field = self.get_msf_id_db_field_name(model_id)
             if main_table is None:
                 main_table = table_name
                 main_pk_field = pk_field
@@ -245,8 +244,8 @@ class DynamicRegistry(object):
                 )
 
             for field_id in field_ids:
-                field_name = cls.get_db_field_name(field_id)
-                data_slug = cls.data_slug(model_id, field_id)
+                field_name = self.get_db_field_name(field_id)
+                data_slug = self.data_slug(model_id, field_id)
                 select_fields.append("{}.{} AS `{}`".format(table_name, field_name, data_slug))
 
         sql = clean_sql("""
@@ -320,30 +319,25 @@ class DynamicRegistry(object):
         """Apply data conversion on the given model config."""
         row["id"] = Cast.int(row["id"])
 
-    @staticmethod
-    def get_db_table_name(model_id):
+    def get_db_table_name(self, model_id):
         """Return the name of the DB data table for the given ID."""
         # return self.models_config[model_id]._db_data_table
         return DB_DATA_TABLE_NAME_FORMAT.format(model_id)
 
-    @staticmethod
-    def get_db_field_name(field_id):
+    def get_db_field_name(self, field_id):
         """Return the name of the DB field for the given ID."""
         return DB_FIELD_NAME_FORMAT.format(field_id)
 
-    @staticmethod
-    def get_msf_id_db_field_name(model_id):
+    def get_msf_id_db_field_name(self, model_id):
         """Return the name of the "MSF ID" DB field for the given model ID."""
-        model_config = DynamicRegistry.get_model_config(model_id)
+        model_config = self.get_model_config(model_id)
         return model_config.msf_id_db_field_name
 
-    @staticmethod
-    def data_slug(model_id, field_id):
-        field_config = DynamicRegistry.get_field_config(model_id, field_id)
+    def data_slug(self, model_id, field_id):
+        field_config = self.get_field_config(model_id, field_id)
         return field_config.data_slug
 
-    @staticmethod
-    def split_data_slug(data_slug):
+    def split_data_slug(self, data_slug):
         """Split the data slug into ``(table_id, field_id)``."""
         return [int(v) for v in data_slug.split(DATA_SLUG_SEPARATOR)]
 
