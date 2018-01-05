@@ -12,7 +12,7 @@ from graphos.renderers import flot
 from graphos.sources.simple import SimpleDataSource
 
 from .DAO import DAO
-from .exports import ExportDataModel, ExportExcelList
+from .exports import ExportDataModel, ExportExcelFull, ExportExcelList, ExportExcelDetail
 from .ExternalExport import ExternalExport
 
 
@@ -346,6 +346,21 @@ def export_excel_list(request):
 
     # Retrieve data and populate export.
     export.populate()
+
+    # Get a response containing the Excel file.
+    response = export.save_to_response()
+    return response
+
+
+@login_required
+def export_excel_detail(request, table_id, record_id):
+    """Export data for a given patient, returned as an Excel file to download."""
+    is_admin_or_redirect(request)
+
+    export = ExportExcelDetail()
+
+    # Retrieve data and populate export.
+    export.populate(table_id, record_id)
 
     # Get a response containing the Excel file.
     response = export.save_to_response()

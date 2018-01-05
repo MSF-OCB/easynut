@@ -401,10 +401,9 @@ class ExportExcelDetail(AbstractExportExcelTemplate):
 
     DEFAULT_TEMPLATE = "easynut-detail.xlsx"
 
-    def populate(self, data):
-        """Populate the template with the given data."""
-        super(ExportExcelList, self).populate(data)
-        raise NotImplemented()  # @TODO
+    def populate(self, model_id, record_id):
+        """Populate the template with data."""
+        super(ExportExcelList, self).populate()
 
     def _init_config(self):
         """

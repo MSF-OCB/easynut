@@ -11,6 +11,7 @@
               <td><span class="title">Patient #{{ record.3.0.4 }}</span></td>
               {% if easyUser.tables.1.view_table %}
                 <td width="5%"><a href="{% url 'emr:detail' table_id record_id %}" class="button is-mei go">View</a></td>
+                <td width="5%"><a href="{% url 'emr:print' table_id record_id %}" class="button is-mei go">Print</a></td>
               {% endif %}
               {% if easyUser.tables.1.edit_table %}
                 <td width="5%"><a href="{% url 'emr:edit' table_id record_id %}" class="button is-mei careful">Edit</a></td>
