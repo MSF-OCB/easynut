@@ -60,11 +60,11 @@ class DynamicModel(object):
         for fieldname in NON_DYNAMIC_DB_FIELD_NAMES:
             setattr(self, fieldname, None)
 
-    def get_field_config(self, id):
-        return self._model_config.fields_config[id]
-
     def get_field(self, id):
         return self.fields[id]
+
+    def get_field_config(self, id):
+        return self._model_config.fields_config[id]
 
     def load_data(self, data):
         for fieldname, value in data.iteritems():
@@ -120,10 +120,11 @@ class DynamicModelConfig(object):
         if data is not None:
             self._load_data(data)
 
-    def model_factory(self, row):
-        model = DynamicModel(self.id)
-        model.load_data(row)
-        return model
+    @property
+    def msf_id_db_field_name(self):
+        if self._msf_id_field_config is None:
+            return None
+        return self._msf_id_field_config.fieldname
 
     def build_sql(self, fields=["*"], where=None, **kwargs):
         """Build a SQL query based on the given parameters."""
@@ -140,11 +141,9 @@ class DynamicModelConfig(object):
         sql += " LIMIT 10"  # @DEBUG
         return sql
 
-    @property
-    def msf_id_db_field_name(self):
-        if self._msf_id_field_config is None:
-            return None
-        return self._msf_id_field_config.fieldname
+    def delete(self):
+        """Delete this record from DB ."""
+        raise NotImplemented()  # @TODO
 
     def get_field_config(self, id):
         """Get a given dynamic field config."""
@@ -154,13 +153,27 @@ class DynamicModelConfig(object):
         # /!\ Dangerous use of ``DB_FIELD_NAME_FORMAT``.
         return Cast.int(fieldname.replace(DB_FIELD_NAME_FORMAT.format(""), ""))
 
+    def model_factory(self, row):
+        model = DynamicModel(self.id)
+        model.load_data(row)
+        return model
+
     def save(self):
         """Save this record in DB (using an INSERT or UPDATE)."""
         raise NotImplemented()  # @TODO
 
-    def delete(self):
-        """Delete this record from DB ."""
-        raise NotImplemented()  # @TODO
+    def _cast_field_config_row(self, row):
+        """Apply data conversion on the given field config."""
+        row["id"] = self.get_field_id_from_name(row["fieldname"])
+        row["kind"] = Cast.field_kind(row["kind"])
+        row["values_list"] = Cast.csv(row["values_list"])
+        row["has_list"] = Cast.bool(row["has_list"])
+        row["has_detail"] = Cast.bool(row["has_detail"])
+        row["has_find"] = Cast.bool(row["has_find"])
+        row["has_use"] = Cast.bool(row["has_use"])
+        row["has_new_line"] = Cast.bool(row["has_new_line"])
+        row["is_editable"] = Cast.bool(row["is_editable"])
+        row["position"] = Cast.int(row["position"])
 
     def _load_fields_config(self):
         """Initialize model fields config."""
@@ -194,19 +207,6 @@ class DynamicModelConfig(object):
                 # Register MSF ID field config.
                 if row["name"] == MSF_ID_FIELD_NAME:
                     self._msf_id_field_config = self.fields_config[key]
-
-    def _cast_field_config_row(self, row):
-        """Apply data conversion on the given field config."""
-        row["id"] = self.get_field_id_from_name(row["fieldname"])
-        row["kind"] = Cast.field_kind(row["kind"])
-        row["values_list"] = Cast.csv(row["values_list"])
-        row["has_list"] = Cast.bool(row["has_list"])
-        row["has_detail"] = Cast.bool(row["has_detail"])
-        row["has_find"] = Cast.bool(row["has_find"])
-        row["has_use"] = Cast.bool(row["has_use"])
-        row["has_new_line"] = Cast.bool(row["has_new_line"])
-        row["is_editable"] = Cast.bool(row["is_editable"])
-        row["position"] = Cast.int(row["position"])
 
 
 class DynamicRegistry(object):
@@ -246,6 +246,7 @@ class DynamicRegistry(object):
             for field_id in field_ids:
                 field_name = self.get_db_field_name(field_id)
                 data_slug = self.data_slug(model_id, field_id)
+                data_slug = self.get_data_slug(model_id, field_id)
                 select_fields.append("{}.{} AS `{}`".format(table_name, field_name, data_slug))
 
         sql = clean_sql("""
@@ -257,6 +258,36 @@ class DynamicRegistry(object):
             main_table=main_table, main_pk_field=main_pk_field,
         ))
         return sql
+
+    def get_data_slug(self, model_id, field_id):
+        field_config = self.get_field_config(model_id, field_id)
+        return field_config.data_slug
+
+    def get_db_field_name(self, field_id):
+        """Return the name of the DB field for the given ID."""
+        return DB_FIELD_NAME_FORMAT.format(field_id)
+
+    def get_db_table_name(self, model_id):
+        """Return the name of the DB data table for the given ID."""
+        # return self.models_config[model_id]._db_data_table
+        return DB_DATA_TABLE_NAME_FORMAT.format(model_id)
+
+    def get_field_config(self, model_id, field_id):
+        """Get a given dynamic field config."""
+        model_config = self.get_model_config(model_id)
+        return model_config.get_field_config(field_id)
+
+    def get_model_config(self, id):
+        """Get a given dynamic model config, loading it if not already available."""
+        # If not yet available, load it.
+        if id not in self.models_config:
+            self.load_models_config(id)
+        return self.models_config[id]
+
+    def get_msf_id_db_field_name(self, model_id):
+        """Return the name of the "MSF ID" DB field for the given model ID."""
+        model_config = self.get_model_config(model_id)
+        return model_config.msf_id_db_field_name
 
     def load_models_config(self, ids=None):
         """Initialize all available dynamic models config, or given ones."""
@@ -292,17 +323,9 @@ class DynamicRegistry(object):
         if ids is None:
             self._all_models_config_loaded = True
 
-    def get_field_config(self, model_id, field_id):
-        """Get a given dynamic field config."""
-        model_config = self.get_model_config(model_id)
-        return model_config.get_field_config(field_id)
-
-    def get_model_config(self, id):
-        """Get a given dynamic model config, loading it if not already available."""
-        # If not yet available, load it.
-        if id not in self.models_config:
-            self.load_models_config(id)
-        return self.models_config[id]
+    def split_data_slug(self, data_slug):
+        """Split the data slug into ``(table_id, field_id)``."""
+        return [int(v) for v in data_slug.split(DATA_SLUG_SEPARATOR)]
 
     def _build_models_config_where(self, ids):
         """Build the WHERE clause to retrieve dynamic models config as requested."""
@@ -318,28 +341,6 @@ class DynamicRegistry(object):
     def _cast_model_config_row(self, row):
         """Apply data conversion on the given model config."""
         row["id"] = Cast.int(row["id"])
-
-    def get_db_table_name(self, model_id):
-        """Return the name of the DB data table for the given ID."""
-        # return self.models_config[model_id]._db_data_table
-        return DB_DATA_TABLE_NAME_FORMAT.format(model_id)
-
-    def get_db_field_name(self, field_id):
-        """Return the name of the DB field for the given ID."""
-        return DB_FIELD_NAME_FORMAT.format(field_id)
-
-    def get_msf_id_db_field_name(self, model_id):
-        """Return the name of the "MSF ID" DB field for the given model ID."""
-        model_config = self.get_model_config(model_id)
-        return model_config.msf_id_db_field_name
-
-    def data_slug(self, model_id, field_id):
-        field_config = self.get_field_config(model_id, field_id)
-        return field_config.data_slug
-
-    def split_data_slug(self, data_slug):
-        """Split the data slug into ``(table_id, field_id)``."""
-        return [int(v) for v in data_slug.split(DATA_SLUG_SEPARATOR)]
 
 
 # Singleton: Override class with its instance.
