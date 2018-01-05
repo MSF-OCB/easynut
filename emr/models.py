@@ -21,6 +21,8 @@ PK_FIELD_NAME = "_id"
 MSF_ID_FIELD_NAME = "MSF ID"
 
 
+# MODELS ======================================================================
+
 class DynamicManager(object):
 
     def __init__(self, model_config):
@@ -56,6 +58,7 @@ class DynamicManager(object):
         return self._generate_model(row)
 
     def _generate_model(self, data):
+        """Generate a model using the given data."""
         return self.model_config.model_factory(data)
 
     def _generate_models(self, sql):
@@ -69,10 +72,10 @@ class DynamicManager(object):
 
 class DynamicModel(object):
 
-    def __init__(self, table_id):
-        self.table_id = table_id
+    def __init__(self, model_id):
+        self.model_id = model_id
 
-        self._model_config = DynamicRegistry.get_model_config(table_id)
+        self._model_config = DynamicRegistry.get_model_config(model_id)
         self.fields = OrderedDict()
 
         for fieldname in NON_DYNAMIC_DB_FIELD_NAMES:
@@ -93,6 +96,8 @@ class DynamicModel(object):
                 if field_id in self._model_config.fields_config:
                     self.fields[field_id] = value
 
+
+# MODELS CONFIG ===============================================================
 
 class DynamicFieldConfig(object):
     """Dynamic field of a dynamic model (configured in a row of the model "config table")."""
@@ -168,9 +173,10 @@ class DynamicModelConfig(object):
         # /!\ Dangerous use of ``DB_FIELD_NAME_FORMAT``.
         return Cast.int(fieldname.replace(DB_FIELD_NAME_FORMAT.format(""), ""))
 
-    def model_factory(self, data):
+    def model_factory(self, data=None):
         model = DynamicModel(self.id)
-        model.load_data(data)
+        if data is not None:
+            model.load_data(data)
         return model
 
     def save(self):
@@ -291,12 +297,12 @@ class DynamicRegistry(object):
         model_config = self.get_model_config(model_id)
         return model_config.get_field_config(field_id)
 
-    def get_model_config(self, id):
+    def get_model_config(self, model_id):
         """Get a given dynamic model config, loading it if not already available."""
         # If not yet available, load it.
-        if id not in self.models_config:
-            self.load_models_config(id)
-        return self.models_config[id]
+        if model_id not in self.models_config:
+            self.load_models_config(model_id)
+        return self.models_config[model_id]
 
     def get_msf_id_db_field_name(self, model_id):
         """Return the name of the "MSF ID" DB field for the given model ID."""
