@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 """
+Dynamic database structure.
+
 Terminology:
 - Table/Column: Used when we talk about DB objects.
 - Model/Field: Used when we talk about Python objects.
@@ -15,8 +17,8 @@ Terminology:
 - Data slug: A unique identifier for a ``model.field`` (used in Excel templates).
 - Special fields: Dynamic DB columns that have special meaning/usage.
 """
-from collections import Iterable, OrderedDict
 import re
+from collections import Iterable, OrderedDict
 
 from django.core.exceptions import MultipleObjectsReturned, ObjectDoesNotExist
 
@@ -156,17 +158,17 @@ class DynamicModel(object):
 
     @property
     def pk(self):
-        """Convenient access to the DB primary key."""
+        """Provide convenient access to the DB primary key."""
         return getattr(self, PK_DB_COL_NAME)
 
     @property
     def msf_id(self):
-        """Convenient access to the special field ``MSF ID``."""
+        """Provide convenient access to the special field ``MSF ID``."""
         return self.get_field_value(self._model_config.msf_id_field_id)
 
     @property
     def date(self):
-        """Convenient access to the special field ``Date``."""
+        """Provide convenient access to the special field ``Date``."""
         return self.get_field_value(self._model_config.date_field_id)
 
     def get_field_value(self, field_id):
@@ -229,6 +231,7 @@ class DynamicFieldConfig(object):
 
     @property
     def data_slug(self):
+        """Return the data slug of the current ``model.field``."""
         return DATA_SLUG_FORMAT.format(model_id=self.model_config.id, field_id=self.id)
 
 
@@ -268,14 +271,14 @@ class DynamicModelConfig(object):
 
     @property
     def msf_id_db_col_name(self):
-        """Convenient access to the DB col name of the special field ``MSF ID``."""
+        """Provide convenient access to the DB col name of the special field ``MSF ID``."""
         if self.msf_id_field_id is None:
             return None
         return self.get_field_config(self.msf_id_field_id).db_col_name
 
     @property
     def date_db_col_name(self):
-        """Convenient access to the DB col name of the special field ``Date``."""
+        """Provide convenient access to the DB col name of the special field ``Date``."""
         if self.date_field_id is None:
             return None
         return self.get_field_config(self.date_field_id).db_col_name
@@ -340,12 +343,9 @@ class DynamicModelConfig(object):
         with DataDb.execute(sql) as c:
             # If no record found, raise Exception.
             if c.rowcount == 0:
-                if ids is None:
-                    raise RuntimeError(
-                        "No dynamic fields config found in database for this model (ID: {}).".format(self.id)
-                    )
-                else:
-                    raise AttributeError("No dynamic model found matching '{}'.".format(ids))
+                raise RuntimeError(
+                    "No dynamic fields config found in database for this model (ID: {}).".format(self.id)
+                )
 
             # Loop over records.
             for row in c.fetchall():
@@ -364,7 +364,8 @@ class DynamicModelConfig(object):
 
 class DynamicRegistry(object):
     """Registry of available dynamic models. This is a ``Singleton``."""
-    # Singleton pattern: See right after this class definition for the ``Singleton`` implementation.
+
+    # Note: See right after this class definition for the ``Singleton`` implementation.
 
     def __init__(self):
         # Initialize the models config registry.
@@ -383,7 +384,7 @@ class DynamicRegistry(object):
         from_clause = ""  # The whole FROM clause (including the FROM and optional JOINs).
 
         # The first table in the given config is considered as the main table for JOINs.
-        # @TODO: This could be specified in separate method parameters.
+        # @TODO: This could be specified in separate method parameters OR in DB `tablas`.
         main_table = None
         main_id_col = None
 
