@@ -41,13 +41,13 @@ class AbstractExportExcel(object):
             sheet.cell(column=col, row=row).style = heading_style
 
     def cell_name_to_col_row(self, cell):
-        """Convert a cell name into ``(col, row)`` indexes. E.g. ``B5`` => ``(2, 5)``."""
+        """Convert a cell name into ``(col, row)`` coordinate. E.g. ``B5`` => ``(2, 5)``."""
         col, row = coordinate_from_string(cell)
         col = column_index_from_string(col)
         return col, row
 
     def cell_col_row_to_name(self, col, row):
-        """Convert ``(col, row)`` indexes into a cell name. E.g. ``(2, 5)`` => ``B5``."""
+        """Convert ``(col, row)`` coordinate into a cell name. E.g. ``(2, 5)`` => ``B5``."""
         col_letter = get_column_letter(col)
         return "{}{}".format(col_letter, row)
 
@@ -56,7 +56,7 @@ class AbstractExportExcel(object):
         return self.book.create_sheet(title=title)
 
     def get_sheet(self, index):
-        """Return a sheet identified by its ID."""
+        """Return a sheet identified by its index."""
         return self.book.worksheets[index]
 
     # def get_sheet_names(self):
@@ -163,24 +163,25 @@ class AbstractExportExcelTemplate(AbstractExportExcel):
             sheet = self.get_sheet(index)
             yield index, sheet, config
 
-    def _update_db_tables(self, sheet_index, data_slug):
-        """Register the tables and fields for a given sheet."""
-        # Split the data slug into ``(table_id, field_id)``.
-        table_id, field_id = DynamicRegistry.split_data_slug(data_slug)
+    def _update_models_fields(self, sheet_index, data_slug):
+        """Register the models and fields for a given sheet."""
+        # Split the data slug into ``(model_id, field_id)``.
+        model_id, field_id = DynamicRegistry.split_data_slug(data_slug)
 
-        # Register
-        if table_id not in self._config[sheet_index]["db_tables"]:
-            self._config[sheet_index]["db_tables"][table_id] = []
-        if field_id not in self._config[sheet_index]["db_tables"][table_id]:
-            self._config[sheet_index]["db_tables"][table_id].append(field_id)
+        # Register the model and field.
+        config = self._config[sheet_index]["models_fields"]
+        if model_id not in config:
+            config[model_id] = []
+        if field_id not in config[model_id]:
+            config[model_id].append(field_id)
 
 
 # EXPORTS =====================================================================
 
 class ExportDataModel(AbstractExportExcel):
-    """Create an Excel file containing a list of all tables and fields with their data slug."""
 
     VERBOSE = True
+    """Create an Excel file containing a list of all models and fields with their data slug."""
 
     DEFAULT_FILENAME = "easynut-data-model.xlsx"  # Default name for the file.
 
@@ -189,30 +190,32 @@ class ExportDataModel(AbstractExportExcel):
         DynamicRegistry.load_models_config()
 
         self._generate_data_slugs()
-        self._generate_tables()
+        self._generate_models()
 
         return self.book
 
     def _generate_data_slugs(self):
+        """Generate the data slugs sheet."""
         sheet = self.get_sheet(0)
         sheet.title = "Data Slugs"
 
-        headings = ["Table Name", "Field Name", "Data Slug"]
+        headings = ["Model Name", "Field Name", "Data Slug"]
         if self.VERBOSE:
-            headings += [None, "Table ID", "Field ID", "Position", "Type", "Values List"]
+            headings += [None, "Model ID", "Field ID", "Position", "Type", "Values List"]
         self._write_headings(sheet, headings)
 
-        self._write_data_slugs(sheet)
+        self._write_values_data_slugs(sheet)
 
-    def _generate_tables(self):
-        sheet = self.create_sheet("Tables")
+    def _generate_models(self):
+        """Generate the models sheet."""
+        sheet = self.create_sheet("Models")
 
-        headings = ["Table Name"]
+        headings = ["Model Name"]
         if self.VERBOSE:
-            headings += ["Table ID"]
+            headings += ["Model ID"]
         self._write_headings(sheet, headings)
 
-        self._write_data_tables(sheet)
+        self._write_values_models(sheet)
 
     def _save_common(self):
         """Common steps for "save" methods."""
@@ -235,7 +238,8 @@ class ExportDataModel(AbstractExportExcel):
         self.apply_heading_style(sheet, row, num_cols=len(headings))
         sheet.freeze_panes = sheet.cell(column=1, row=row + 1)
 
-    def _write_data_slugs(self, sheet):
+    def _write_values_data_slugs(self, sheet):
+        """Write data slugs values."""
         # Loop over all models and fields config.
         row = 1  # Start at 1 to skip heading row.
         for model_id, model_config in DynamicRegistry.models_config.iteritems():
@@ -261,7 +265,8 @@ class ExportDataModel(AbstractExportExcel):
                 # Write values.
                 self._write_values(sheet, row, values)
 
-    def _write_data_tables(self, sheet):
+    def _write_values_models(self, sheet):
+        """Write models values."""
         # Loop over all models config.
         row = 1  # Start at 1 to skip heading row.
         for model_id, model_config in DynamicRegistry.models_config.iteritems():
@@ -343,16 +348,16 @@ class ExportExcelList(AbstractExportExcelTemplate):
 
         # Loop over sheets to populate.
         for sheet_index, sheet, config in self._sheets_iterator():
-            # Get tables and fields needed for this sheet.
-            tables_fields = self._config[sheet_index]["db_tables"]
+            # Get models and fields needed for this sheet.
+            models_fields = self._config[sheet_index]["models_fields"]
 
             # No config for this sheet? => skip it.
-            if len(tables_fields) == 0:
+            if len(models_fields) == 0:
                 continue
 
-            # Build the SQL to get data for this sheet.
+            # Build the SQL statement to get data for this sheet.
             # @TODO: Data are not converted using raw DB queries.
-            sql = DynamicRegistry.build_sql(tables_fields)
+            sql = DynamicRegistry.build_sql(models_fields)
 
             with DataDb.execute(sql) as c:
                 # Loop over data records.
@@ -407,8 +412,8 @@ class ExportExcelList(AbstractExportExcelTemplate):
                 # Register the data slug to use for this column.
                 self._config[sheet_index]["columns"][col] = data_slug
 
-                # Register this table/field for this sheet.
-                self._update_db_tables(sheet_index, data_slug)
+                # Register this model/field for this sheet.
+                self._update_models_fields(sheet_index, data_slug)
 
     def _init_config_sheets(self):
         """
@@ -445,7 +450,7 @@ class ExportExcelList(AbstractExportExcelTemplate):
                 "start_col": start_col,
                 "start_row": start_row,
                 "columns": OrderedDict(),  # Populated in ``self._init_config_columns()``.
-                "db_tables": OrderedDict(),  # Populated in ``self._init_config_columns()``.
+                "models_fields": OrderedDict(),  # Populated in ``self._init_config_columns()``.
             }
 
         # Remove the config sheet.
