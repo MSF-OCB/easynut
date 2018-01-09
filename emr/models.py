@@ -40,6 +40,7 @@ PK_DB_COL_NAME = "_id"
 
 # Verbose names of special fields (cf. DB column ``presentador`` in DB tables ``tabla_X_des``).
 MSF_ID_VERBOSE_NAME = "MSF ID"
+DATE_VERBOSE_NAME = "Date"
 
 # Data slug format and validation.
 DATA_SLUG_SEPARATOR = "#"
@@ -158,6 +159,11 @@ class DynamicModel(object):
         """Convenient access to the special field ``MSF ID``."""
         return self.get_field_value(self._model_config.msf_id_field_id)
 
+    @property
+    def date(self):
+        """Convenient access to the special field ``Date``."""
+        return self.get_field_value(self._model_config.date_field_id)
+
     def get_field_value(self, field_id):
         """Return the value of a field based on its ID."""
         return self.fields_value[field_id]
@@ -242,6 +248,7 @@ class DynamicModelConfig(object):
 
         # Field ID of special fields.
         self.msf_id_field_id = None
+        self.date_field_id = None
 
         # Initialize the fields config registry.
         self.fields_config = OrderedDict()
@@ -261,6 +268,12 @@ class DynamicModelConfig(object):
             return None
         return self.get_field_config(self.msf_id_field_id).db_col_name
 
+    @property
+    def date_db_col_name(self):
+        """Convenient access to the DB col name of the special field ``Date``."""
+        if self.date_field_id is None:
+            return None
+        return self.get_field_config(self.date_field_id).db_col_name
 
     def delete(self):
         """Delete this record from DB."""
@@ -340,6 +353,8 @@ class DynamicModelConfig(object):
                 # Register the field ID of special fields.
                 if row["name"] == MSF_ID_VERBOSE_NAME:
                     self.msf_id_field_id = field_id
+                elif row["name"] == DATE_VERBOSE_NAME:
+                    self.date_field_id = field_id
 
 
 class DynamicRegistry(object):
@@ -444,6 +459,11 @@ class DynamicRegistry(object):
         """Return the DB col name of the special field ``MSF ID`` for the given model ID."""
         model_config = self.get_model_config(model_id)
         return model_config.msf_id_db_col_name
+
+    def get_date_db_col_name(self, model_id):
+        """Return the DB col name of the special field ``Date`` for the given model ID."""
+        model_config = self.get_model_config(model_id)
+        return model_config.date_db_col_name
 
     def load_models_config(self, ids=None):
         """Initialize all available dynamic models config, or given ones."""
