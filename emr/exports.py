@@ -10,15 +10,12 @@ from openpyxl import load_workbook, Workbook
 from openpyxl.styles import Font, NamedStyle, PatternFill
 from openpyxl.utils import column_index_from_string, coordinate_from_string, get_column_letter
 
-from .models import RE_DATA_SLUG_VALIDATION, DynamicRegistry
+from .models import MSF_ID_VERBOSE_NAME, DATE_VERBOSE_NAME, RE_DATA_SLUG_VALIDATION, DynamicRegistry
 from .utils import DataDb, insert_filename_pre_extension, now_for_filename, xlsx_download_response_factory
 
 
 # Value allowing to skip a cell while continuing to read config of other columns.
 DATA_SLUG_EMPTY_CELL = "#"
-
-# Background color for heading row.
-HEADING_BG_COLOR = "CCDDFF"
 
 
 # BASE CLASSES ================================================================
@@ -26,6 +23,21 @@ HEADING_BG_COLOR = "CCDDFF"
 class AbstractExportExcel(object):
 
     DEFAULT_FILENAME = "easynut-export.xlsx"  # Default name of the file.
+
+    # Minimum number of cols to apply formatting to.
+    APPLY_STYLE_MIN_NUM_COLS = 30
+
+    # Available named styles.
+    STYLE_HEADING = "heading"  # For heading rows.
+    STYLE_VERBOSE = "advanced"  # For advanced information (cf. ``VERBOSE``).
+    STYLE_MSF_ID = "msf_id"  # For the special field ``MSF ID``.
+    STYLE_DATE = "date"  # For the special field ``Date``.
+
+    # Named styles config.
+    HEADING_BG_COLOR = "DDDDFF"
+    VERBOSE_FG_COLOR = "999999"
+    MSF_ID_BG_COLOR = "FFDDDD"
+    DATE_BG_COLOR = "DDFFDD"
 
     def __init__(self):
         self.book = None  # The Excel workbook.
@@ -36,11 +48,15 @@ class AbstractExportExcel(object):
         # Initialize the file name.
         self.init_filename()
 
-    def apply_heading_style(self, sheet, row, num_cols=0):
-        max_col = max(num_cols, 50)  # Apply to at least 50 columns.
-        heading_style = self.get_heading_style()
-        for col in range(1, max_col):
-            sheet.cell(column=col, row=row).style = heading_style
+    def apply_style_to_cols(self, style, sheet, min_col, max_col, min_row=None, max_row=None):
+        for row_cells in sheet.iter_rows(min_col=min_col, max_col=max_col, min_row=min_row, max_row=max_row):
+            for cell in row_cells:
+                cell.style = style
+
+    def apply_style_to_rows(self, style, sheet, min_row, max_row, min_col=None, max_col=None):
+        for col_cells in sheet.iter_cols(min_row=min_row, max_row=max_row, min_col=min_col, max_col=max_col):
+            for cell in col_cells:
+                cell.style = style
 
     def cell_name_to_col_row(self, cell):
         """Convert a cell name into ``(col, row)`` coordinate. E.g. ``B5`` => ``(2, 5)``."""
@@ -65,14 +81,29 @@ class AbstractExportExcel(object):
         """Return the list of sheet names."""
         return self.book.sheetnames
 
-    def get_heading_style(self):
-        if "heading" not in self.styles:
-            self.styles["heading"] = NamedStyle(name="heading")
-            self.styles["heading"].font = Font(bold=True)
-            self.styles["heading"].fill = PatternFill(
-                fill_type="solid", start_color=HEADING_BG_COLOR, end_color=HEADING_BG_COLOR
-            )
-        return self.styles["heading"]
+    def get_style(self, name):
+        """Return a named style to format an Excel cell."""
+        if name not in self.styles:
+            self.styles[name] = NamedStyle(name=name)
+            if name == self.STYLE_HEADING:
+                self.styles[name].font = Font(bold=True)
+                self.styles[name].fill = PatternFill(
+                    fill_type="solid", start_color=self.HEADING_BG_COLOR, end_color=self.HEADING_BG_COLOR
+                )
+            elif name == self.STYLE_VERBOSE:
+                self.styles[name].font = Font(color=self.VERBOSE_FG_COLOR)
+            elif name == self.STYLE_MSF_ID:
+                self.styles[name].fill = PatternFill(
+                    fill_type="solid", start_color=self.MSF_ID_BG_COLOR, end_color=self.MSF_ID_BG_COLOR
+                )
+            elif name == self.STYLE_DATE:
+                self.styles[name].fill = PatternFill(
+                    fill_type="solid", start_color=self.DATE_BG_COLOR, end_color=self.DATE_BG_COLOR
+                )
+            else:
+                return None
+
+        return self.styles[name]
 
     def init_filename(self):
         """Initialize file name to its default value with "now"."""
@@ -182,6 +213,12 @@ class ExportDataModel(AbstractExportExcel):
     DEFAULT_FILENAME = "easynut-data-model.xlsx"  # Default name for the file.
     VERBOSE = True  # Whether to include advanced information.
 
+    # Headings. Use ``None`` to skip a column.
+    DATA_SLUGS_HEADINGS = ["Model Name", "Field Name", "Data Slug"]
+    DATA_SLUGS_HEADINGS_VERBOSE = [None, "Model ID", "Field ID", "Position", "Type", "Values List"]
+    MODELS_HEADINGS = ["Model Name"]
+    MODELS_HEADINGS_VERBOSE = ["Model ID"]
+
     def generate(self):
         """Generate the export."""
         self.book = Workbook()
@@ -197,9 +234,9 @@ class ExportDataModel(AbstractExportExcel):
         sheet = self.get_sheet(0)
         sheet.title = "Data Slugs"
 
-        headings = ["Model Name", "Field Name", "Data Slug"]
+        headings = self.DATA_SLUGS_HEADINGS
         if self.VERBOSE:
-            headings += [None, "Model ID", "Field ID", "Position", "Type", "Values List"]
+            headings += self.DATA_SLUGS_HEADINGS_VERBOSE
         self._write_headings(sheet, headings)
 
         self._write_values_data_slugs(sheet)
@@ -208,9 +245,9 @@ class ExportDataModel(AbstractExportExcel):
         """Generate the models sheet."""
         sheet = self.create_sheet("Models")
 
-        headings = ["Model Name"]
+        headings = self.MODELS_HEADINGS
         if self.VERBOSE:
-            headings += ["Model ID"]
+            headings += self.MODELS_HEADINGS_VERBOSE
         self._write_headings(sheet, headings)
 
         self._write_values_models(sheet)
@@ -223,16 +260,16 @@ class ExportDataModel(AbstractExportExcel):
 
     def _write_headings(self, sheet, headings):
         """Write heading row."""
-        heading_style = self.get_heading_style()
-
         col = 0; row = 1  # NOQA
         for value in headings:
             col += 1
-            if value is not None:
+            if value is not None:  # None = skip column.
                 sheet.cell(column=col, row=row).value = value
 
         # Apply heading style and freeze heading row.
-        self.apply_heading_style(sheet, row, num_cols=len(headings))
+        style = self.get_style(self.STYLE_HEADING)
+        max_col = max(len(headings), self.APPLY_STYLE_MIN_NUM_COLS)  # Apply to at least a min number of columns.
+        self.apply_style_to_rows(style, sheet, min_row=row, max_row=row, max_col=max_col)
         sheet.freeze_panes = sheet.cell(column=1, row=row + 1)
 
     def _write_values(self, sheet, row, values):
@@ -240,13 +277,14 @@ class ExportDataModel(AbstractExportExcel):
         col = 0
         for value in values:
             col += 1
-            if value is not None:
+            if value is not None:  # None = skip column.
                 sheet.cell(column=col, row=row).value = value
 
     def _write_values_data_slugs(self, sheet):
         """Write data slugs values."""
         # Loop over all models and fields config.
-        row = 1  # Start at 1 to skip heading row.
+        min_row = 2  # Skip heading row.
+        row = min_row - 1    # To start the loops with the increment, easier to read.
         for model_id, model_config in DynamicRegistry.models_config.iteritems():
             for field_id, field_config in model_config.fields_config.iteritems():
                 row += 1
@@ -257,6 +295,7 @@ class ExportDataModel(AbstractExportExcel):
                     field_config.name,
                     field_config.data_slug,
                 ]
+                verbose_min_col = len(values) + 1
                 if self.VERBOSE:
                     values += [
                         None,
@@ -266,24 +305,49 @@ class ExportDataModel(AbstractExportExcel):
                         field_config.kind,
                         json.dumps(field_config.values_list) if field_config.values_list else "",
                     ]
+                    verbose_max_col = len(values) + 1
 
                 # Write values.
                 self._write_values(sheet, row, values)
 
+                # Apply special fields style.
+                style = None
+                if field_config.name == MSF_ID_VERBOSE_NAME:
+                    style = self.get_style(self.STYLE_MSF_ID)
+                elif field_config.name == DATE_VERBOSE_NAME:
+                    style = self.get_style(self.STYLE_DATE)
+                if style is not None:
+                    self.apply_style_to_rows(
+                        style, sheet, min_row=row, max_row=row, min_col=1, max_col=verbose_min_col - 1
+                    )
+
+                # Apply verbose style.
+                style = self.get_style(self.STYLE_VERBOSE)
+                self.apply_style_to_cols(
+                    style, sheet, min_col=verbose_min_col, max_col=verbose_max_col, min_row=min_row
+                )
+
     def _write_values_models(self, sheet):
         """Write models values."""
         # Loop over all models config.
-        row = 1  # Start at 1 to skip heading row.
+        min_row = 2  # Skip heading row.
+        row = min_row - 1    # To start the loops with the increment, easier to read.
         for model_id, model_config in DynamicRegistry.models_config.iteritems():
             row += 1
 
             # Build values.
             values = [model_config.name]
+            verbose_min_col = len(values) + 1
             if self.VERBOSE:
                 values += [model_id]
+                verbose_max_col = len(values) + 1
 
             # Write values.
             self._write_values(sheet, row, values)
+
+            # Apply verbose style.
+            style = self.get_style(self.STYLE_VERBOSE)
+            self.apply_style_to_cols(style, sheet, min_col=verbose_min_col, max_col=verbose_max_col, min_row=min_row)
 
 
 class ExportExcelFull(AbstractExportExcel):
@@ -309,7 +373,9 @@ class ExportExcelFull(AbstractExportExcel):
                 field_ids.append(field_id)
 
             # Apply heading style and freeze heading row.
-            self.apply_heading_style(sheet, row, num_cols=len(model_config.fields_config))
+            style = self.get_style(self.STYLE_HEADING)
+            num_cols = len(model_config.fields_config)
+            self.apply_style_to_rows(style, sheet, min_row=row, max_row=row, num_cols=num_cols)
             sheet.freeze_panes = sheet.cell(column=1, row=row + 1)
 
             # Write values.
