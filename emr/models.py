@@ -61,13 +61,13 @@ class DynamicManager(object):
 
     def all(self):
         """Return all records."""
-        sql = self.model_config.build_sql()
+        sql = self._build_sql()
         return self._generate_models(sql)
 
     def filter(self, msf_id):
         """Return all records matching the given MSF ID."""
-        sql = self.model_config.build_sql(where=where)
         where = "{}='{}'".format(self.model_config.msf_id_db_col_name, msf_id)
+        sql = self._build_sql(where=where)
         return self._generate_models(sql)
 
     def get(self, pk=None, msf_id=None):
@@ -80,8 +80,12 @@ class DynamicManager(object):
         else:
             raise Exception("You must provide either a pk or MSFID.")
 
-        sql = self.model_config.build_sql(where=where)
+        # Build the SQL statement.
+        sql = self._build_sql(where=where)
+
+        # Execute the query.
         with DataDb.execute(sql) as c:
+            # Raise an exception if no record found or multiple records found.
             if c.rowcount == 0:
                 raise ObjectDoesNotExist()
             if c.rowcount > 1:
@@ -90,6 +94,32 @@ class DynamicManager(object):
             row = c.fetchone()
 
         return self._generate_model(row)
+
+    def _build_sql(self, db_cols=["*"], where=None, **kwargs):
+        """Build a SQL query based on the given parameters."""
+        # Build the WHERE clause.
+        where_clause = ""
+        if where is not None:
+            where_clause = "WHERE {}".format(where)
+
+        # Sort results by MSF ID, then by date if that column exists.
+        order_by = [self.model_config.msf_id_db_col_name]
+        if self.model_config.date_db_col_name is not None:
+            order_by.append("{} DESC".format(self.model_config.date_db_col_name))
+
+        # Build the SQL statement.
+        sql = clean_sql("""
+            SELECT {cols}
+            FROM {table}
+            {where_clause}
+            ORDER BY {order_by}
+        """.format(
+            cols=", ".join(force_list(db_cols)),
+            table=self.model_config.db_data_table,
+            where_clause=where_clause,
+            order_by=", ".join(order_by),
+        ))
+        return sql
 
     def _generate_model(self, data_row):
         """Generate a model using the given data."""
@@ -228,19 +258,6 @@ class DynamicModelConfig(object):
             return None
         return self.get_field_config(self.msf_id_field_id).db_col_name
 
-    def build_sql(self, fields=["*"], where=None, **kwargs):
-        """Build a SQL query based on the given parameters."""
-        where_clause = "" if where is None else "WHERE " + where
-        sql = clean_sql("""
-            SELECT {fields}
-            FROM {table}
-            {where_clause}
-        """.format(
-            fields=", ".join(force_list(fields)),
-            table=self._db_data_table,
-            where_clause=where_clause,
-        ))
-        return sql
 
     def delete(self):
         """Delete this record from DB."""
