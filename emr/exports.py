@@ -31,6 +31,8 @@ class AbstractExportExcel(object):
         self.book = None
         self.filename = None
 
+        self.styles = {}  # Named styles for formatting Excel cells.
+
         # Initialize the file name.
         self.init_filename()
 
@@ -113,9 +115,6 @@ class AbstractExportExcelTemplate(AbstractExportExcel):
 
         # Config of the loaded template.
         self._config = OrderedDict()
-
-        # Registry of DB data tables and their fields in use in the loaded template.
-        self._db_tables = {}
 
         # Load the template.
         self.load_template(template)
