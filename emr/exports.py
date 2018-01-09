@@ -28,8 +28,8 @@ class AbstractExportExcel(object):
     DEFAULT_FILENAME = "easynut-export.xlsx"  # Default name of the file.
 
     def __init__(self):
-        self.book = None
-        self.filename = None
+        self.book = None  # The Excel workbook.
+        self.filename = None  # The name of the file.
 
         self.styles = {}  # Named styles for formatting Excel cells.
 
@@ -54,15 +54,16 @@ class AbstractExportExcel(object):
         return "{}{}".format(col_letter, row)
 
     def create_sheet(self, title):
-        """Create a new sheet."""
+        """Create a new sheet in the current workbook."""
         return self.book.create_sheet(title=title)
 
     def get_sheet(self, index):
         """Return a sheet identified by its index."""
         return self.book.worksheets[index]
 
-    # def get_sheet_names(self):
-    #     return self.book.sheetnames
+    def get_sheet_names(self):
+        """Return the list of sheet names."""
+        return self.book.sheetnames
 
     def get_heading_style(self):
         if "heading" not in self.styles:
@@ -78,19 +79,23 @@ class AbstractExportExcel(object):
         self.filename = insert_filename_pre_extension(self.DEFAULT_FILENAME, now_for_filename())
 
     def save(self, filename=None):
-        """Save the Excel file (under ``EXPORTS_ROOT``)."""
+        """Save the Excel file (under ``settings.EXPORTS_ROOT``)."""
         self._save_common()
         if not filename:
             filename = self.filename
 
+        # Save the file on the file system.
         file_path = os.path.join(settings.EXPORTS_ROOT, filename)
         self.book.save(file_path)
+
+        # Return the path where the file has been saved.
         return file_path
 
     def save_to_response(self):
         """Save the Excel file in an HTTP response."""
         self._save_common()
 
+        # Create a download response for an Excel (xlsx) file.
         response = xlsx_download_response_factory(self.filename)
         self.book.save(response)
         return response
@@ -106,7 +111,7 @@ class AbstractExportExcel(object):
 
 class AbstractExportExcelTemplate(AbstractExportExcel):
 
-    DEFAULT_TEMPLATE = None
+    DEFAULT_TEMPLATE = None  # Default Excel template to use.
 
     def __init__(self, template=None, filename=None):
         super(AbstractExportExcelTemplate, self).__init__()
@@ -116,13 +121,15 @@ class AbstractExportExcelTemplate(AbstractExportExcel):
         # Config of the loaded template.
         self._config = OrderedDict()
 
-        # Load the template.
+        # Load the template (if not specified, load default one).
         self.load_template(template)
 
     def load_template(self, template=None):
-        """Create the workbook from a template file (located under ``EXPORTS_TEMPLATES_DIR``)."""
+        """Create the workbook from a template file (located under ``settings.EXPORTS_TEMPLATES_DIR``)."""
         # Set the current template.
         if template is None:
+            if self.DEFAULT_TEMPLATE is None:
+                raise Exception("No template defined.")
             template = self.DEFAULT_TEMPLATE
         self.template = template
 
@@ -137,6 +144,7 @@ class AbstractExportExcelTemplate(AbstractExportExcel):
         """Populate the template with data."""
         if self.book is None:
             raise Exception("No template loaded.")
+        # Must be implemented in concrete classes. Don't raise ``NotImplemented`` so that they can override this.
 
     def _init_config(self):
         """
@@ -157,10 +165,9 @@ class AbstractExportExcelTemplate(AbstractExportExcel):
             self._generate_filename()
 
     def _sheets_iterator(self, for_config=False):
-        """Iterate over sheets to populate."""
+        """Iterate over configured sheets."""
         for index, config in self._config.iteritems():
-            sheet = self.get_sheet(index)
-            yield index, sheet, config
+            yield index, self.get_sheet(index), config
 
     def _update_models_fields(self, sheet_index, data_slug):
         """Register the models and fields for a given sheet."""
@@ -178,13 +185,13 @@ class AbstractExportExcelTemplate(AbstractExportExcel):
 # EXPORTS =====================================================================
 
 class ExportDataModel(AbstractExportExcel):
-
-    VERBOSE = True
     """Create an Excel file containing a list of all models and fields with their data slug."""
 
     DEFAULT_FILENAME = "easynut-data-model.xlsx"  # Default name for the file.
+    VERBOSE = True  # Whether to include advanced information.
 
     def generate(self):
+        """Generate the export."""
         self.book = Workbook()
         DynamicRegistry.load_models_config()
 
@@ -218,10 +225,9 @@ class ExportDataModel(AbstractExportExcel):
 
     def _save_common(self):
         """Common steps for "save" methods."""
-        try:
-            super(ExportDataModel, self)._save_common()
-        except Exception:
+        if self.book is None:
             self.generate()
+        super(ExportDataModel, self)._save_common()
 
     def _write_headings(self, sheet, headings):
         """Write heading row."""
@@ -236,6 +242,14 @@ class ExportDataModel(AbstractExportExcel):
         # Apply heading style and freeze heading row.
         self.apply_heading_style(sheet, row, num_cols=len(headings))
         sheet.freeze_panes = sheet.cell(column=1, row=row + 1)
+
+    def _write_values(self, sheet, row, values):
+        """Write values on the given row."""
+        col = 0
+        for value in values:
+            col += 1
+            if value is not None:
+                sheet.cell(column=col, row=row).value = value
 
     def _write_values_data_slugs(self, sheet):
         """Write data slugs values."""
@@ -280,21 +294,13 @@ class ExportDataModel(AbstractExportExcel):
             self._write_values(sheet, row, values)
 
 
-    def _write_values(self, sheet, row, values):
-        """Write values on the given row."""
-        col = 0
-        for value in values:
-            col += 1
-            if value is not None:
-                sheet.cell(column=col, row=row).value = value
-
-
 class ExportExcelFull(AbstractExportExcel):
     """Create an Excel file containing an export of the whole database."""
 
     DEFAULT_FILENAME = "easynut-full-export.xlsx"  # Default name for the file.
 
     def generate(self):
+        """Generate the export."""
         self.book = Workbook()
         DynamicRegistry.load_models_config()
 
@@ -329,17 +335,16 @@ class ExportExcelFull(AbstractExportExcel):
 
     def _save_common(self):
         """Common steps for "save" methods."""
-        try:
-            super(ExportDataModel, self)._save_common()
-        except Exception:
+        if self.book is None:
             self.generate()
+        super(ExportExcelFull, self)._save_common()
 
 
 class ExportExcelList(AbstractExportExcelTemplate):
     """Excel export for templates containing a list of records."""
 
-    DEFAULT_TEMPLATE = "easynut-list.xlsx"
     DEFAULT_FILENAME = "easynut-list.xlsx"  # Default name for the file.
+    DEFAULT_TEMPLATE = "easynut-list.xlsx"  # Default template file to use.
 
     def populate(self):
         """Populate the template with data."""
@@ -358,6 +363,7 @@ class ExportExcelList(AbstractExportExcelTemplate):
             # @TODO: Data are not converted using raw DB queries.
             sql = DynamicRegistry.build_sql(models_fields)
 
+            # Execute the query.
             with DataDb.execute(sql) as c:
                 # Loop over data records.
                 row = config["start_row"] - 1  # To start the loops with the increment, easier to read.
@@ -459,8 +465,8 @@ class ExportExcelList(AbstractExportExcelTemplate):
 class ExportExcelDetail(AbstractExportExcelTemplate):
     """Excel export for templates containing the data of a single record."""
 
-    DEFAULT_TEMPLATE = "easynut-detail.xlsx"
     DEFAULT_FILENAME = "easynut-detail.xlsx"  # Default name for the file.
+    DEFAULT_TEMPLATE = "easynut-detail.xlsx"  # Default template file to use.
     DEFAULT_LIST_CONFIG = {
         "col_inc": 1,
         "row_inc": 0,

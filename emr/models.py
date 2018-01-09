@@ -155,6 +155,11 @@ class DynamicModel(object):
             setattr(self, db_col_name, None)
 
     @property
+    def pk(self):
+        """Convenient access to the DB primary key."""
+        return getattr(self, PK_DB_COL_NAME)
+
+    @property
     def msf_id(self):
         """Convenient access to the special field ``MSF ID``."""
         return self.get_field_value(self._model_config.msf_id_field_id)
