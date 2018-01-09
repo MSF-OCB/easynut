@@ -27,7 +27,7 @@ class RecordSerializer(serializers.Serializer):
         if showall:
             fields = table_config.fields
         else:
-            fields = table_config.printable_fields()
+            fields = filter(lambda f: f.list, table_config.fields)
 
         # Map the different column types to the correct serializer.
         self.fields['_id'] = serializers.IntegerField(default=None)

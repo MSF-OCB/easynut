@@ -49,13 +49,13 @@ class ExternalFields(object):
         if msfId:
             laststeps = {}
             for tablec in tables_config:
-                if tablec.id != '1':
+                if tablec['id'] != '1':
                     sql_query = 'SELECT MAX(timestamp) FROM {} WHERE campo_2 = {}'
-                    params = [tablec.sql_table_config_name, msfId]
+                    params = [tablec['sql_table_config_name'], msfId]
                     c.execute(sql_query.format(*params))
                     timestamp = c.fetchone()[0]
                     if timestamp:
-                        laststeps[tablec.name] = timestamp
+                        laststeps[tablec['name']] = timestamp
             if bool(laststeps):
                 lastStep = max(laststeps, key=laststeps.get)
                 Date = laststeps[lastStep].strftime('%a %d %b at %H:%M')

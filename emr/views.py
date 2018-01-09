@@ -14,6 +14,8 @@ from .ExternalExport import ExternalExport
 from graphos.renderers import flot
 from graphos.sources.simple import SimpleDataSource
 
+from django.contrib.auth.signals import user_logged_in
+from django.dispatch import receiver
 
 # Display log in page
 def loginview(request):
@@ -48,8 +50,7 @@ def logoutbutton(request):
 def index(request):
     template_name = 'emr/index.html'
     daoobject = DAO()
-    daoobject.set_tables_config()
-    daoobject.setEasyUser(request.user)
+    daoobject = getTableConfigandUser(request, daoobject)
     # *TBC*#
     # Last ID not used anymore
     return render(request, template_name, {
@@ -65,8 +66,7 @@ def results(request):
     template_name = 'emr/results.html'
     search_query = request.GET.get('searchstring')
     daoobject = DAO()
-    daoobject.set_tables_config()
-    daoobject.setEasyUser(request.user)
+    daoobject = getTableConfigandUser(request, daoobject)
     regularsearch = render(request, template_name, {
         'searchresults': daoobject.search(search_query, '1'),
         'lastId': daoobject.getLastId('tabla_1', 'campo_1'),
@@ -92,11 +92,8 @@ def results(request):
 def patient(request, record_id):
     template_name = 'emr/patient.html'
     daoobject = DAO()
-    daoobject.set_tables_config()
-    daoobject.set_tables_relationships()
+    daoobject = getTableConfigandUser(request, daoobject)
     daoobject.set_graphs(record_id)
-    daoobject.setEasyUser(request.user)
-
     # Initialise graphos chart objects
     charts = []
     for graph in daoobject.graphs:
@@ -118,6 +115,10 @@ def patient(request, record_id):
                 }
             )
         ])
+    daoobject.get_record_with_type('1', record_id, True)
+    daoobject.get_related_records(record_id)
+    daoobject.getLastId('tabla_1', 'campo_1')
+
     return render(request, template_name, {
         'record': daoobject.get_record_with_type('1', record_id, True),
         'relatedrecords': daoobject.get_related_records(record_id),
@@ -133,8 +134,7 @@ def patient(request, record_id):
 def detail(request, table_id, record_id):
     template_name = 'emr/detail.html'
     daoobject = DAO()
-    daoobject.set_tables_config()
-    daoobject.setEasyUser(request.user)
+    daoobject = getTableConfigandUser(request, daoobject)
     if daoobject.backEndUserRolesCheck(table_id, 'view_table'):
         return render(request, template_name, {
             'record': daoobject.get_record_with_type(table_id, record_id, False),
@@ -149,8 +149,7 @@ def detail(request, table_id, record_id):
 def edit(request, table_id, record_id):
     template_name = 'emr/edit.html'
     daoobject = DAO()
-    daoobject.set_tables_config()
-    daoobject.setEasyUser(request.user)
+    daoobject = getTableConfigandUser(request, daoobject)
     if daoobject.backEndUserRolesCheck(table_id, 'edit_table'):
         return render(request, template_name, {
             'record': daoobject.get_record_with_type(table_id, record_id, False),
@@ -166,18 +165,17 @@ def save(request):
     record_id = request.POST.get('record_id')
     table_id = request.POST.get('table_id')
     daoobject = DAO()
-    daoobject.set_tables_config()
-    daoobject.setEasyUser(request.user)
+    daoobject = getTableConfigandUser(request, daoobject)
     fieldstochange = []
     patientId = 0
     # *TBC*#
     # Lost of nested loops
     for tablec in daoobject.tables_config:
-        if tablec.id == table_id:
-            for fieldc in tablec.fields:
-                if fieldc.name == 'MSF ID':
-                    patientId = daoobject.getPatientIdFromMsfId(request.POST.get(fieldc.field_id))
-                fieldstochange.append([fieldc.field_id, request.POST.get(fieldc.field_id), fieldc.type])
+        if tablec['id'] == table_id:
+            for fieldc in tablec['fields']:
+                if fieldc['name'] == 'MSF ID':
+                    patientId = daoobject.getPatientIdFromMsfId(request.POST.get(fieldc['field_id']))
+                fieldstochange.append([fieldc['field_id'], request.POST.get(fieldc['field_id']), fieldc['type']])
             fieldstochange.append(['user', request.user.username, '2'])
     if record_id != "0":
         if daoobject.backEndUserRolesCheck(table_id, 'edit_table'):
@@ -195,9 +193,7 @@ def save(request):
 def addrecord(request, table_id, related_record_entry):
     template_name = 'emr/addrecord.html'
     daoobject = DAO()
-    daoobject.set_tables_config()
-    daoobject.set_tables_relationships()
-    daoobject.setEasyUser(request.user)
+    daoobject = getTableConfigandUser(request, daoobject)
     if daoobject.backEndUserRolesCheck(table_id, 'add_table'):
         if (related_record_entry == '0') and (table_id == '1'):
             related_record_field = 'campo_1'
@@ -218,8 +214,7 @@ def addrecord(request, table_id, related_record_entry):
 @login_required
 def deleterecord(request, table_id, record_id):
     daoobject = DAO()
-    daoobject.set_tables_config()
-    daoobject.setEasyUser(request.user)
+    daoobject = getTableConfigandUser(request, daoobject)
     if daoobject.backEndUserRolesCheck(table_id, 'delete_table'):
         daoobject.delete(table_id, record_id)
     return index(request)
@@ -229,8 +224,7 @@ def deleterecord(request, table_id, record_id):
 @login_required
 def downloadexport(request):
     daoobject = DAO()
-    daoobject.set_tables_config()
-    daoobject.setEasyUser(request.user)
+    daoobject = getTableConfigandUser(request, daoobject)
     # If user is in group "Admin"
     if request.user.groups.filter(id=2).exists():
         zip = daoobject.generateExport()+'.zip'
@@ -248,8 +242,7 @@ def downloadexport(request):
 @login_required
 def downloadsfexport(request):
     daoobject = DAO()
-    daoobject.set_tables_config()
-    daoobject.setEasyUser(request.user)
+    daoobject = getTableConfigandUser(request, daoobject)
     if request.user.groups.filter(id=2).exists():
         zip = daoobject.generateSingleFileExport()+'.zip'
         if os.path.exists(zip):
@@ -266,8 +259,7 @@ def downloadsfexport(request):
 @login_required
 def downloadbackup(request):
     daoobject = DAO()
-    daoobject.set_tables_config()
-    daoobject.setEasyUser(request.user)
+    daoobject = getTableConfigandUser(request, daoobject)
     if request.user.groups.filter(id=2).exists():
         file = u'/opt/shared/backup.gz.enc'
         if os.path.exists(file):
@@ -313,3 +305,24 @@ def downloaddefaulters(request):
         raise Http404
     else:
         return index(request)
+
+# Create sessions variables for expensive functions    
+@receiver(user_logged_in)
+def setTableConfigsAndUser(sender, user, request, **kwargs):
+    daoobject = DAO()
+    request.session['tableConfig'] = daoobject.set_tables_config()
+    request.session['tableConfigLite'] = daoobject.tables_config_lite
+    request.session['easyUser'] = daoobject.setEasyUser(request.user)
+    return
+
+def getTableConfigandUser(request, daoobject):
+    if request.session['tableConfig'] and request.session['tableConfigLite']:
+        daoobject.tables_config = request.session['tableConfig']
+        daoobject.tables_config_lite = request.session['tableConfigLite']
+    else:
+        daoobject.set_tables_config()
+    if request.session['easyUser']:
+        daoobject.easy_user = request.session['easyUser']
+    else:
+        daoobject.setEasyUser(request.user)
+    return daoobject

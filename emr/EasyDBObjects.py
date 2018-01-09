@@ -11,26 +11,6 @@ class TableConfig(object):
         self.sql_table_field_config_name = ''
         self.sql_table_config_name = ''
 
-    def set_id(self, id):
-        self.id = id
-
-    def set_name(self, name):
-        self.name = name
-
-    def set_fields(self, fields):
-        self.fields = fields
-
-    def add_field(self, field):
-        self.fields.append(field)
-
-    def set_sql_names(self):
-        self.sql_table_config_name = 'tabla_' + str(self.id)
-        self.sql_table_field_config_name = self.sql_table_config_name + '_des'
-
-    def printable_fields(self):
-        return filter(lambda f: f.list, self.fields)
-
-
 class FieldConfig(object):
 
     # Declare field types
