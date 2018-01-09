@@ -7,13 +7,18 @@ from django.conf import settings
 from django.utils.encoding import force_text
 
 from openpyxl import load_workbook, Workbook
-from openpyxl.utils import coordinate_from_string, column_index_from_string, get_column_letter
+from openpyxl.styles import Font, NamedStyle, PatternFill
+from openpyxl.utils import column_index_from_string, coordinate_from_string, get_column_letter
 
 from .models import RE_DATA_SLUG_VALIDATION, DynamicRegistry
 from .utils import DataDb, now_for_filename, xlsx_download_response_factory
 
 
-DATA_SLUG_EMPTY_CELL = "#"  # Value allowing to skip a cell while continuing to read config of other columns.
+# Value allowing to skip a cell while continuing to read config of other columns.
+DATA_SLUG_EMPTY_CELL = "#"
+
+# Background color for heading row.
+HEADING_BG_COLOR = "CCDDFF"
 
 
 # BASE CLASSES ================================================================
@@ -23,6 +28,12 @@ class AbstractExportExcel(object):
     def __init__(self):
         self.book = None
         self.filename = None
+
+    def apply_heading_style(self, sheet, row, num_cols=0):
+        max_col = max(num_cols, 50)  # Apply to at least 50 columns.
+        heading_style = self.get_heading_style()
+        for col in range(1, max_col):
+            sheet.cell(column=col, row=row).style = heading_style
 
     def cell_name_to_col_row(self, cell):
         """Convert a cell name into ``(col, row)`` indexes. E.g. ``B5`` => ``(2, 5)``."""
@@ -45,6 +56,15 @@ class AbstractExportExcel(object):
 
     # def get_sheet_names(self):
     #     return self.book.sheetnames
+
+    def get_heading_style(self):
+        if "heading" not in self.styles:
+            self.styles["heading"] = NamedStyle(name="heading")
+            self.styles["heading"].font = Font(bold=True)
+            self.styles["heading"].fill = PatternFill(
+                fill_type="solid", start_color=HEADING_BG_COLOR, end_color=HEADING_BG_COLOR
+            )
+        return self.styles["heading"]
 
     def save(self, filename=None):
         """Save the Excel file (under ``EXPORTS_ROOT``)."""
@@ -202,6 +222,20 @@ class ExportDataModel(AbstractExportExcel):
         except Exception:
             self.generate()
 
+    def _write_headings(self, sheet, headings):
+        """Write heading row."""
+        heading_style = self.get_heading_style()
+
+        col = 0; row = 1  # NOQA
+        for value in headings:
+            col += 1
+            if value is not None:
+                sheet.cell(column=col, row=row).value = value
+
+        # Apply heading style and freeze heading row.
+        self.apply_heading_style(sheet, row, num_cols=len(headings))
+        sheet.freeze_panes = sheet.cell(column=1, row=row + 1)
+
     def _write_data_slugs(self, sheet):
         # Loop over all models and fields config.
         row = 1  # Start at 1 to skip heading row.
@@ -251,14 +285,6 @@ class ExportDataModel(AbstractExportExcel):
             if value is not None:
                 sheet.cell(column=col, row=row).value = value
 
-    def _write_headings(self, sheet, headings):
-        """Write heading row."""
-        col = 0
-        for value in headings:
-            col += 1
-            if value is not None:
-                sheet.cell(column=col, row=1).value = value
-
 
 class ExportExcelFull(AbstractExportExcel):
     """Create an Excel file containing an export of the whole database."""
@@ -279,11 +305,15 @@ class ExportExcelFull(AbstractExportExcel):
             field_ids = []
 
             # Write headings.
-            col = 0
+            col = 0; row = 1  # NOQA
             for field_id, field_config in model_config.fields_config.iteritems():
                 col += 1
-                sheet.cell(column=col, row=1).value = field_config.name
+                sheet.cell(column=col, row=row).value = field_config.name
                 field_ids.append(field_id)
+
+            # Apply heading style and freeze heading row.
+            self.apply_heading_style(sheet, row, num_cols=len(model_config.fields_config))
+            sheet.freeze_panes = sheet.cell(column=1, row=row + 1)
 
             # Write values.
             row = 1
