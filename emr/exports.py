@@ -156,14 +156,6 @@ class AbstractExportExcelTemplate(AbstractExportExcel):
         """
         raise NotImplemented()
 
-    def _save_common(self):
-        """Common steps for "save" methods."""
-        super(AbstractExportExcelTemplate, self)._save_common()
-
-        # Ensure the filename is defined.
-        if not self.filename:
-            self._generate_filename()
-
     def _sheets_iterator(self, for_config=False):
         """Iterate over configured sheets."""
         for index, config in self._config.iteritems():
