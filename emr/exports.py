@@ -11,7 +11,7 @@ from openpyxl.styles import Font, NamedStyle, PatternFill
 from openpyxl.utils import column_index_from_string, coordinate_from_string, get_column_letter
 
 from .models import RE_DATA_SLUG_VALIDATION, DynamicRegistry
-from .utils import DataDb, now_for_filename, xlsx_download_response_factory
+from .utils import DataDb, insert_filename_pre_extension, now_for_filename, xlsx_download_response_factory
 
 
 # Value allowing to skip a cell while continuing to read config of other columns.
@@ -25,9 +25,14 @@ HEADING_BG_COLOR = "CCDDFF"
 
 class AbstractExportExcel(object):
 
+    DEFAULT_FILENAME = "easynut-export.xlsx"  # Default name of the file.
+
     def __init__(self):
         self.book = None
         self.filename = None
+
+        # Initialize the file name.
+        self.init_filename()
 
     def apply_heading_style(self, sheet, row, num_cols=0):
         max_col = max(num_cols, 50)  # Apply to at least 50 columns.
@@ -65,6 +70,10 @@ class AbstractExportExcel(object):
                 fill_type="solid", start_color=HEADING_BG_COLOR, end_color=HEADING_BG_COLOR
             )
         return self.styles["heading"]
+
+    def init_filename(self):
+        """Initialize file name to its default value with "now"."""
+        self.filename = insert_filename_pre_extension(self.DEFAULT_FILENAME, now_for_filename())
 
     def save(self, filename=None):
         """Save the Excel file (under ``EXPORTS_ROOT``)."""
@@ -130,13 +139,6 @@ class AbstractExportExcelTemplate(AbstractExportExcel):
         if self.book is None:
             raise Exception("No template loaded.")
 
-    def _generate_filename(self):
-        """Generate a filename based on the template name and "today"."""
-        # Split filename and extension. /!\ The extension contains the/starts with a ".".
-        filename, ext = os.path.splitext(os.path.basename(self.template))
-        # Insert "today" between the filename and the extension.
-        self.filename = "{}.{}{}".format(filename, now_for_filename(), ext)
-
     def _init_config(self):
         """
         Read the template config.
@@ -178,12 +180,9 @@ class AbstractExportExcelTemplate(AbstractExportExcel):
 class ExportDataModel(AbstractExportExcel):
     """Create an Excel file containing a list of all tables and fields with their data slug."""
 
-    DEFAULT_FILENAME = "easynut-data-model.{}.xlsx"
     VERBOSE = True
 
-    def __init__(self):
-        super(ExportDataModel, self).__init__()
-        self.filename = self.DEFAULT_FILENAME.format(now_for_filename())
+    DEFAULT_FILENAME = "easynut-data-model.xlsx"  # Default name for the file.
 
     def generate(self):
         self.book = Workbook()
@@ -289,11 +288,7 @@ class ExportDataModel(AbstractExportExcel):
 class ExportExcelFull(AbstractExportExcel):
     """Create an Excel file containing an export of the whole database."""
 
-    DEFAULT_FILENAME = "easynut-full-export.{}.xlsx"
-
-    def __init__(self):
-        super(ExportExcelFull, self).__init__()
-        self.filename = self.DEFAULT_FILENAME.format(now_for_filename())
+    DEFAULT_FILENAME = "easynut-full-export.xlsx"  # Default name for the file.
 
     def generate(self):
         self.book = Workbook()
@@ -340,6 +335,7 @@ class ExportExcelList(AbstractExportExcelTemplate):
     """Excel export for templates containing a list of records."""
 
     DEFAULT_TEMPLATE = "easynut-list.xlsx"
+    DEFAULT_FILENAME = "easynut-list.xlsx"  # Default name for the file.
 
     def populate(self):
         """Populate the template with data."""
@@ -460,6 +456,7 @@ class ExportExcelDetail(AbstractExportExcelTemplate):
     """Excel export for templates containing the data of a single record."""
 
     DEFAULT_TEMPLATE = "easynut-detail.xlsx"
+    DEFAULT_FILENAME = "easynut-detail.xlsx"  # Default name for the file.
     DEFAULT_LIST_CONFIG = {
         "col_inc": 1,
         "row_inc": 0,

@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import json
+import os
 import re
 
 from django.conf import settings
@@ -28,6 +29,19 @@ def force_list(value, string_separator=","):
     if type(value) not in (list, tuple):
         return [value]
     return value
+
+
+def insert_filename_pre_extension(filename, pre_ext):
+    """Insert a pre-extension in a filename, just before the file extension."""
+    # Split filename and extension. /!\ The extension contains the/starts with a ".".
+    filename, ext = os.path.splitext(os.path.basename(filename))
+
+    # Ensure the pre-extension starts with a ".".
+    if not pre_ext.startswith("."):
+        pre_ext = "." + pre_ext
+
+    # Insert pre-extension between the filename and the extension.
+    return "{}{}{}".format(filename, pre_ext, ext)
 
 
 def now_for_filename():
