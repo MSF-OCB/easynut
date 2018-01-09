@@ -206,8 +206,9 @@ class DynamicFieldConfig(object):
     Config information stored in the ``DYNAMIC_MODEL_DB_CONFIG_TABLE_NAME_FORMAT`` DB table.
     """
 
-    def __init__(self, model_config, attrs):
-        self.model_config = model_config
+    def __init__(self, field_id, model_config, attrs):
+        self.id = field_id
+        self.model_config = model_config  # Link to the parent ``DynamicModelConfig``.
 
         # Define field attributes: db_col_name, name, position, kind, values_list,
         #     has_list, has_detail, has_find, has_use, has_new_line, is_editable.
@@ -227,8 +228,10 @@ class DynamicModelConfig(object):
     Config information stored in the ``DYNAMIC_REGISTRY_DB_CONFIG_TABLE_NAME_FORMAT`` DB table.
     """
 
-        # Define model attributes: id, name.
-    def __init__(self, attrs, data_row=None):
+    def __init__(self, model_id, attrs, data_row=None):
+        self.id = model_id  # Model ID.
+
+        # Define model attributes: name.
         # Note: Attributes are retrieved in ``DynamicRegistry.load_models_config()``.
         for k, v in attrs.iteritems():
             setattr(self, k, v)
@@ -330,13 +333,13 @@ class DynamicModelConfig(object):
             for row in c.fetchall():
                 # Apply data conversion.
                 self._cast_field_config_row(row)
-                key = row["id"]
+                field_id = row.pop("id")
                 # Create an instance of ``DynamicFieldConfig`` and store it in the fields config registry.
-                self.fields_config[key] = DynamicFieldConfig(self, row)
+                self.fields_config[field_id] = DynamicFieldConfig(field_id, self, row)
 
-                    self.msf_id_field_id = key
                 # Register the field ID of special fields.
                 if row["name"] == MSF_ID_VERBOSE_NAME:
+                    self.msf_id_field_id = field_id
 
 
 class DynamicRegistry(object):
@@ -471,8 +474,8 @@ class DynamicRegistry(object):
                 self._cast_model_config_row(row)
 
                 # Create an instance of ``DynamicModelConfig`` and store it in the models config registry.
-                key = row["id"]
-                self.models_config[key] = DynamicModelConfig(row)
+                model_id = row.pop("id")
+                self.models_config[model_id] = DynamicModelConfig(model_id, row)
 
         # Register all models config as loaded.
         if ids is None:
