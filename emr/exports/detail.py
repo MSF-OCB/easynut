@@ -32,10 +32,10 @@ class ExportExcelDetail(AbstractExportExcelTemplate):
             # Loop over cells to populate.
             for cell_name, data_slug in config["cells"].iteritems():
                 col, row = self.cell_name_to_col_row(cell_name)
+
+                # Get values for this data slug.
                 values = self.model.get_value_from_data_slug(data_slug)
-                if type(values) not in (list, tuple):
-                    sheet.cell(column=col, row=row).value = values
-                else:
+                if type(values) in (list, tuple):
                     list_config = config["lists_config"].get(cell_name, self.DEFAULT_LIST_CONFIG)
                     max_values = list_config["max_values"]
                     list_col, list_row = col, row
@@ -43,6 +43,8 @@ class ExportExcelDetail(AbstractExportExcelTemplate):
                         sheet.cell(column=list_col, row=list_row).value = value
                         list_col += list_config["col_inc"]
                         list_row += list_config["row_inc"]
+                else:
+                    sheet.cell(column=col, row=row).value = values
 
     def _init_config(self):
         """

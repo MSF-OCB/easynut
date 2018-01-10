@@ -194,7 +194,10 @@ class DynamicModel(object):
         if model_id == self.model_id:
             return self.get_field_value(field_id)
 
+        # Retrieve data for the related model (as a list of ``DynamicModel``).
         related_models = self.get_related_models(model_id)
+
+        # Return a simple list of values for the given field.
         return [m.get_field_value(field_id) for m in related_models]
 
     def load_data(self, data_row):
@@ -218,6 +221,10 @@ class DynamicModel(object):
         """Load data for the same MSF ID from another model."""
         model_config = DynamicRegistry.get_model_config(model_id)
         self.related_models[model_id] = model_config.objects.filter(msf_id=self.msf_id)
+
+    def set_field_value(self, field_id, value):
+        """Set the value of a field based on its ID."""
+        self.fields_value[field_id] = value
 
     def _from_db_values(self, data_row):
         """Convert values of a DB record into Python values."""
