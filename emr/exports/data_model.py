@@ -79,7 +79,7 @@ class ExportDataModel(AbstractExportExcel):
         for value in values:
             col += 1
             if value is not None:  # None = skip column.
-                sheet.cell(column=col, row=row).value = value
+                self.set_cell_value(sheet.cell(column=col, row=row), value)
 
     def _write_values_data_slugs(self, sheet):
         """Write data slugs values."""

@@ -38,7 +38,7 @@ class ExportExcelList(AbstractExportExcelTemplate):
                     # Loop over columns to populate.
                     row += 1
                     for col, data_slug in self._config[sheet_index]["columns"].iteritems():
-                        sheet.cell(column=col, row=row).value = data_row[data_slug]
+                        self.set_cell_value(sheet.cell(column=col, row=row), data_row[data_slug])
 
     def _init_config(self):
         """

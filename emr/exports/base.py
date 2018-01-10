@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 import os
 from collections import OrderedDict
-
+from datetime import date, datetime
 
 from django.conf import settings
 
@@ -15,6 +15,9 @@ from ..utils import insert_filename_pre_extension, now_for_filename, xlsx_downlo
 
 # Value allowing to skip a cell while continuing to read config of other columns.
 DATA_SLUG_EMPTY_CELL = "#"
+
+EXCEL_DATE_FORMAT = "%d/%m/%Y"
+EXCEL_DATETIME_FORMAT = "%d/%m/%Y %H:%M:%S"
 
 
 class AbstractExportExcel(object):
@@ -124,6 +127,18 @@ class AbstractExportExcel(object):
         response = xlsx_download_response_factory(self.filename)
         self.book.save(response)
         return response
+
+    def set_cell_value(self, cell, value):
+        """Set the value of a cell."""
+        cell.value = self.to_excel_value(value)
+
+    def to_excel_value(self, value):
+        """Convert a Python value to its Excel value."""
+        if isinstance(value, date):
+            return value.strftime(EXCEL_DATE_FORMAT)
+        if isinstance(value, datetime):
+            return value.strftime(EXCEL_DATETIME_FORMAT)
+        return value
 
     def _save_common(self):
         """Provide common steps for "save" methods."""

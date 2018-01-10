@@ -40,11 +40,11 @@ class ExportExcelDetail(AbstractExportExcelTemplate):
                     max_values = list_config["max_values"]
                     list_col, list_row = col, row
                     for value in values[:max_values]:
-                        sheet.cell(column=list_col, row=list_row).value = value
+                        self.set_cell_value(sheet.cell(column=list_col, row=list_row), value)
                         list_col += list_config["col_inc"]
                         list_row += list_config["row_inc"]
                 else:
-                    sheet.cell(column=col, row=row).value = values
+                    self.set_cell_value(sheet.cell(column=col, row=row), values)
 
     def _init_config(self):
         """
