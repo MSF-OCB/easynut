@@ -17,8 +17,6 @@ from graphos.sources.simple import SimpleDataSource
 from django.contrib.auth.signals import user_logged_in
 from django.dispatch import receiver
 
-CACHE_TTL = getattr(settings, 'CACHE_TTL', DEFAULT_TIMEOUT)
-
 # Display log in page
 def loginview(request):
     if request.method == 'POST':
