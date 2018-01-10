@@ -106,6 +106,7 @@ class ExportExcelDetail(AbstractExportExcelTemplate):
                 "col_inc": int(sheet.cell(column=START_COL + 2, row=row).value),
                 "row_inc": int(sheet.cell(column=START_COL + 3, row=row).value),
                 "max_values": int(sheet.cell(column=START_COL + 4, row=row).value),
+                "kind": str(sheet.cell(column=START_COL + 5, row=row).value).lower(),
             }
 
     def _init_config_sheets(self):
