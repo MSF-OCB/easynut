@@ -12,7 +12,7 @@ class ExportExcelDetail(AbstractExportExcelTemplate):
     """Excel export for templates containing the data of a single record."""
 
     DEFAULT_FILENAME = "easynut-detail.xlsx"  # Default name for the file.
-    DEFAULT_TEMPLATE = "easynut-detail.xlsx"  # Default template file to use.
+    DEFAULT_TEMPLATE = "export-template-detail.xlsx"  # Default template file to use.
     DEFAULT_LIST_CONFIG = {
         "col_inc": 1,
         "row_inc": 0,

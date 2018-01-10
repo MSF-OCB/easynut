@@ -11,7 +11,7 @@ class ExportExcelList(AbstractExportExcelTemplate):
     """Excel export for templates containing a list of records."""
 
     DEFAULT_FILENAME = "easynut-list.xlsx"  # Default name for the file.
-    DEFAULT_TEMPLATE = "easynut-list.xlsx"  # Default template file to use.
+    DEFAULT_TEMPLATE = "export-template-list.xlsx"  # Default template file to use.
 
     def populate(self):
         """Populate the template with data."""
