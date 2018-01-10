@@ -1,0 +1,23 @@
+{% extends "emr/base.html" %}
+
+{% block content %}	
+	<section class="hero is-fullheight">
+		<div align="center">
+			<br/>
+			{% if wrongcrendentials %}
+				<span  style="color:red; font-weight: bold;">{{ wrongcrendentials }}</span>
+				<p><br/></p>
+			{% endif %}
+			<form id="login_form" method="POST" action="{% url 'emr:login' %}">
+				<table>
+					{% csrf_token %}
+					<tr><input class="searchbox" type="text" name="username" value="" placeholder="Username"/></tr>
+					<tr>&nbsp;</tr>
+					<tr><input class="searchbox" type="password" name="password" value="" placeholder="Password"/></tr>
+					<tr>&nbsp;</tr>
+					<tr><input class="searchnow" type="submit" value="Login"  class="has-text-centered"/></tr>
+				</table>
+			</form>
+		</div>
+	</section>
+{% endblock %}

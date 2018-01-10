@@ -1,0 +1,52 @@
+{% load staticfiles %}
+
+<html>
+
+	<link rel="stylesheet" type="text/css" href="{% static 'emr/style.css' %}" />
+	<script type="text/javascript" src="/static/emr/js/jquery-3.2.1.min.js"></script> 
+	<link rel="stylesheet" type="text/css" href="{% static 'emr/jquery-ui.css' %}" />
+	<script type="text/javascript" src="/static/emr/js/jquery-ui.js"></script>	
+	<script type="text/javascript">
+		$(document).ready( function() {
+			$("#nextId").click(function () {
+				alert("Last ID used: {{ lastId }}");
+			});
+		});
+	</script>
+
+	<head>
+	    <meta charset="utf-8">
+	    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+	    <meta name="viewport" content="width=device-width, initial-scale=1">
+	    <title>Fori - EasyNut</title>
+	</head>
+	
+	<header>
+		<div class='elementclass'>
+			<div class="background-image"></div>
+			<h1>EasyNut</h1>
+			<h3>Fori - Nutrition System</h3>		
+		</div>
+		<div class='elementclass'>
+			<nav class="rightalign">
+				<li><a href="{% url 'emr:index' %}" class="btn">Home</a></li>
+			</nav class="rightalign">
+			<nav>
+				<li><a href="#" accesskey="1" id="nextId" class="btn">Last ID</a></li>
+				<li><a href="{% url 'emr:downloadexport' %}" accesskey="2" class="btn">Export</a></li>
+			</nav>
+		</div>
+	</header>
+	
+	<body>	
+		
+		<section class="features">
+            {% block content %}
+            {% endblock %}		
+		</section>	
+			
+		<footer>
+			<p>MSF - Nigeria - Fori | Support: <a href="mailto:msfocb-blantyre-ehealth@brussels.msf.org">msfocb-blantyre-ehealth@brussels.msf.org</a> | OCB eHealth</a>.</p>
+		</footer>		
+	</body>
+</html>
