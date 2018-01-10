@@ -17,6 +17,7 @@ import MySQLdb.cursors
 RE_CLEAN_SQL = re.compile("(\n +)+", re.MULTILINE)
 
 DB_DATE_FORMAT = "%Y-%m-%d"
+DB_DATETIME_FORMAT = "%Y-%m-%d5%H:%M:%S"
 
 # See: https://developer.mozilla.org/en-US/docs/Web/HTTP/Basics_of_HTTP/MIME_types/Complete_list_of_MIME_types
 CONTENT_TYPE_CSV = "text/csv"
@@ -162,6 +163,13 @@ class Cast(object):
         if value is None or isinstance(value, date):
             return value
         return datetime.strptime(value, DB_DATE_FORMAT).date
+
+    @staticmethod
+    def datetime(value):
+        """Convert datetime values."""
+        if value is None or isinstance(value, datetime):
+            return value
+        return datetime.strptime(value, DB_DATETIME_FORMAT)
 
     @staticmethod
     def field_kind(kind):
