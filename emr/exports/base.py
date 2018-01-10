@@ -46,17 +46,11 @@ class AbstractExportExcel(object):
         # Initialize the file name.
         self.init_filename()
 
-    def apply_style_to_cols(self, style, sheet, min_col, max_col, min_row=None, max_row=None):
-        """Apply a style to columns."""
-        for row_cells in sheet.iter_rows(min_col=min_col, max_col=max_col, min_row=min_row, max_row=max_row):
-            for cell in row_cells:
-                cell.style = style
-
-    def apply_style_to_rows(self, style, sheet, min_row, max_row, min_col=None, max_col=None):
-        self.apply_style_to_cols(style, sheet, min_col, max_col, min_row=min_row, max_row=max_row)
-        # for col_cells in sheet.iter_cols(min_row=min_row, max_row=max_row, min_col=min_col, max_col=max_col):
-        #     for cell in col_cells:
-        #         cell.style = style
+    def apply_style(self, style, sheet, max_col, max_row, min_col=1, min_row=1):
+        """Apply a style to a range of cells in the given sheet."""
+        for col in range(min_col, max_col + 1):
+            for row in range(min_row, max_row + 1):
+                sheet.cell(column=col, row=row).style = style
 
     def cell_name_to_col_row(self, cell):
         """Convert a cell name into ``(col, row)`` coordinate. E.g. ``B5`` => ``(2, 5)``."""

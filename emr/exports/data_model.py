@@ -70,7 +70,7 @@ class ExportDataModel(AbstractExportExcel):
         # Apply heading style and freeze heading row.
         style = self.get_style(self.STYLE_HEADING)
         max_col = max(len(headings), self.APPLY_STYLE_MIN_NUM_COLS)  # Apply to at least a min number of columns.
-        self.apply_style_to_rows(style, sheet, min_row=row, max_row=row, max_col=max_col)
+        self.apply_style(style, sheet, max_col, row, min_row=row)
         sheet.freeze_panes = sheet.cell(column=1, row=row + 1)
 
     def _write_values(self, sheet, row, values):
@@ -83,6 +83,10 @@ class ExportDataModel(AbstractExportExcel):
 
     def _write_values_data_slugs(self, sheet):
         """Write data slugs values."""
+        verbose_style = self.get_style(self.STYLE_VERBOSE)
+        msf_id_style = self.get_style(self.STYLE_MSF_ID)
+        date_style = self.get_style(self.STYLE_DATE)
+
         # Loop over all models and fields config.
         min_row = 2  # Skip heading row.
         row = min_row - 1    # To start the loops with the increment, easier to read.
@@ -114,22 +118,19 @@ class ExportDataModel(AbstractExportExcel):
                 # Apply special fields style.
                 style = None
                 if field_config.name == MSF_ID_VERBOSE_NAME:
-                    style = self.get_style(self.STYLE_MSF_ID)
+                    style = msf_id_style
                 elif field_config.name == DATE_VERBOSE_NAME:
-                    style = self.get_style(self.STYLE_DATE)
+                    style = date_style
                 if style is not None:
-                    self.apply_style_to_rows(
-                        style, sheet, min_row=row, max_row=row, min_col=1, max_col=verbose_min_col - 1
-                    )
+                    self.apply_style(style, sheet, verbose_min_col - 1, row, min_row=row)
 
                 # Apply verbose style.
-                style = self.get_style(self.STYLE_VERBOSE)
-                self.apply_style_to_cols(
-                    style, sheet, min_col=verbose_min_col, max_col=verbose_max_col, min_row=min_row
-                )
+                self.apply_style(verbose_style, sheet, verbose_max_col, row, min_col=verbose_min_col, min_row=row)
 
     def _write_values_models(self, sheet):
         """Write models values."""
+        verbose_style = self.get_style(self.STYLE_VERBOSE)
+
         # Loop over all models config.
         min_row = 2  # Skip heading row.
         row = min_row - 1    # To start the loops with the increment, easier to read.
@@ -147,5 +148,4 @@ class ExportDataModel(AbstractExportExcel):
             self._write_values(sheet, row, values)
 
             # Apply verbose style.
-            style = self.get_style(self.STYLE_VERBOSE)
-            self.apply_style_to_cols(style, sheet, min_col=verbose_min_col, max_col=verbose_max_col, min_row=min_row)
+            self.apply_style(verbose_style, sheet, verbose_max_col, row, min_col=verbose_min_col, min_row=row)
