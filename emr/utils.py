@@ -24,6 +24,7 @@ CONTENT_TYPE_ZIP = "application/zip"
 
 
 def force_list(value, string_separator=","):
+    """Force the value to be a list of values."""
     if isinstance(value, six.string_types) and string_separator is not None:
         return value.split(string_separator)
     if type(value) not in (list, tuple):
@@ -45,16 +46,19 @@ def insert_filename_pre_extension(filename, pre_ext):
 
 
 def now_for_filename():
+    """Return a string representation of "now" for filenames."""
     return timezone.now().strftime("%y%m%d-%H%M%S")
 
 
 def today_for_filename():
+    """Return a string representation of "today" for filenames."""
     return timezone.now().strftime("%y%m%d")
 
 
 # DATABASE ====================================================================
 
 def get_db(name="data"):
+    """Return a DB connection for the given name defined in Django settings."""
     if name not in settings.DATABASES:
         raise AttributeError("Database '{}' is not defined in settings.".format(name))
 
@@ -74,6 +78,7 @@ def get_db(name="data"):
 
 
 def clean_sql(sql):
+    """Clean a SQL statement to a one-line string."""
     return RE_CLEAN_SQL.sub(" ", sql).strip()
 
 
@@ -86,22 +91,26 @@ class DbExecute(object):
         self._cursor = None
 
     def __enter__(self):
+        """Initialize the ``with`` statement."""
         self._cursor = self._db.cursor()
         self._cursor.execute(self._sql)
         return self._cursor
 
     def __exit__(self, type, value, traceback):
+        """Exit properly the ``with`` statement."""
         self._cursor.close()
 
 
 class DataDb(object):
     """Default connection to the "data" DB. This is a ``Singleton``."""
-    # Singleton pattern: See right after this class definition for the ``Singleton`` implementation.
+
+    # Note: See right after this class definition for the ``Singleton`` implementation.
 
     def __init__(self):
         self._db = get_db("data")
 
     def __getattr__(self, name):
+        """Provide convenient access to DB connection attributes."""
         if hasattr(self._db, name):
             return getattr(self._db, name)
 
@@ -121,23 +130,28 @@ DataDb = DataDb()
 # CAST VALUES =================================================================
 
 class Cast(object):
+    """Convert a DB value into its Python value."""
 
     @staticmethod
     def bool(value):
+        """Convert boolean values."""
         return value == "true"
 
     @staticmethod
     def int(value):
+        """Convert integer values."""
         return int(value)
 
     @staticmethod
     def csv(values):
+        """Convert list of values separated by a comma."""
         if values:
             return [v.strip() for v in values.split(",")]
         return None
 
     @staticmethod
     def field_kind(kind):
+        """Convert field type from Spanish to English."""
         mapping = {
             "fecha": "date",
             "entero": "int",
@@ -152,24 +166,28 @@ class Cast(object):
 # HTTP RESPONSES ==============================================================
 
 def download_response_factory(filename, content="", *args, **kwargs):
+    """Return an ``HttpResponse`` that triggers a file download in the browser."""
     response = HttpResponse(content, *args, **kwargs)
     response["Content-Disposition"] = "attachment; filename={}".format(filename)
     return response
 
 
 def csv_download_response_factory(filename, content="", *args, **kwargs):
+    """Return a downlaod response for CSV files."""
     kwargs["content_type"] = CONTENT_TYPE_CSV
     response = download_response_factory(filename, content=content, *args, **kwargs)
     return response
 
 
 def xlsx_download_response_factory(filename, content="", *args, **kwargs):
+    """Return a downlaod response for Excel (.xlsx) files."""
     kwargs["content_type"] = CONTENT_TYPE_XLSX
     response = download_response_factory(filename, content=content, *args, **kwargs)
     return response
 
 
 def pdf_download_response_factory(filename, content="", *args, **kwargs):
+    """Return a downlaod response for PDF files."""
     kwargs["content_type"] = CONTENT_TYPE_PDF
     response = download_response_factory(filename, content=content, *args, **kwargs)
     return response
@@ -178,7 +196,8 @@ def pdf_download_response_factory(filename, content="", *args, **kwargs):
 # DEBUGGING ===================================================================
 
 def debug(label, var):
+    """Print debug information."""
     try:
         print label, json.dumps(var, indent=2, cls=DjangoJSONEncoder)
-    except:
+    except Exception:
         print label, var
