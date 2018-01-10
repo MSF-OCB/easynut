@@ -32,7 +32,7 @@ urlpatterns = [
     url(r'^downloadabsents/$', views.downloadabsents, name='downloadabsents'),
     url(r'^downloaddefaulters/$', views.downloaddefaulters, name='downloaddefaulters'),
 
-    url(r'^export/data-model$', views.export_data_model, name='export_data_model'),
-    url(r'^export/excel/full$', views.export_excel_full, name='export_excel_full'),
-    url(r'^export/excel/list$', views.export_excel_list, name='export_excel_list'),
+    url(r'^export/data-model/$', views.export_data_model, name='export_data_model'),
+    url(r'^export/excel/full/$', views.export_excel_full, name='export_excel_full'),
+    url(r'^export/excel/list/$', views.export_excel_list, name='export_excel_list'),
 ]
