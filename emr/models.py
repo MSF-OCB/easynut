@@ -19,6 +19,7 @@ Terminology:
 """
 import re
 from collections import Iterable, OrderedDict
+from copy import copy
 
 from django.core.exceptions import MultipleObjectsReturned, ObjectDoesNotExist
 
@@ -307,18 +308,20 @@ class DynamicModelConfig(object):
         """Save this record in DB (using an INSERT or UPDATE)."""
         raise NotImplemented()  # @TODO
 
-    def _cast_field_config_row(self, row):
-        """Apply data conversion on the given field config values."""
-        row["id"] = self.get_field_id_from_db_col_name(row["db_col_name"])
-        row["position"] = Cast.int(row["position"])
-        row["kind"] = Cast.field_kind(row["kind"])
-        row["values_list"] = Cast.csv(row["values_list"])
-        row["has_list"] = Cast.bool(row["has_list"])
-        row["has_detail"] = Cast.bool(row["has_detail"])
-        row["has_find"] = Cast.bool(row["has_find"])
-        row["has_use"] = Cast.bool(row["has_use"])
-        row["has_new_line"] = Cast.bool(row["has_new_line"])
-        row["is_editable"] = Cast.bool(row["is_editable"])
+    def _from_db_values_field_config(self, row):
+        """Convert DB values of a field config into their Python values."""
+        cleaned_data = copy(row)
+        cleaned_data["id"] = self.get_field_id_from_db_col_name(row["db_col_name"])
+        cleaned_data["position"] = Cast.int(row["position"])
+        cleaned_data["kind"] = Cast.field_kind(row["kind"])
+        cleaned_data["values_list"] = Cast.csv(row["values_list"])
+        cleaned_data["has_list"] = Cast.bool(row["has_list"])
+        cleaned_data["has_detail"] = Cast.bool(row["has_detail"])
+        cleaned_data["has_find"] = Cast.bool(row["has_find"])
+        cleaned_data["has_use"] = Cast.bool(row["has_use"])
+        cleaned_data["has_new_line"] = Cast.bool(row["has_new_line"])
+        cleaned_data["is_editable"] = Cast.bool(row["is_editable"])
+        return cleaned_data
 
     def _load_fields_config(self):
         """Initialize model fields config."""
@@ -349,11 +352,12 @@ class DynamicModelConfig(object):
 
             # Loop over records.
             for row in c.fetchall():
-                # Apply data conversion.
-                self._cast_field_config_row(row)
-                field_id = row.pop("id")
+                # Convert DB values into their Python values.
+                cleaned_data = self._from_db_values_field_config(row)
+
                 # Create an instance of ``DynamicFieldConfig`` and store it in the fields config registry.
-                self.fields_config[field_id] = DynamicFieldConfig(field_id, self, row)
+                field_id = cleaned_data.pop("id")
+                self.fields_config[field_id] = DynamicFieldConfig(field_id, self, cleaned_data)
 
                 # Register the field ID of special fields.
                 if row["name"] == MSF_ID_VERBOSE_NAME:
@@ -496,12 +500,12 @@ class DynamicRegistry(object):
 
             # Loop over records.
             for row in c.fetchall():
-                # Apply data conversion.
-                self._cast_model_config_row(row)
+                # Convert DB values into their Python values.
+                cleaned_data = self._from_db_values_model_config(row)
 
                 # Create an instance of ``DynamicModelConfig`` and store it in the models config registry.
-                model_id = row.pop("id")
-                self.models_config[model_id] = DynamicModelConfig(model_id, row)
+                model_id = cleaned_data.pop("id")
+                self.models_config[model_id] = DynamicModelConfig(model_id, cleaned_data)
 
         # Register all models config as loaded.
         if ids is None:
@@ -524,9 +528,11 @@ class DynamicRegistry(object):
 
         return where
 
-    def _cast_model_config_row(self, row):
-        """Apply data conversion on the given model config."""
-        row["id"] = Cast.int(row["id"])
+    def _from_db_values_model_config(self, row):
+        """Convert DB values of a model config into their Python values."""
+        cleaned_data = copy(row)
+        cleaned_data["id"] = Cast.int(row["id"])
+        return cleaned_data
 
 
 # Singleton: Override class with its instance.
