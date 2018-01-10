@@ -162,7 +162,7 @@ class Cast(object):
         """Convert date values."""
         if value is None or isinstance(value, date):
             return value
-        return datetime.strptime(value, DB_DATE_FORMAT).date
+        return datetime.strptime(value, DB_DATE_FORMAT).date()
 
     @staticmethod
     def datetime(value):
