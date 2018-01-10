@@ -199,13 +199,17 @@ class DynamicModel(object):
 
     def load_data(self, data_row):
         """Initialize model fields value based on a DB row."""
+        # Loop over cleaned data.
         for db_col_name, value in data_row.iteritems():
-            if db_col_name in NON_DYNAMIC_FIELDS_DB_COL_NAMES:
+            # Retrieve the field ID based on the DB col name.
+            field_id = self._model_config.get_field_id_from_db_col_name(db_col_name)
+
+            # Set non dynamic field.
+            if field_id is None:
                 setattr(self, db_col_name, value)
+            # Set dynamic field.
             else:
-                field_id = self._model_config.get_field_id_from_db_col_name(db_col_name)
-                if field_id in self._model_config.fields_config:
-                    self.fields_value[field_id] = value
+                self.fields_value[field_id] = value
 
     def load_related_models(self, model_id):
         """Load data for the same MSF ID from another model."""
@@ -263,6 +267,7 @@ class DynamicModelConfig(object):
 
         # Initialize the fields config registry.
         self.fields_config = OrderedDict()
+        self.db_col_names_mapping = {}  # DB col name to field ID mapping.
         self._load_fields_config()
 
         # Create an instance of the manager and register this model config with it.
@@ -295,9 +300,12 @@ class DynamicModelConfig(object):
         return self.fields_config[field_id]
 
     def get_field_id_from_db_col_name(self, db_col_name):
-        """Return the field ID from its DB column name."""
-        # /!\ Dangerous use of ``DYNAMIC_FIELD_DB_COL_NAME_FORMAT``.
-        return Cast.int(db_col_name.replace(DYNAMIC_FIELD_DB_COL_NAME_FORMAT.format(""), ""))
+        """
+        Return the field ID from its DB col name.
+
+        If the DB col name is not in the mapping, it means it's a non dynamic field.
+        """
+        return self.db_col_names_mapping.get(db_col_name, None)
 
     def model_factory(self, data_row=None):
         """Create a dynamic model for this model config, and load data if provided."""
@@ -314,7 +322,8 @@ class DynamicModelConfig(object):
         """Convert DB values of a field config into their Python values."""
         cleaned_data = copy(row)
         # @TODO: ``tabla_X_des.campo_id`` should be the ID, not the DB col name (i.e. same as in ``tablas.tabla_id``).
-        cleaned_data["id"] = self.get_field_id_from_db_col_name(row["id"])
+        # /!\ Dangerous use of ``DYNAMIC_FIELD_DB_COL_NAME_FORMAT``.
+        cleaned_data["id"] = Cast.int(row["db_col_name"].replace(DYNAMIC_FIELD_DB_COL_NAME_FORMAT.format(""), ""))
         cleaned_data["position"] = Cast.int(row["position"])
         cleaned_data["kind"] = Cast.field_kind(row["kind"])
         cleaned_data["values_list"] = Cast.csv(row["values_list"])
@@ -368,6 +377,10 @@ class DynamicModelConfig(object):
                     self.msf_id_field_id = field_id
                 elif row["name"] == DATE_VERBOSE_NAME:
                     self.date_field_id = field_id
+
+                # Register DB col name to field ID mapping.
+                db_col_name = self.fields_config[field_id].db_col_name
+                self.db_col_names_mapping[db_col_name] = field_id
 
 
 class DynamicRegistry(object):
