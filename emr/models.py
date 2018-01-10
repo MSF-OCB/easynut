@@ -199,8 +199,11 @@ class DynamicModel(object):
 
     def load_data(self, data_row):
         """Initialize model fields value based on a DB row."""
+        # Convert DB values to Python values.
+        cleaned_data = self._from_db_values(data_row)
+
         # Loop over cleaned data.
-        for db_col_name, value in data_row.iteritems():
+        for db_col_name, value in cleaned_data.iteritems():
             # Retrieve the field ID based on the DB col name.
             field_id = self._model_config.get_field_id_from_db_col_name(db_col_name)
 
@@ -216,6 +219,21 @@ class DynamicModel(object):
         model_config = DynamicRegistry.get_model_config(model_id)
         self.related_models[model_id] = model_config.objects.filter(msf_id=self.msf_id)
 
+    def _from_db_values(self, data_row):
+        """Convert values of a DB record into Python values."""
+        clean_data = {}
+        for db_col_name, value in data_row.iteritems():
+            field_id = self._model_config.get_field_id_from_db_col_name(db_col_name)
+
+            # Convert non dynamic field (via ``DynamicModelConfig``).
+            if field_id is None:
+                clean_data[db_col_name] = self._model_config.from_db_value_non_dynamic(db_col_name, value)
+            # Convert dynamic field (via ``DynamicFieldConfig``).
+            else:
+                field_config = self.get_field_config(field_id)
+                clean_data[db_col_name] = field_config.from_db_value(value)
+        return clean_data
+
 
 # MODELS CONFIG ===============================================================
 
@@ -225,6 +243,15 @@ class DynamicFieldConfig(object):
 
     Config information stored in the ``DYNAMIC_MODEL_DB_CONFIG_TABLE_NAME_FORMAT`` DB table.
     """
+
+    # Available field types.
+    KIND_BOOL = "bool"
+    KIND_DATE = "date"
+    KIND_INT = "int"
+    KIND_NOTES = "notes"
+    KIND_RADIO = "radio"
+    KIND_SELECT = "select"
+    KIND_TEXT = "text"
 
     def __init__(self, field_id, model_config, attrs):
         self.id = field_id
@@ -240,6 +267,23 @@ class DynamicFieldConfig(object):
     def data_slug(self):
         """Return the data slug of the current ``model.field``."""
         return DATA_SLUG_FORMAT.format(model_id=self.model_config.id, field_id=self.id)
+
+    def from_db_value(self, value):
+        """Convert a DB value for this field into its Python value."""
+        if value is None:
+            return value
+        # Type ``radio`` with Yes/No values should be defined as ``bool``.
+        if self.kind == self.KIND_BOOL:
+            return Cast.bool(value)
+        if self.kind == self.KIND_DATE:
+            return Cast.date(value)
+        if self.kind == self.KIND_INT:
+            return Cast.int(value)
+        return value
+
+    def to_db_value(self, value):
+        """Convert a Python value for this field into its DB value."""
+        raise NotImplemented()
 
 
 class DynamicModelConfig(object):
@@ -294,6 +338,20 @@ class DynamicModelConfig(object):
     def delete(self):
         """Delete this record from DB."""
         raise NotImplemented()  # @TODO
+
+    def from_db_value_non_dynamic(self, db_col_name, value):
+        """Convert the DB value of a non dynamic field into its Python value."""
+        if value is None:
+            return value
+
+        if db_col_name == "_id":
+            return Cast.int(value)
+        if db_col_name == "user":
+            return value
+        if db_col_name == "timestamp":
+            return Cast.datetime(value)
+
+        raise ValueError("'{}' is not a non dynamic field.".format(db_col_name))
 
     def get_field_config(self, field_id):
         """Return the config of a field based on its ID."""
