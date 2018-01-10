@@ -107,6 +107,8 @@ class DynamicManager(object):
             where_clause = "WHERE {}".format(where)
 
         # Sort results by MSF ID, then by date if that column exists.
+        # Remark: We don't use the sorting defined in the ``DYNAMIC_REGISTRY_DB_CONFIG_TABLE_NAME_FORMAT``.
+        # That table defines the ORDER BY in its DB columns ``orden`` (DB col name) and ``orden_sen`` (ASC/DESC).
         order_by = [self.model_config.msf_id_db_col_name]
         if self.model_config.date_db_col_name is not None:
             order_by.append("{} DESC".format(self.model_config.date_db_col_name))
@@ -246,7 +248,7 @@ class DynamicModelConfig(object):
     def __init__(self, model_id, attrs, data_row=None):
         self.id = model_id  # Model ID.
 
-        # Define model attributes: name.
+        # Define model attributes: name, position.
         # Note: Attributes are retrieved in ``DynamicRegistry.load_models_config()``.
         for k, v in attrs.iteritems():
             setattr(self, k, v)
@@ -311,7 +313,8 @@ class DynamicModelConfig(object):
     def _from_db_values_field_config(self, row):
         """Convert DB values of a field config into their Python values."""
         cleaned_data = copy(row)
-        cleaned_data["id"] = self.get_field_id_from_db_col_name(row["db_col_name"])
+        # @TODO: ``tabla_X_des.campo_id`` should be the ID, not the DB col name (i.e. same as in ``tablas.tabla_id``).
+        cleaned_data["id"] = self.get_field_id_from_db_col_name(row["id"])
         cleaned_data["position"] = Cast.int(row["position"])
         cleaned_data["kind"] = Cast.field_kind(row["kind"])
         cleaned_data["values_list"] = Cast.csv(row["values_list"])
@@ -327,7 +330,8 @@ class DynamicModelConfig(object):
         """Initialize model fields config."""
         # Build the query to retrieve the fields config.
         sql = clean_sql("""
-            SELECT campo_id AS db_col_name,
+            SELECT campo_id AS id,
+                campo AS db_col_name,
                 presentador AS name,
                 pos AS position,
                 tipo AS kind,
@@ -483,10 +487,12 @@ class DynamicRegistry(object):
 
         # Build the SQL statement.
         sql = clean_sql("""
-            SELECT CAST(tabla_id AS UNSIGNED) AS id, presentador AS name
+            SELECT tabla_id AS id,
+                presentador AS name,
+                registros AS position
             FROM tablas
             {where_clause}
-            ORDER BY id
+            ORDER BY registros
         """.format(where_clause=self._build_models_config_where_clause(ids)))
 
         # Execute the query.
@@ -532,6 +538,7 @@ class DynamicRegistry(object):
         """Convert DB values of a model config into their Python values."""
         cleaned_data = copy(row)
         cleaned_data["id"] = Cast.int(row["id"])
+        cleaned_data["position"] = Cast.int(row["position"])
         return cleaned_data
 
 
