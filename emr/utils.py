@@ -2,6 +2,7 @@
 import json
 import os
 import re
+from datetime import date, datetime
 
 from django.conf import settings
 from django.core.serializers.json import DjangoJSONEncoder
@@ -14,6 +15,8 @@ import MySQLdb.cursors
 
 
 RE_CLEAN_SQL = re.compile("(\n +)+", re.MULTILINE)
+
+DB_DATE_FORMAT = "%Y-%m-%d"
 
 # See: https://developer.mozilla.org/en-US/docs/Web/HTTP/Basics_of_HTTP/MIME_types/Complete_list_of_MIME_types
 CONTENT_TYPE_CSV = "text/csv"
@@ -135,19 +138,30 @@ class Cast(object):
     @staticmethod
     def bool(value):
         """Convert boolean values."""
-        return value == "true"
+        if value is None or isinstance(value, bool):
+            return value
+        val = str(value).lower()
+        if val in ("true", "t", "yes", "y", "1"):
+            return True
+        if val in ("false", "f", "no", "n", "0"):
+            return False
+        raise ValueError("Wrong boolean value: '{}'.".format(value))
 
     @staticmethod
-    def int(value):
-        """Convert integer values."""
-        return int(value)
+    def csv(value, string_separator=","):
+        """Convert list of values separated by a ``string_separator``."""
+        if value is None or type(value) in (list, tuple):
+            return value
+        if isinstance(value, six.string_types) and string_separator is not None:
+            return [v.strip() for v in value.split(string_separator)]
+        raise ValueError("Wrong CSV value: '{}'.".format(value))
 
     @staticmethod
-    def csv(values):
-        """Convert list of values separated by a comma."""
-        if values:
-            return [v.strip() for v in values.split(",")]
-        return None
+    def date(value):
+        """Convert date values."""
+        if value is None or isinstance(value, date):
+            return value
+        return datetime.strptime(value, DB_DATE_FORMAT).date
 
     @staticmethod
     def field_kind(kind):
@@ -161,6 +175,13 @@ class Cast(object):
             "radio": "radio",
         }
         return mapping[kind] if kind in mapping else kind
+
+    @staticmethod
+    def int(value):
+        """Convert integer values."""
+        if value is None:
+            return value
+        return int(value)
 
 
 # HTTP RESPONSES ==============================================================
