@@ -1,0 +1,19 @@
+{% extends "builder/base.html" %}
+
+{% block builder_content %}
+  <div class="columns">
+    <div class="column is-12 scroll">
+      <table>
+        <tr>
+          <td><span class="subtitle">Edit Model #{{ model_id }}</span></td>
+          <td width="5%"><a href="{% url "builder:model_view" model_id %}" class="button is-mei go">View</a></td>
+          <td width="5%"><a href="{% url "builder:home" %}" class="button is-mei go">List</a></td>
+        </tr>
+      </table>
+    </div>
+  </div>
+  <div class="columns">
+    <div class="column is-12 scroll">
+    </div>
+  </div>
+{% endblock builder_content %}

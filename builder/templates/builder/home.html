@@ -1,0 +1,37 @@
+{% extends "builder/base.html" %}
+
+{% block builder_content %}
+  <div class="columns">
+    <div class="column is-12 scroll">
+      <table>
+        <tr>
+          <td><span class="subtitle">Models</span></td>
+          <td width="5%"><a href="{% url 'builder:model_add' %}" class="button is-mei go">Add</a></td>
+        </tr>
+      </table>
+    </div>
+  </div>
+  <div class="columns">
+    <div class="column is-12 scroll">
+      <table class="table is-striped is-bordered">
+        <thead>
+          <tr>
+            <th class="nowrap" width="5%">Model ID</th>
+            <th>Name</th>
+            <th class="nowrap" colspan="2" width="5%">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for model_config in models_config %}
+            <tr>
+              <td>{{ model_config.id }}</td>
+              <td>{{ model_config.name }}</td>
+              <td><a href="{% url 'builder:model_view' model_config.id %}" class="button is-mei go">View</a></td>
+              <td><a href="{% url 'builder:model_edit' model_config.id %}" class="button is-mei careful">Edit</a></td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+{% endblock builder_content %}
