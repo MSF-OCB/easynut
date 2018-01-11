@@ -16,10 +16,8 @@ ALTER TABLE `tabla_11` ADD INDEX `msf_id` (`campo_2`);
 ALTER TABLE `tabla_12` ADD INDEX `msf_id` (`campo_2`);
 ALTER TABLE `tabla_13` ADD INDEX `msf_id` (`campo_2`);
 ALTER TABLE `tabla_14` ADD INDEX `msf_id` (`campo_2`);
-ALTER TABLE `tabla_15` ADD INDEX `msf_id` (`campo_2`);
 ALTER TABLE `tabla_16` ADD INDEX `msf_id` (`campo_2`);
 ALTER TABLE `tabla_17` ADD INDEX `msf_id` (`campo_2`);
-ALTER TABLE `tabla_18` ADD INDEX `msf_id` (`campo_2`);
 
 
 -- Register this migration as applied.
