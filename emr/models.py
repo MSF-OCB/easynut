@@ -151,7 +151,7 @@ class DynamicModel(object):
     def __init__(self, model_id):
         self.model_id = model_id  # ID of the ``DynamicModelConfig``.
 
-        self._model_config = DynamicRegistry.get_model_config(model_id)  # Link to the ``DynamicModelConfig``.
+        self.model_config = DynamicRegistry.get_model_config(model_id)  # Link to the ``DynamicModelConfig``.
         self.fields_value = OrderedDict()  # Fields value.
         self.related_models = {}  # Cache of related models.
 
@@ -167,12 +167,12 @@ class DynamicModel(object):
     @property
     def msf_id(self):
         """Provide convenient access to the special field ``MSF ID``."""
-        return self.get_field_value(self._model_config.msf_id_field_id)
+        return self.get_field_value(self.model_config.msf_id_field_id)
 
     @property
     def date(self):
         """Provide convenient access to the special field ``Date``."""
-        return self.get_field_value(self._model_config.date_field_id)
+        return self.get_field_value(self.model_config.date_field_id)
 
     def get_field_value(self, field_id):
         """Return the value of a field based on its ID."""
@@ -180,7 +180,7 @@ class DynamicModel(object):
 
     def get_field_config(self, field_id):
         """Return the ``DynamicFieldConfig`` of a field based on its ID."""
-        return self._model_config.fields_config[field_id]
+        return self.model_config.fields_config[field_id]
 
     def get_related_models(self, model_id):
         """Return related models for the given model ID, loading it if not already available."""
@@ -208,7 +208,7 @@ class DynamicModel(object):
         # Loop over cleaned data.
         for db_col_name, value in cleaned_data.iteritems():
             # Retrieve the field ID based on the DB col name.
-            field_id = self._model_config.get_field_id_from_db_col_name(db_col_name)
+            field_id = self.model_config.get_field_id_from_db_col_name(db_col_name)
 
             # Set non dynamic field.
             if field_id is None:
@@ -230,11 +230,11 @@ class DynamicModel(object):
         """Convert values of a DB record into Python values."""
         clean_data = {}
         for db_col_name, value in data_row.iteritems():
-            field_id = self._model_config.get_field_id_from_db_col_name(db_col_name)
+            field_id = self.model_config.get_field_id_from_db_col_name(db_col_name)
 
             # Convert non dynamic field (via ``DynamicModelConfig``).
             if field_id is None:
-                clean_data[db_col_name] = self._model_config.from_db_value_non_dynamic(db_col_name, value)
+                clean_data[db_col_name] = self.model_config.from_db_value_non_dynamic(db_col_name, value)
             # Convert dynamic field (via ``DynamicFieldConfig``).
             else:
                 field_config = self.get_field_config(field_id)
