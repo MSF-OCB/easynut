@@ -32,18 +32,11 @@ DYNAMIC_MODEL_DB_DATA_TABLE_NAME_FORMAT = "tabla_{}"
 DYNAMIC_MODEL_DB_CONFIG_TABLE_NAME_FORMAT = "tabla_{}_des"
 DYNAMIC_FIELD_DB_COL_NAME_FORMAT = "campo_{}"
 
-# Validation regex for dynamic field DB column names.
-RE_DYNAMIC_FIELD_DB_COL_NAME_VALIDATION = re.compile(r"^campo_[0-9]+$")
-
 # DB column names of non dynamic fields.
 NON_DYNAMIC_FIELDS_DB_COL_NAMES = ("_id", "user", "timestamp")
 
 # DB column name of the primary key in DB tables ``tabla_X``).
 PK_DB_COL_NAME = "_id"
-
-# Verbose names of special fields (cf. DB column ``presentador`` in DB tables ``tabla_X_des``).
-MSF_ID_VERBOSE_NAME = "MSF ID"
-DATE_VERBOSE_NAME = "Date"
 
 # Data slug format and validation.
 DATA_SLUG_SEPARATOR = "#"
@@ -265,10 +258,14 @@ class DynamicFieldConfig(object):
         self.model_config = model_config  # Link to the parent ``DynamicModelConfig``.
 
         # Define field attributes: db_col_name, name, position, kind, values_list,
-        #     has_list, has_detail, has_find, has_use, has_new_line, is_editable.
+        #     has_list, has_detail, has_find, has_use, has_new_line, is_editable, is_sensitive.
         # Note: Attributes are retrieved in ``DynamicModelConfig._load_fields_config()``.
         for k, v in attrs.iteritems():
             setattr(self, k, v)
+
+        # Define special fields flag.
+        self.is_msf_id = self.model_config.msf_id_field_id == field_id
+        self.is_date = self.model_config.date_field_id == field_id
 
     @property
     def data_slug(self):
@@ -303,7 +300,7 @@ class DynamicModelConfig(object):
     def __init__(self, model_id, attrs, data_row=None):
         self.id = model_id  # Model ID.
 
-        # Define model attributes: name, position.
+        # Define model attributes: name, position, is_main_table, is_main_join_tablemsf_id_field_id, date_field_id.
         # Note: Attributes are retrieved in ``DynamicRegistry.load_models_config()``.
         for k, v in attrs.iteritems():
             setattr(self, k, v)
@@ -311,10 +308,6 @@ class DynamicModelConfig(object):
         # DB tables containing the model fields config and the data.
         self.db_config_table = DynamicRegistry.get_db_config_table_name(self.id)
         self.db_data_table = DynamicRegistry.get_db_data_table_name(self.id)
-
-        # Field ID of special fields.
-        self.msf_id_field_id = None
-        self.date_field_id = None
 
         # Initialize the fields config registry.
         self.fields_config = OrderedDict()
@@ -386,9 +379,7 @@ class DynamicModelConfig(object):
     def _from_db_values_field_config(self, row):
         """Convert DB values of a field config into their Python values."""
         cleaned_data = copy(row)
-        # @TODO: ``tabla_X_des.campo_id`` should be the ID, not the DB col name (i.e. same as in ``tablas.tabla_id``).
-        # /!\ Dangerous use of ``DYNAMIC_FIELD_DB_COL_NAME_FORMAT``.
-        cleaned_data["id"] = Cast.int(row["db_col_name"].replace(DYNAMIC_FIELD_DB_COL_NAME_FORMAT.format(""), ""))
+        cleaned_data["id"] = Cast.int(row["id"])
         cleaned_data["position"] = Cast.int(row["position"])
         cleaned_data["kind"] = Cast.field_kind(row["kind"])
         cleaned_data["values_list"] = Cast.csv(row["values_list"])
@@ -398,6 +389,7 @@ class DynamicModelConfig(object):
         cleaned_data["has_use"] = Cast.bool(row["has_use"])
         cleaned_data["has_new_line"] = Cast.bool(row["has_new_line"])
         cleaned_data["is_editable"] = Cast.bool(row["is_editable"])
+        cleaned_data["is_sensitive"] = Cast.bool(row["is_sensitive"])
         return cleaned_data
 
     def _load_fields_config(self):
@@ -415,7 +407,8 @@ class DynamicModelConfig(object):
                 buscar AS has_find,
                 usar AS has_use,
                 nuevaLinea AS has_new_line,
-                editable AS is_editable
+                editable AS is_editable,
+                is_sensitive
             FROM {table}
             ORDER BY pos
         """.format(table=self.db_config_table))
@@ -436,12 +429,6 @@ class DynamicModelConfig(object):
                 # Create an instance of ``DynamicFieldConfig`` and store it in the fields config registry.
                 field_id = cleaned_data.pop("id")
                 self.fields_config[field_id] = DynamicFieldConfig(field_id, self, cleaned_data)
-
-                # Register the field ID of special fields.
-                if row["name"] == MSF_ID_VERBOSE_NAME:
-                    self.msf_id_field_id = field_id
-                elif row["name"] == DATE_VERBOSE_NAME:
-                    self.date_field_id = field_id
 
                 # Register DB col name to field ID mapping.
                 db_col_name = self.fields_config[field_id].db_col_name
@@ -567,7 +554,11 @@ class DynamicRegistry(object):
         sql = clean_sql("""
             SELECT tabla_id AS id,
                 presentador AS name,
-                registros AS position
+                registros AS position,
+                main_table AS is_main_table,
+                main_join_table AS is_main_join_table,
+                msf_id_field_id,
+                date_field_id
             FROM tablas
             {where_clause}
             ORDER BY registros
@@ -591,6 +582,12 @@ class DynamicRegistry(object):
                 model_id = cleaned_data.pop("id")
                 self.models_config[model_id] = DynamicModelConfig(model_id, cleaned_data)
 
+                # Check for main tables.
+                if cleaned_data["is_main_table"]:
+                    self.main_model_id = model_id
+                if cleaned_data["is_main_join_table"]:
+                    self.main_join_model_id = model_id
+
         # Register all models config as loaded.
         if ids is None:
             self._all_models_config_loaded = True
@@ -604,7 +601,7 @@ class DynamicRegistry(object):
         if ids is None:
             return ""
 
-        where = "WHERE CAST(tabla_id AS UNSIGNED)"
+        where = "WHERE tabla_id"
         if isinstance(ids, Iterable):
             where += " IN ({})".format(", ".join(ids))
         else:
@@ -617,6 +614,10 @@ class DynamicRegistry(object):
         cleaned_data = copy(row)
         cleaned_data["id"] = Cast.int(row["id"])
         cleaned_data["position"] = Cast.int(row["position"])
+        cleaned_data["is_main_table"] = Cast.bool(row["is_main_table"])
+        cleaned_data["is_main_join_table"] = Cast.bool(row["is_main_join_table"])
+        cleaned_data["msf_id_field_id"] = Cast.int(row["msf_id_field_id"])
+        cleaned_data["date_field_id"] = Cast.int(row["date_field_id"])
         return cleaned_data
 
 

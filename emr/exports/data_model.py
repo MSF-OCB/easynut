@@ -3,7 +3,7 @@ import json
 
 from openpyxl import Workbook
 
-from ..models import MSF_ID_VERBOSE_NAME, DATE_VERBOSE_NAME, DynamicRegistry
+from ..models import DynamicRegistry
 
 from .base import AbstractExportExcel
 
@@ -16,9 +16,9 @@ class ExportDataModel(AbstractExportExcel):
 
     # Headings. Use ``None`` to skip a column.
     DATA_SLUGS_HEADINGS = ["Model Name", "Field Name", "Data Slug"]
-    DATA_SLUGS_HEADINGS_VERBOSE = [None, "Model ID", "Field ID", "Position", "Type", "Values List"]
+    DATA_SLUGS_HEADINGS_VERBOSE = [None, "Model ID", "Field ID", "Position", "Sensitive?", "Type", "Values List"]
     MODELS_HEADINGS = ["Model Name"]
-    MODELS_HEADINGS_VERBOSE = ["Model ID"]
+    MODELS_HEADINGS_VERBOSE = ["Model ID", "Position", "Main Table?", "Main Join Table?"]
 
     def generate(self):
         """Generate the export."""
@@ -71,6 +71,8 @@ class ExportDataModel(AbstractExportExcel):
         style = self.get_style(self.STYLE_HEADING)
         max_col = max(len(headings), self.APPLY_STYLE_MIN_NUM_COLS)  # Apply to at least a min number of columns.
         self.apply_style(style, sheet, max_col, row, min_row=row)
+
+        # Freeze panes.
         sheet.freeze_panes = sheet.cell(column=1, row=row + 1)
 
     def _write_values(self, sheet, row, values):
@@ -107,6 +109,7 @@ class ExportDataModel(AbstractExportExcel):
                         model_id,
                         field_id,
                         field_config.position,
+                        field_config.is_sensitive,
                         field_config.kind,
                         json.dumps(field_config.values_list) if field_config.values_list else "",
                     ]
@@ -117,9 +120,9 @@ class ExportDataModel(AbstractExportExcel):
 
                 # Apply special fields style.
                 style = None
-                if field_config.name == MSF_ID_VERBOSE_NAME:
+                if field_config.is_msf_id:
                     style = msf_id_style
-                elif field_config.name == DATE_VERBOSE_NAME:
+                elif field_config.is_date:
                     style = date_style
                 if style is not None:
                     self.apply_style(style, sheet, verbose_min_col - 1, row, min_row=row)
@@ -141,7 +144,12 @@ class ExportDataModel(AbstractExportExcel):
             values = [model_config.name]
             verbose_min_col = len(values) + 1
             if self.VERBOSE:
-                values += [model_id]
+                values += [
+                    model_id,
+                    model_config.position,
+                    model_config.is_main_table,
+                    model_config.is_main_join_table,
+                ]
                 verbose_max_col = len(values) + 1
 
             # Write values.
