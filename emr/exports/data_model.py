@@ -33,7 +33,7 @@ class ExportDataModel(AbstractExportExcel):
     def _generate_data_slugs(self):
         """Generate the data slugs sheet."""
         sheet = self.get_sheet(0)
-        sheet.title = "Data Slugs"
+        self.set_sheet_title(sheet, "Data Slugs")
 
         headings = self.DATA_SLUGS_HEADINGS
         if self.VERBOSE:

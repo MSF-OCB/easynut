@@ -68,7 +68,9 @@ class AbstractExportExcel(object):
 
     def create_sheet(self, title):
         """Create a new sheet in the current workbook."""
-        return self.book.create_sheet(title=title)
+        sheet = self.book.create_sheet()
+        self.set_sheet_title(sheet, title)
+        return sheet
 
     def get_sheet(self, index):
         """Return a sheet identified by its index."""
@@ -132,12 +134,22 @@ class AbstractExportExcel(object):
         """Set the value of a cell."""
         cell.value = self.to_excel_value(value)
 
+    def set_sheet_title(self, sheet, title):
+        """Change the title of the given sheet."""
+        sheet.title = title[:31]  # Excel allows max 31 chars.
+
     def to_excel_value(self, value):
         """Convert a Python value to its Excel value."""
-        if isinstance(value, date):
-            return value.strftime(EXCEL_DATE_FORMAT)
+        if isinstance(value, bool):
+            if value is True:
+                return "Yes"
+            if value is False:
+                return "No"
+            return "Undefined"
         if isinstance(value, datetime):
             return value.strftime(EXCEL_DATETIME_FORMAT)
+        if isinstance(value, date):
+            return value.strftime(EXCEL_DATE_FORMAT)
         return value
 
     def _save_common(self):

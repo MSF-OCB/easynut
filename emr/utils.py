@@ -151,7 +151,7 @@ class Cast(object):
     @staticmethod
     def csv(value, string_separator=","):
         """Convert list of values separated by a ``string_separator``."""
-        if value is None or type(value) in (list, tuple):
+        if not value or type(value) in (list, tuple):
             return value
         if isinstance(value, six.string_types) and string_separator is not None:
             return [v.strip() for v in value.split(string_separator)]

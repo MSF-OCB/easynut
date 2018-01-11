@@ -38,7 +38,7 @@ class ExportExcelFull(AbstractExportExcel):
 
             # Apply heading style and freeze heading row.
             style = self.get_style(self.STYLE_HEADING)
-            max_col = max(len(model_config.fields_config), self.APPLY_STYLE_MIN_NUM_COLS)
+            max_col = max(col, self.APPLY_STYLE_MIN_NUM_COLS)
             self.apply_style(style, sheet, max_col, row, min_row=row)
             sheet.freeze_panes = sheet.cell(column=1, row=row + 1)
 
