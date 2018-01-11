@@ -1,21 +1,7 @@
 # EasyNut SQL Migrations
 
-## List 5 last applied migrations
+- List all applied migrations: `./applied_migrations.sh`
+- List last 5 applied migrations: `./applied_migrations.sh 5`
 
-```
-mysql -u root -D easynutdata -e "SELECT * FROM sql_migrations ORDER BY applied DESC LIMIT 5"
-```
-
-
-# Apply a migration
-
-```
-mysql -u root < 0000_initial.sql
-```
-
-
-# Apply all migrations (not yet applied)
-
-```
-for f in `ls *.sql`; do [ "`mysql -u root -D easynutdata -B -N -e "SELECT COUNT(*) FROM sql_migrations WHERE name='${f%.*}'" 2>&1`" != "1" ] && { echo "Applying $f..."; mysql -u root < $f; }; done
-```
+- Apply all migrations: `./migrate.sh`
+- Apply a specific migration: `./migrate.sh 0001` (_actually all files matching `0001*.sql`_)
