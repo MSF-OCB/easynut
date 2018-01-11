@@ -49,7 +49,8 @@ class ExportExcelFull(AbstractExportExcel):
                 col = 0; row += 1  # NOQA
                 for field_id in field_ids:
                     col += 1
-                    self.set_cell_value(sheet.cell(column=col, row=row), model.get_field_value(field_id))
+                    value = self.protect_sensitive_data(model, field_id)
+                    self.set_cell_value(sheet.cell(column=col, row=row), value)
 
                 if self.VERBOSE:
                     col += 1  # Skip a column.

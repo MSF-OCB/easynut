@@ -12,6 +12,8 @@ from openpyxl.utils import column_index_from_string, coordinate_from_string, get
 from ..models import DynamicRegistry
 from ..utils import insert_filename_pre_extension, now_for_filename, xlsx_download_response_factory
 
+from .utils import ExcelTemplateFunction
+
 
 # Value allowing to skip a cell while continuing to read config of other columns.
 DATA_SLUG_EMPTY_CELL = "#"
@@ -107,6 +109,14 @@ class AbstractExportExcel(object):
     def init_filename(self):
         """Initialize file name to its default value with "now"."""
         self.filename = insert_filename_pre_extension(self.DEFAULT_FILENAME, now_for_filename())
+
+    def protect_sensitive_data(self, model, field_id):
+        """Obfuscate sensitive data."""
+        value = model.get_field_value(field_id)
+        field_config = model.get_field_config(field_id)
+        if field_config.is_sensitive:
+            return ExcelTemplateFunction.obfuscate(value)
+        return value
 
     def save(self, filename=None):
         """Save the Excel file (under ``settings.EXPORTS_ROOT``)."""
