@@ -22,12 +22,12 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # See https://docs.djangoproject.com/en/1.11/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = config('SECRET_KEY')
+SECRET_KEY = os.environ['SECRET_KEY']
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.environ['DEBUG']
 
-ALLOWED_HOSTS = config('ALLOWED_HOSTS', cast=lambda v: [s.strip() for s in v.split(',')])
+ALLOWED_HOSTS = os.environ['ALLOWED_HOSTS']
 
 # Application definition
 
@@ -57,7 +57,7 @@ ROOT_URLCONF = 'django_easynut.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [os.path.join(BASE_DIR, 'templates')],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -78,19 +78,19 @@ WSGI_APPLICATION = 'django_easynut.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'easynut',
-        'USER': config('DEFAULT_DB_USER'),
-        'PASSWORD': config('DEFAULT_DB_PW'),
-        'HOST': '127.0.0.1',
-        'PORT': '',
+        'NAME': os.environ['MYSQL_DATABASE'],
+        'USER': os.environ['MYSQL_USER'],
+        'PASSWORD': os.environ['MYSQL_PASSWORD'],
+        'HOST': os.environ['DB_SERVICE'],
+        'PORT': os.environ['DB_PORT'],
     },
     'data': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'easynutdata',
-        'USER': config('DATA_DB_USER'),
-        'PASSWORD': config('DATA_DB_PW'),
-        'HOST': '127.0.0.1',
-        'PORT': '',
+        'NAME': os.environ['DATA_DB_NAME'],
+        'USER': os.environ['MYSQL_USER'],
+        'PASSWORD': os.environ['MYSQL_PASSWORD'],
+        'HOST': os.environ['DB_SERVICE'],
+        'PORT': os.environ['DB_PORT'],
     }
 }
 
@@ -139,3 +139,20 @@ STATIC_ROOT = 'static'
 SESSION_EXPIRE_AT_BROWSER_CLOSE = True
 SESSION_COOKIE_AGE = 20 * 60
 SESSION_SAVE_EVERY_REQUEST = True
+
+
+if (os.environ['ENV_TYPE'] != 'dev'):
+	# https://www.capside.com/labs/deploying-full-django-stack-with-docker-compose/
+	CACHES = {
+	    "default": {
+		"BACKEND": "django_redis.cache.RedisCache",
+		"LOCATION": "redis://redis:6379/0",
+		"OPTIONS": {
+		    "CLIENT_CLASS": "django_redis.client.DefaultClient",
+		}
+	    }
+	}
+
+	SESSION_ENGINE = "django.contrib.sessions.backends.cache"
+	SESSION_CACHE_ALIAS = "default"
+

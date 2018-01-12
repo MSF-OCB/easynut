@@ -2,9 +2,11 @@
 
 /migrations/
 export/*
+!export/.keep
 venv
 *.sqlite
-
+static/*
+!static/.keep
 .idea
 *.log
 *.pyc
