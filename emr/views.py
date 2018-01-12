@@ -17,6 +17,8 @@ from graphos.sources.simple import SimpleDataSource
 from django.contrib.auth.signals import user_logged_in
 from django.dispatch import receiver
 
+from django.core.cache import cache
+
 # Display log in page
 def loginview(request):
     if request.method == 'POST':
@@ -310,19 +312,19 @@ def downloaddefaulters(request):
 @receiver(user_logged_in)
 def setTableConfigsAndUser(sender, user, request, **kwargs):
     daoobject = DAO()
-    request.session['tableConfig'] = daoobject.set_tables_config()
-    request.session['tableConfigLite'] = daoobject.tables_config_lite
-    request.session['easyUser'] = daoobject.setEasyUser(request.user)
+    daoobject = getTableConfigandUser(request, daoobject)
     return
 
+# Cache user and metadata
 def getTableConfigandUser(request, daoobject):
-    if request.session['tableConfig'] and request.session['tableConfigLite']:
-        daoobject.tables_config = request.session['tableConfig']
-        daoobject.tables_config_lite = request.session['tableConfigLite']
+    if cache.get('tableConfig') and cache.get('tableConfigLite'):
+        daoobject.tables_config = cache.get('tableConfig')
+        daoobject.tables_config_lite = cache.get('tableConfigLite')
     else:
-        daoobject.set_tables_config()
-    if request.session['easyUser']:
+        cache.set('tableConfig', daoobject.set_tables_config())
+        cache.set('tableConfigLite', daoobject.tables_config_lite)
+    if 'easyUser' in request.session:
         daoobject.easy_user = request.session['easyUser']
     else:
-        daoobject.setEasyUser(request.user)
+        request.session['easyUser'] = daoobject.setEasyUser(request.user)
     return daoobject
