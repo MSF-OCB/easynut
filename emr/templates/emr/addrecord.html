@@ -63,7 +63,7 @@
 					
 					<table>
 						<tr>
-							<td><input type="submit" name="Save" value="Save" class="searchnow" onclick="this.value='Submitting...';"/></td>
+							<td><input type="submit" name="Save" value="Save" class="searchnow" onclick="this.disabled=true;this.value='Submitting...';this.form.submit();"/></td>
 						</tr>
 					</table>					
 				</form>
