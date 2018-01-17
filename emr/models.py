@@ -460,6 +460,10 @@ class DynamicRegistry(object):
         # Initialize the models config registry.
         self.models_config = OrderedDict()
 
+        # Model config of the main tables.
+        self.main_model_config = None
+        self.main_join_model_config = None
+
         # Whether all models config have been loaded.
         self._all_models_config_loaded = False
 
@@ -608,13 +612,14 @@ class DynamicRegistry(object):
 
                 # Create an instance of ``DynamicModelConfig`` and store it in the models config registry.
                 model_id = cleaned_data.pop("id")
-                self.models_config[model_id] = DynamicModelConfig(model_id, cleaned_data)
+                model_config = DynamicModelConfig(model_id, cleaned_data)
+                self.models_config[model_id] = model_config
 
                 # Check for main tables.
                 if cleaned_data["is_main_table"]:
-                    self.main_model_id = model_id
+                    self.main_model_config = model_config
                 if cleaned_data["is_main_join_table"]:
-                    self.main_join_model_id = model_id
+                    self.main_join_model_config = model_config
 
         # Register all models config as loaded.
         if ids is None:
