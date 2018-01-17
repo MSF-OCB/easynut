@@ -322,18 +322,34 @@ class DynamicModelConfig(object):
             self._load_data(data_row)
 
     @property
-    def msf_id_db_col_name(self):
-        """Provide convenient access to the DB col name of the special field ``MSF ID``."""
-        if self.msf_id_field_id is None:
-            return None
-        return self.get_field_config(self.msf_id_field_id).db_col_name
-
-    @property
     def date_db_col_name(self):
         """Provide convenient access to the DB col name of the special field ``Date``."""
+        field_config = self.date_field_config
+        if field_config is None:
+            return None
+        return field_config.db_col_name
+
+    @property
+    def date_field_config(self):
+        """Provide convenient access to the ``FieldConfig`` of the special field ``Date``."""
         if self.date_field_id is None:
             return None
-        return self.get_field_config(self.date_field_id).db_col_name
+        return self.get_field_config(self.date_field_id)
+
+    @property
+    def msf_id_db_col_name(self):
+        """Provide convenient access to the DB col name of the special field ``MSF ID``."""
+        field_config = self.msf_id_field_config
+        if field_config is None:
+            return None
+        return field_config.db_col_name
+
+    @property
+    def msf_id_field_config(self):
+        """Provide convenient access to the ``FieldConfig`` of the special field ``MSF ID``."""
+        if self.msf_id_field_id is None:
+            return None
+        return self.get_field_config(self.msf_id_field_id)
 
     def delete(self):
         """Delete this record from DB."""
