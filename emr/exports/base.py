@@ -230,7 +230,7 @@ class AbstractExportExcelTemplate(AbstractExportExcel):
         model_id, field_id = DynamicRegistry.split_data_slug(data_slug)
 
         # Register the model and field.
-        config = self._config[sheet_index]["models_fields"]
+        config = self._config[sheet_index]["models_fields"]  # Format: ``{model_id: [field_id, ...]}``
         if model_id not in config:
             config[model_id] = []
         if field_id not in config[model_id]:

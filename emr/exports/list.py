@@ -121,8 +121,10 @@ class ExportExcelList(AbstractExportExcelTemplate):
             self._config[sheet_index] = {
                 "start_col": start_col,
                 "start_row": start_row,
-                "columns": OrderedDict(),  # Populated in ``self._init_config_columns()``.
-                "models_fields": OrderedDict(),  # Populated in ``self._init_config_columns()``.
+                # Format: ``{col_index: data_slug}``. Populated in ``self._init_config_columns()``.
+                "columns": OrderedDict(),
+                # Format: ``{model_id: [field_id, ...]}``. Populated in ``self._init_config_columns()``.
+                "models_fields": OrderedDict(),
             }
 
         # Remove the config sheet.

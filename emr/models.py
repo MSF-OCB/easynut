@@ -300,7 +300,7 @@ class DynamicModelConfig(object):
     def __init__(self, model_id, attrs, data_row=None):
         self.id = model_id  # Model ID.
 
-        # Define model attributes: name, position, is_main_table, is_main_join_tablemsf_id_field_id, date_field_id.
+        # Define model attributes: name, position, is_main_table, is_main_join_table, msf_id_field_id, date_field_id.
         # Note: Attributes are retrieved in ``DynamicRegistry.load_models_config()``.
         for k, v in attrs.iteritems():
             setattr(self, k, v)
@@ -464,7 +464,12 @@ class DynamicRegistry(object):
         self._all_models_config_loaded = False
 
     def build_sql(self, models_fields):
-        """Build a SQL query based on the given parameters."""
+        """
+        Build a SQL query based on the given list of required models and fields.
+
+        Args:
+            models_fields: Format = ``{model_id: [field_id, ...]}``.
+        """
         # Check that the given config is not empty.
         if len(models_fields) == 0:
             raise Exception("The `models_fields` config is empty.")

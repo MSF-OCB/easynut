@@ -101,6 +101,7 @@ class ExportExcelDetail(AbstractExportExcelTemplate):
             # Adapt the index as in the code counting starts at 0 (+ force int, not long).
             sheet_index = int(sheet_index) - 1
 
+            # Store the config for this cell.
             cell_name = sheet.cell(column=START_COL + 1, row=row).value
             self._config[sheet_index]["lists_config"][cell_name] = {
                 "col_inc": int(sheet.cell(column=START_COL + 2, row=row).value),
@@ -147,8 +148,10 @@ class ExportExcelDetail(AbstractExportExcelTemplate):
                 "start_row": start_row,
                 "end_col": end_col,
                 "end_row": end_row,
-                "cells": OrderedDict(),  # Populated in ``self._init_config_cells()``.
-                "lists_config": {},  # Populated in ``self._init_config_cells()``.
+                # Format: ``{cell_name: data_slug}``. Populated in ``self._init_config_cells()``.
+                "cells": OrderedDict(),
+                # Format: ``{cell_name: {...}}``. Populated in ``self._init_config_cells()``.
+                "lists_config": {},
             }
 
         # Read config for lists of data.
