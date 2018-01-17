@@ -272,6 +272,11 @@ class DynamicFieldConfig(object):
         """Return the data slug of the current ``model.field``."""
         return DATA_SLUG_FORMAT.format(model_id=self.model_config.id, field_id=self.id)
 
+    @property
+    def full_db_col_name(self):
+        """Return the full DB col name for SQL queries (as ``table.column``)."""
+        return "{}.{}".format(self.model_config.db_data_table, self.db_col_name)
+
     def from_db_value(self, value):
         """Convert a DB value for this field into its Python value."""
         if value is None:
@@ -381,6 +386,45 @@ class DynamicModelConfig(object):
         """
         return self.db_col_names_mapping.get(db_col_name, None)
 
+    def get_order_by_cols_names(self):
+        """Return the full DB cols names to be used in ORDER BY clause for this model."""
+        db_cols_names = [self.msf_id_field_config.full_db_col_name]
+        if self.date_field_id is not None:
+            db_cols_names.append(self.date_field_config.full_db_col_name)
+        return db_cols_names
+
+    def get_sql_join_clause(self, main_model_config, main_join_model_config, kind="LEFT JOIN"):
+        """Return the SQL JOIN clause for this model."""
+        condition_cols = []
+
+        # Build the mapping for MSF ID.
+        condition_cols.append(
+            "{}={}".format(
+                self.msf_id_field_config.full_db_col_name,
+                main_model_config.msf_id_field_config.full_db_col_name,
+            )
+        )
+
+        # If there's a Date, build the mapping for it.
+        if self.date_field_id is not None:
+            condition_cols.append(
+                "{}={}".format(
+                    self.date_field_config.full_db_col_name,
+                    main_join_model_config.date_field_config.full_db_col_name,
+                )
+            )
+
+        # Build the JOIN clause.
+        join_clause = clean_sql("""
+            {kind} {table} ON ({condition})
+        """.format(
+            kind=kind.upper(),
+            table=self.db_data_table,
+            condition=" AND ".join(condition_cols),
+        ))
+
+        return join_clause
+
     def model_factory(self, data_row=None):
         """Create a dynamic model for this model config, and load data if provided."""
         model = DynamicModel(self.id)
@@ -481,51 +525,77 @@ class DynamicRegistry(object):
         # Ensure the dynamic registry is initialized.
         self.init()
 
-        select_cols = []  # Column names for the SELECT clause.
-        from_clause = ""  # The whole FROM clause (including the FROM and optional JOINs).
+        # Column names for the SELECT clause.
+        select_cols = []
 
-        # The first table in the given config is considered as the main table for JOINs.
-        # @TODO: This could be specified in separate method parameters OR in DB `tablas`.
-        main_table = None
-        main_id_col = None
+        # If the main model is in the required models, use it, else use the first model.
+        if self.main_model_config.id in models_fields:
+            main_model_config = self.main_model_config
+        else:
+            main_model_config = self.get_model_config(models_fields.keys()[0])
+
+        # If the main join model is in the required models, use it, else…
+        main_join_model_config = None
+        if self.main_join_model_config.id in models_fields:
+            main_join_model_config = self.main_join_model_config
+        # …use the main model if it also has a ``Date`` field, else…
+        elif main_model_config.date_field_id is not None:
+            main_join_model_config = main_model_config
+        # …use the first model having a ``Date`` field.
+        else:
+            for model_id in models_fields.keys():
+                model_config = self.get_model_config(model_id)
+                if model_config.date_field_id is not None:
+                    main_join_model_config = model_config
+                    break
+
+        # The whole FROM clause (including the FROM and optional JOINs).
+        from_clause = "FROM {}".format(main_model_config.db_data_table)
+
+        # Add a JOIN to the main join table, if available.
+        if main_join_model_config is not None:
+            from_clause += " LEFT JOIN {} ON {}".format(
+                main_join_model_config.db_data_table,
+                main_join_model_config.msf_id_field_config.full_db_col_name,
+            )
+
+        # DB cols names for the ORDER BY clause.
+        order_by_cols = main_model_config.get_order_by_cols_names()
+
+        # Check if the special field ``Date`` is in the ORDER BY.
+        # If not and there is a main join model, use that one. If no required model has that field, it's normal to
+        # not have it in the ORDER BY.
+        # /!\ Risky check! Using the number of cols works as we have only 2 special fields and the first one is
+        # always the ``MSF ID``.
+        is_missing_date_order_col = len(order_by_cols) < 2
+        if is_missing_date_order_col and main_join_model_config is not None:
+            order_by_cols.append(main_join_model_config.date_field_config.full_db_col_name)
 
         # Loop over models from the given config.
         for model_id, field_ids in models_fields.iteritems():
-            # Retrieve the table name and the name of the ID column.
-            table_name = self.get_db_data_table_name(model_id)
-            id_col = self.get_msf_id_db_col_name(model_id)  # Use MSF ID as ID column.
+            model_config = self.get_model_config(model_id)
 
-            # The first model is the main one, use it for the FROM clause (and register it as the main table).
-            if main_table is None:
-                from_clause = "FROM {}".format(table_name)
-                main_table = table_name
-                main_id_col = id_col
-            # Use JOINs for other models (using the main table).
-            else:
-                from_clause += " LEFT JOIN {table} ON {table}.{id_col}={main_table}.{main_id_col}".format(
-                    table=table_name, id_col=id_col,
-                    main_table=main_table, main_id_col=main_id_col,
-                )
+            # Add the JOIN clause for this model, if it's not the main model nor the main join model.
+            if model_id not in (main_model_config.id, getattr(main_join_model_config, "id", None)):
+                from_clause += " " + model_config.get_sql_join_clause(main_model_config, main_join_model_config)
 
             # Loop over fields.
             for field_id in field_ids:
-                # Retrieve the column name and the data slug (used as column alias).
-                col_name = self.get_db_col_name(field_id)
-                data_slug = self.get_data_slug(model_id, field_id)
+                field_config = model_config.get_field_config(field_id)
 
                 # Add the column to the SELECT columns.
-                select_cols.append("{}.{} AS `{}`".format(table_name, col_name, data_slug))
+                select_cols.append("{} AS `{}`".format(field_config.full_db_col_name, field_config.data_slug))
 
         # Build the SQL statement.
         sql = clean_sql("""
             SELECT {cols}
             {from_clause}
             {where_clause}
-            ORDER BY {main_table}.{main_id_col}
+            ORDER BY {order_by}
         """.format(
             cols=", ".join(select_cols),
             from_clause=from_clause,
-            main_table=main_table, main_id_col=main_id_col,
+            order_by=", ".join(order_by_cols),
         ))
         return sql
 
