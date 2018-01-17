@@ -160,6 +160,8 @@ class AbstractExportExcel(object):
             return value.strftime(EXCEL_DATETIME_FORMAT)
         if isinstance(value, date):
             return value.strftime(EXCEL_DATE_FORMAT)
+        if value == "NULL":
+            return ""
         return value
 
     def _save_common(self):
