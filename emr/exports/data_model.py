@@ -23,7 +23,7 @@ class ExportDataModel(AbstractExportExcel):
     def generate(self):
         """Generate the export."""
         self.book = Workbook()
-        DynamicRegistry.load_models_config()
+        DynamicRegistry.init()
 
         self._generate_data_slugs()
         self._generate_models()

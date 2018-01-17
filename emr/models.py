@@ -474,6 +474,9 @@ class DynamicRegistry(object):
         if len(models_fields) == 0:
             raise Exception("The `models_fields` config is empty.")
 
+        # Ensure the dynamic registry is initialized.
+        self.init()
+
         select_cols = []  # Column names for the SELECT clause.
         from_clause = ""  # The whole FROM clause (including the FROM and optional JOINs).
 
@@ -564,6 +567,10 @@ class DynamicRegistry(object):
         """Return the DB col name of the special field ``Date`` for the given model ID."""
         model_config = self.get_model_config(model_id)
         return model_config.date_db_col_name
+
+    def init(self):
+        """Initialize the registry."""
+        self.load_models_config()
 
     def load_models_config(self, ids=None):
         """Initialize all available dynamic models config, or given ones."""

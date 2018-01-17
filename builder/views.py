@@ -8,7 +8,7 @@ from emr.models import DynamicRegistry
 @login_required
 def home(request):
     """Builder home page."""
-    DynamicRegistry.load_models_config()
+    DynamicRegistry.init()
     context = {
         "models_config": DynamicRegistry.models_config.values(),
     }

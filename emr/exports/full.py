@@ -15,7 +15,7 @@ class ExportExcelFull(AbstractExportExcel):
     def generate(self):
         """Generate the export."""
         self.book = Workbook()
-        DynamicRegistry.load_models_config()
+        DynamicRegistry.init()
         verbose_style = self.get_style(self.STYLE_VERBOSE)
 
         # Loop over all models and fields config.
