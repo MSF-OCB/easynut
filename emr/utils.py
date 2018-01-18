@@ -23,7 +23,7 @@ RE_DATA_SLUG_VALIDATION = re.compile(r"^[0-9]{2}#[0-9]{2}$")
 
 # Format of date and date/time as returned by the database.
 DB_DATE_FORMAT = "%Y-%m-%d"
-DB_DATETIME_FORMAT = "%Y-%m-%d5%H:%M:%S"
+DB_DATETIME_FORMAT = "%Y-%m-%dT%H:%M:%S"
 
 # See: https://developer.mozilla.org/en-US/docs/Web/HTTP/Basics_of_HTTP/MIME_types/Complete_list_of_MIME_types
 CONTENT_TYPE_CSV = "text/csv"
