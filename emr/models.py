@@ -44,6 +44,13 @@ DATA_SLUG_FORMAT = "{model_id:02d}#{field_id:02d}"
 RE_DATA_SLUG_VALIDATION = re.compile(r"^[0-9]{2}#[0-9]{2}$")
 
 
+# UTILS =======================================================================
+
+def is_data_slug(value):
+    """Return whether the value is a data slug."""
+    return value is not None and RE_DATA_SLUG_VALIDATION.match(value) is not None
+
+
 # MODELS ======================================================================
 
 class DynamicManager(object):

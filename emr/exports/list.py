@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
 from collections import OrderedDict
 
-from ..models import DynamicRegistry
+from ..models import DynamicRegistry, is_data_slug
 from ..utils import DataDb
 
-from .base import DATA_SLUG_EMPTY_CELL, AbstractExportExcelTemplate
+from .base import AbstractExportExcelTemplate
 
 
 class ExportExcelList(AbstractExportExcelTemplate):
@@ -57,7 +57,8 @@ class ExportExcelList(AbstractExportExcelTemplate):
         - Data are populated row by row starting at the "starting cell".
         - The first row lists the data slug to populate each cell.
           - We stop the loop at the first empty cell in that row.
-          - ``DATA_SLUG_EMPTY_CELL`` allows to leave a column empty while continuing this loop.
+          - If the value is not a data slug, we skip that column and contine the loop.
+          - The value of the cell is emptied.
         """
         # Loop over the sheets that must be populated to read their columns config.
         for sheet_index, sheet, config in self._sheets_iterator():
@@ -78,7 +79,7 @@ class ExportExcelList(AbstractExportExcelTemplate):
                 sheet.cell(column=col, row=row).value = ""
 
                 # Skip this column and continue to look for config information.
-                if data_slug == DATA_SLUG_EMPTY_CELL:
+                if not is_data_slug(data_slug):
                     continue
 
                 # Register the data slug to use for this column.
