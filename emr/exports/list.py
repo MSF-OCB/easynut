@@ -67,26 +67,27 @@ class ExportExcelList(AbstractExportExcelTemplate):
             row = config["start_row"]
             while True:
                 col += 1
+                cell = sheet.cell(column=col, row=row)
 
-                # Get the data slug.
-                data_slug = sheet.cell(column=col, row=row).value
+                # Save the cell value (as emptied below).
+                cell_value = cell.value
 
                 # Empty cell? => stop looking for config information.
-                if not data_slug:
+                if not cell_value:
                     break
 
                 # Remove the config information from the cell.
-                sheet.cell(column=col, row=row).value = ""
+                cell.value = ""
 
                 # Skip this column and continue to look for config information.
-                if not is_data_slug(data_slug):
+                if not is_data_slug(cell_value):
                     continue
 
                 # Register the data slug to use for this column.
-                self._config[sheet_index]["columns"][col] = data_slug
+                self._config[sheet_index]["columns"][col] = cell_value
 
                 # Register this model/field for this sheet.
-                self._update_models_fields(sheet_index, data_slug)
+                self._update_models_fields(sheet_index, cell_value)
 
     def _init_config_sheets(self):
         """
