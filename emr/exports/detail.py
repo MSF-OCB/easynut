@@ -3,7 +3,7 @@ from collections import OrderedDict
 
 from django.utils.encoding import force_text
 
-from ..models import RE_DATA_SLUG_VALIDATION
+from ..utils import RE_DATA_SLUG_VALIDATION
 
 from .base import AbstractExportExcelTemplate
 

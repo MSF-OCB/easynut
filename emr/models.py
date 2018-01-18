@@ -584,7 +584,6 @@ class DynamicRegistry(object):
         sql = clean_sql("""
             SELECT {cols}
             {from_clause}
-            {where_clause}
             ORDER BY {order_by}
         """.format(
             cols=", ".join(select_cols),

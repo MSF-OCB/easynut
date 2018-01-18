@@ -5,7 +5,7 @@ from ..models import DynamicRegistry
 from ..utils import DataDb, is_data_slug
 
 from .base import AbstractExportExcelTemplate
-from .utils import ExcelTemplateFunction
+from .utils import AbstractExcelTemplateFunction
 
 
 class ExportExcelList(AbstractExportExcelTemplate):
@@ -98,7 +98,7 @@ class ExportExcelList(AbstractExportExcelTemplate):
                 # If the value is a template function…
                 elif self.is_template_function(cell_value):
                     # Create the template function object.
-                    function = ExcelTemplateFunction.factory(cell_value)
+                    function = AbstractExcelTemplateFunction.factory(cell_value)
 
                     # Register the template function to use for this column.
                     self._config[sheet_index]["columns"][col] = function

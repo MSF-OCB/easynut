@@ -52,7 +52,7 @@ class AbstractExcelTemplateFunction(object):
     @classmethod
     def is_template_function(cls, value):
         """Return whether the value is a template function."""
-        return value is not None and cls.RE_TEMPLATE_FUNCTION_VALIDATION(value) is not None
+        return value is not None and cls.RE_TEMPLATE_FUNCTION_VALIDATION.match(value) is not None
 
     def get_arg_value(self, index):
         """Return the value of an arg (i.e. resolve the data slug or return the value itself)."""
