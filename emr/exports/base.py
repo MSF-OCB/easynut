@@ -12,7 +12,7 @@ from openpyxl.utils import column_index_from_string, coordinate_from_string, get
 from ..models import DynamicRegistry
 from ..utils import insert_filename_pre_extension, now_for_filename, xlsx_download_response_factory
 
-from .utils import ExcelTemplateFunction
+from .utils import AbstractExcelTemplateFunction, ObfuscateTemplateFunction
 
 
 # Value allowing to skip a cell while continuing to read config of other columns.
@@ -115,7 +115,7 @@ class AbstractExportExcel(object):
         value = model.get_field_value(field_id)
         field_config = model.get_field_config(field_id)
         if field_config.is_sensitive:
-            return ExcelTemplateFunction.obfuscate(value)
+            return ObfuscateTemplateFunction.obfuscate(value)
         return value
 
     def save(self, filename=None):
@@ -188,6 +188,17 @@ class AbstractExportExcelTemplate(AbstractExportExcel):
 
         # Load the template (if not specified, load default one).
         self.load_template(template)
+
+    @staticmethod
+    def is_template_function(value):
+        """Provide convenient access to ``AbstractExcelTemplateFunction``."""
+        return isinstance(AbstractExcelTemplateFunction, value) or \
+            AbstractExcelTemplateFunction.is_template_function(value)
+
+    @staticmethod
+    def template_function_factory(value):
+        """Provide convenient access to ``AbstractExcelTemplateFunction``."""
+        return AbstractExcelTemplateFunction.factory(value)
 
     def load_template(self, template=None):
         """Create the workbook from a template file (located under ``settings.EXPORTS_TEMPLATES_DIR``)."""

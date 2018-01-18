@@ -1,10 +1,11 @@
 # -*- coding: utf-8 -*-
 from collections import OrderedDict
 
-from ..models import DynamicRegistry, is_data_slug
-from ..utils import DataDb
+from ..models import DynamicRegistry
+from ..utils import DataDb, is_data_slug
 
 from .base import AbstractExportExcelTemplate
+from .utils import ExcelTemplateFunction
 
 
 class ExportExcelList(AbstractExportExcelTemplate):
@@ -38,7 +39,14 @@ class ExportExcelList(AbstractExportExcelTemplate):
                     # Loop over columns to populate.
                     row += 1
                     for col, data_slug in self._config[sheet_index]["columns"].iteritems():
-                        self.set_cell_value(sheet.cell(column=col, row=row), data_row[data_slug])
+                        # Handle template functions or data slug.
+                        if self.is_template_function(data_slug):
+                            value = data_slug(data_row)
+                        else:
+                            value = data_row[data_slug]
+
+                        # Set cell value.
+                        self.set_cell_value(sheet.cell(column=col, row=row), value)
 
     def _init_config(self):
         """
@@ -79,15 +87,29 @@ class ExportExcelList(AbstractExportExcelTemplate):
                 # Remove the config information from the cell.
                 cell.value = ""
 
-                # Skip this column and continue to look for config information.
-                if not is_data_slug(cell_value):
+                # If the value is a data slug…
+                if is_data_slug(cell_value):
+                    # Register the data slug to use for this column.
+                    self._config[sheet_index]["columns"][col] = cell_value
+
+                    # Register this model/field for this sheet.
+                    self._update_models_fields(sheet_index, cell_value)
+
+                # If the value is a template function…
+                elif self.is_template_function(cell_value):
+                    # Create the template function object.
+                    function = ExcelTemplateFunction.factory(cell_value)
+
+                    # Register the template function to use for this column.
+                    self._config[sheet_index]["columns"][col] = function
+
+                    # Register these models/fields for this sheet.
+                    for data_slug in function.get_args_data_slugs():
+                        self._update_models_fields(sheet_index, data_slug)
+
+                # Else, skip this column and continue to look for config information.
+                else:
                     continue
-
-                # Register the data slug to use for this column.
-                self._config[sheet_index]["columns"][col] = cell_value
-
-                # Register this model/field for this sheet.
-                self._update_models_fields(sheet_index, cell_value)
 
     def _init_config_sheets(self):
         """

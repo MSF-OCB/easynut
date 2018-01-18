@@ -16,6 +16,12 @@ import MySQLdb.cursors
 
 RE_CLEAN_SQL = re.compile("(\n +)+", re.MULTILINE)
 
+# Data slug format and validation.
+DATA_SLUG_SEPARATOR = "#"
+DATA_SLUG_FORMAT = "{model_id:02d}#{field_id:02d}"
+RE_DATA_SLUG_VALIDATION = re.compile(r"^[0-9]{2}#[0-9]{2}$")
+
+# Format of date and date/time as returned by the database.
 DB_DATE_FORMAT = "%Y-%m-%d"
 DB_DATETIME_FORMAT = "%Y-%m-%d5%H:%M:%S"
 
@@ -47,6 +53,11 @@ def insert_filename_pre_extension(filename, pre_ext):
 
     # Insert pre-extension between the filename and the extension.
     return "{}{}{}".format(filename, pre_ext, ext)
+
+
+def is_data_slug(value):
+    """Return whether the value is a data slug."""
+    return value is not None and RE_DATA_SLUG_VALIDATION.match(value) is not None
 
 
 def now_for_filename():

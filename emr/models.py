@@ -17,13 +17,12 @@ Terminology:
 - Data slug: A unique identifier for a ``model.field`` (used in Excel templates).
 - Special fields: Dynamic DB columns that have special meaning/usage.
 """
-import re
 from collections import Iterable, OrderedDict
 from copy import copy
 
 from django.core.exceptions import MultipleObjectsReturned, ObjectDoesNotExist
 
-from .utils import Cast, DataDb, clean_sql, force_list
+from .utils import DATA_SLUG_FORMAT, DATA_SLUG_SEPARATOR, Cast, DataDb, clean_sql, force_list
 
 
 # Format of dynamic tables (data and config) and dynamic columns.
@@ -37,18 +36,6 @@ NON_DYNAMIC_FIELDS_DB_COL_NAMES = ("_id", "user", "timestamp")
 
 # DB column name of the primary key in DB tables ``tabla_X``).
 PK_DB_COL_NAME = "_id"
-
-# Data slug format and validation.
-DATA_SLUG_SEPARATOR = "#"
-DATA_SLUG_FORMAT = "{model_id:02d}#{field_id:02d}"
-RE_DATA_SLUG_VALIDATION = re.compile(r"^[0-9]{2}#[0-9]{2}$")
-
-
-# UTILS =======================================================================
-
-def is_data_slug(value):
-    """Return whether the value is a data slug."""
-    return value is not None and RE_DATA_SLUG_VALIDATION.match(value) is not None
 
 
 # MODELS ======================================================================
