@@ -560,7 +560,7 @@ class DynamicRegistry(object):
         from_clause = "FROM {}".format(main_model_config.db_data_table)
 
         # Add a JOIN to the main join table, if available.
-        if main_join_model_config is not None:
+        if main_join_model_config not in (None, main_model_config):
             from_clause += " LEFT JOIN {} ON {}".format(
                 main_join_model_config.db_data_table,
                 main_join_model_config.msf_id_field_config.full_db_col_name,
