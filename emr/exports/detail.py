@@ -66,8 +66,8 @@ class ExportExcelDetail(AbstractExportExcelTemplate):
         # Loop over the sheets that must be populated to scan for config information.
         for sheet_index, sheet, config in self._sheets_iterator():
             # Loop over the cell range.
-            for col in range(config["start_col"], config["end_col"]):
-                for row in range(config["start_row"], config["end_row"]):
+            for col in range(config["start_col"], config["end_col"] + 1):
+                for row in range(config["start_row"], config["end_row"] + 1):
                     # Get cell value (potential data slug).
                     data_slug = force_text(sheet.cell(column=col, row=row).value)
 
