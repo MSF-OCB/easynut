@@ -8,16 +8,25 @@ from django.http import HttpResponseRedirect, HttpResponse, Http404
 from django.shortcuts import render
 from django.urls import reverse
 
-from .DAO import DAO
-from .ExternalExport import ExternalExport
-
 from graphos.renderers import flot
 from graphos.sources.simple import SimpleDataSource
+
+from .DAO import DAO
+from .exports import ExportDataModel, ExportExcelFull, ExportExcelList, ExportExcelDetail
+from .ExternalExport import ExternalExport
+from .models import DynamicRegistry
+
+
+def is_admin_or_redirect(request):
+    # User must be in group "Admin".
+    if not request.user.groups.filter(id=2).exists():
+        return index(request)
 
 from django.contrib.auth.signals import user_logged_in
 from django.dispatch import receiver
 
 from django.core.cache import cache
+
 
 # Display log in page
 def loginview(request):
@@ -225,6 +234,8 @@ def deleterecord(request, table_id, record_id):
 # Download raw export
 @login_required
 def downloadexport(request):
+    is_admin_or_redirect(request)
+
     daoobject = DAO()
     daoobject = getTableConfigandUser(request, daoobject)
     # If user is in group "Admin"
@@ -243,6 +254,8 @@ def downloadexport(request):
 # Download single-file export
 @login_required
 def downloadsfexport(request):
+    is_admin_or_redirect(request)
+
     daoobject = DAO()
     daoobject = getTableConfigandUser(request, daoobject)
     if request.user.groups.filter(id=2).exists():
@@ -260,6 +273,8 @@ def downloadsfexport(request):
 # Download backup
 @login_required
 def downloadbackup(request):
+    is_admin_or_redirect(request)
+
     daoobject = DAO()
     daoobject = getTableConfigandUser(request, daoobject)
     if request.user.groups.filter(id=2).exists():
@@ -279,23 +294,24 @@ def downloadbackup(request):
 # This is a specific customization for a health center. Should not be here
 @login_required
 def downloadabsents(request):
+    is_admin_or_redirect(request)
+
     extE = ExternalExport()
-    if request.user.groups.filter(id=2).exists():
-        csv = extE.getAbsents()
-        if os.path.exists(csv):
-            with open(csv, 'rb') as fh:
-                response = HttpResponse(fh.read(), content_type="text/csv")
-                response['Content-Disposition'] = 'inline; filename=' + os.path.basename(csv)
-                return response
-        raise Http404
-    else:
-        return index(request)
+    csv = extE.getAbsents()
+    if os.path.exists(csv):
+        with open(csv, 'rb') as fh:
+            response = HttpResponse(fh.read(), content_type="text/csv")
+            response['Content-Disposition'] = 'inline; filename=' + os.path.basename(csv)
+            return response
+    raise Http404
 
 
 # *TBC*#
 # Same as up
 @login_required
 def downloaddefaulters(request):
+    is_admin_or_redirect(request)
+
     extE = ExternalExport()
     if request.user.groups.filter(id=2).exists():
         csv = extE.getDefaulters()
@@ -308,12 +324,14 @@ def downloaddefaulters(request):
     else:
         return index(request)
 
-# Create sessions variables for expensive functions    
+
+# Create sessions variables for expensive functions
 @receiver(user_logged_in)
 def setTableConfigsAndUser(sender, user, request, **kwargs):
     daoobject = DAO()
     daoobject = getTableConfigandUser(request, daoobject)
     return
+
 
 # Cache user and metadata
 def getTableConfigandUser(request, daoobject):
@@ -328,3 +346,52 @@ def getTableConfigandUser(request, daoobject):
     else:
         request.session['easyUser'] = daoobject.setEasyUser(request.user)
     return daoobject
+
+
+@login_required
+def export_data_model(request):
+    """Export a list of all tables and fields with their data slug, returned as an Excel file to download."""
+    is_admin_or_redirect(request)
+    export = ExportDataModel()
+    response = export.save_to_response()
+    return response
+
+
+@login_required
+def export_excel_full(request):
+    """Export of all data, returned as an Excel file to download."""
+    is_admin_or_redirect(request)
+    export = ExportExcelFull()
+    response = export.save_to_response()
+    return response
+
+
+@login_required
+def export_excel_list(request):
+    """Export of all data, returned as an Excel file to download."""
+    is_admin_or_redirect(request)
+
+    export = ExportExcelList()
+
+    # Retrieve data and populate export.
+    export.populate()
+
+    # Get a response containing the Excel file.
+    response = export.save_to_response()
+    return response
+
+
+@login_required
+def export_excel_detail(request, table_id, record_id):
+    """Export data for a given patient, returned as an Excel file to download."""
+    is_admin_or_redirect(request)
+
+    model = DynamicRegistry.get_model(int(table_id), pk=int(record_id))
+    export = ExportExcelDetail(model)
+
+    # Retrieve data and populate export.
+    export.populate()
+
+    # Get a response containing the Excel file.
+    response = export.save_to_response()
+    return response

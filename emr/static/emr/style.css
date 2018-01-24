@@ -7124,7 +7124,7 @@ label.panel-block:hover {
 }
 
 .hero.is-fullheight {
-  background-color: whitesmoke;	
+  background-color: whitesmoke;
   min-height: 50vh;
 }
 
@@ -7161,5 +7161,9 @@ label.panel-block:hover {
 
 .footer {
   padding: 3rem 1.5rem 6rem;
+}
+
+.nowrap {
+  white-space: nowrap;
 }
 /*# sourceMappingURL=bulma.css.map */

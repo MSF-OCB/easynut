@@ -33,6 +33,7 @@ ALLOWED_HOSTS = os.environ['ALLOWED_HOSTS']
 
 INSTALLED_APPS = [
     'emr.apps.EmrConfig',
+    'builder.apps.BuilderConfig',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -40,6 +41,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'rest_framework',
+    'django_extensions',
 ]
 
 MIDDLEWARE = [
@@ -133,34 +135,37 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/1.11/howto/static-files/
 
 STATIC_URL = '/static/'
-STATIC_ROOT = 'static'
+STATIC_ROOT = os.path.join(BASE_DIR, "static")
 
 # Auto log out when browser close or when inactivity of 20 minutes
 SESSION_EXPIRE_AT_BROWSER_CLOSE = True
 SESSION_COOKIE_AGE = 20 * 60
 SESSION_SAVE_EVERY_REQUEST = True
 
-
 if (os.environ['ENV_TYPE'] == 'prod'):
-	# https://www.capside.com/labs/deploying-full-django-stack-with-docker-compose/
-	CACHES = {
-	    "default": {
-			"BACKEND": "django_redis.cache.RedisCache",
-			"LOCATION": "redis://redis:6379/0",
-			"OPTIONS": {
-			    "CLIENT_CLASS": "django_redis.client.DefaultClient",
-			}
-	    }
-	}
+    # https://www.capside.com/labs/deploying-full-django-stack-with-docker-compose/
+    CACHES = {
+        "default": {
+            "BACKEND": "django_redis.cache.RedisCache",
+            "LOCATION": "redis://redis:6379/0",
+            "OPTIONS": {
+                "CLIENT_CLASS": "django_redis.client.DefaultClient",
+            }
+        }
+    }
 
-	SESSION_ENGINE = "django.contrib.sessions.backends.cache"
-	SESSION_CACHE_ALIAS = "default"
+    SESSION_ENGINE = "django.contrib.sessions.backends.cache"
+    SESSION_CACHE_ALIAS = "default"
 else:
-	CACHES = {
-    	'default': {
-        	'BACKEND': 'django.core.cache.backends.filebased.FileBasedCache',
-        	'LOCATION': '/var/tmp/django_cache',
-    	}
-	}
-	SESSION_ENGINE = "django.contrib.sessions.backends.cache"
-	SESSION_CACHE_ALIAS = "default"
+    CACHES = {
+        'default': {
+            'BACKEND': 'django.core.cache.backends.filebased.FileBasedCache',
+            'LOCATION': '/var/tmp/django_cache',
+        }
+    }
+    SESSION_ENGINE = "django.contrib.sessions.backends.cache"
+    SESSION_CACHE_ALIAS = "default"
+
+# Exports
+EXPORTS_ROOT = os.path.join(BASE_DIR, "export")  # Where generated reports are saved.
+EXPORTS_TEMPLATES_DIR = os.path.join(BASE_DIR, "emr", "exports", "templates")  # Where export templates are.
