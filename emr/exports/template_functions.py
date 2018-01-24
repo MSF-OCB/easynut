@@ -3,6 +3,8 @@ import re
 
 from ..utils import is_data_slug
 
+from .utils import obfuscate
+
 
 class ExcelTemplateFunctionError(Exception): pass  # NOQA
 
@@ -108,30 +110,10 @@ class TemplateFunction_obfuscate(AbstractExcelTemplateFunction):
     Usage: ``#obfuscate(FIELD_DATA_SLUG)``
     """
 
-    OBFUSCATE_SPLIT_SEPARATOR = " "
-    OBFUSCATE_JOIN_SEPARATOR = ""
-    OBFUSCATE_MASK = "."
-    OBFUSCATE_MASK_EMPTY = "***"
-
     def init_values(self):
         """Initialize the values of the args."""
         self.value = self.get_arg_value(0)
 
     def _exec(self):
         """Return the computed value of the function."""
-        # Return the empty value mask if value is empty or it's a single chunk.
-        if not self.value or self.OBFUSCATE_SPLIT_SEPARATOR not in self.value:
-            return self.OBFUSCATE_MASK_EMPTY
-
-        # Obfuscate each chunk.
-        chunks = str(self.value).split(self.OBFUSCATE_SPLIT_SEPARATOR)
-        return self.OBFUSCATE_JOIN_SEPARATOR.join([self._obfuscate_chunk(chunk) for chunk in chunks])
-
-    def _obfuscate_chunk(self, value):
-        """Obfuscate the value."""
-        # Return an empty string if there's no value.
-        if not value:
-            return ""
-
-        # Keep the first letter and obfuscate the rest.
-        return "{}{}".format(value[0], self.OBFUSCATE_MASK)
+        return obfuscate(self.value)
