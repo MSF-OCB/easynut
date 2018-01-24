@@ -16,11 +16,3 @@ pytz==2017.3
 # Documents
 django-wkhtmltopdf==3.1.0
 openpyxl==2.4.9
-
-# Server. Commented out for gunicorn below
-# uWSGI==2.0.15
-
-# Docker-compose with gunicorn and redis
-redis==2.10.6
-django-redis==4.8.0
-gunicorn==19.7.1

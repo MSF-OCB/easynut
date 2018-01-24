@@ -1,0 +1,4 @@
+# Docker-compose with gunicorn and redis
+redis==2.10.6
+django-redis==4.8.0
+gunicorn==19.7.1
