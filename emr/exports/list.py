@@ -5,7 +5,7 @@ from ..models import DynamicRegistry
 from ..utils import DataDb, is_data_slug
 
 from .base import AbstractExportExcelTemplate
-from .utils import AbstractExcelTemplateFunction
+from .template_functions import AbstractExcelTemplateFunction
 
 
 class ExportExcelList(AbstractExportExcelTemplate):

@@ -8,7 +8,7 @@ OBFUSCATE_MASK_EMPTY = "***"
 def obfuscate(value):
     """Obfuscate the value."""
 
-    def _obfuscate_chunk(self, value):
+    def _obfuscate_chunk(value):
         """Obfuscate the value."""
         # Return an empty string if there's no value.
         if not value:
