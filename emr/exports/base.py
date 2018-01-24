@@ -12,7 +12,7 @@ from openpyxl.utils import column_index_from_string, coordinate_from_string, get
 from ..models import DynamicRegistry
 from ..utils import insert_filename_pre_extension, now_for_filename, xlsx_download_response_factory
 
-from .utils import AbstractExcelTemplateFunction, TemplateFunction_obfuscate
+from .template_functions import AbstractExcelTemplateFunction, TemplateFunction_obfuscate
 
 
 # Value allowing to skip a cell while continuing to read config of other columns.
