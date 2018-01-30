@@ -157,7 +157,7 @@ class AbstractExportExcel(object):
                 return "Yes"
             if value is False:
                 return "No"
-            return "Undefined"
+            return ""
         if isinstance(value, datetime):
             return value.strftime(EXCEL_DATETIME_FORMAT)
         if isinstance(value, date):
