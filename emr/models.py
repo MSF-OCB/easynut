@@ -548,10 +548,7 @@ class DynamicRegistry(object):
 
         # Add a JOIN to the main join table, if available.
         if main_join_model_config not in (None, main_model_config):
-            from_clause += " LEFT JOIN {} ON {}".format(
-                main_join_model_config.db_data_table,
-                main_join_model_config.msf_id_field_config.full_db_col_name,
-            )
+            from_clause += " " + main_join_model_config.get_sql_join_clause(main_model_config, main_join_model_config)
 
         # DB cols names for the ORDER BY clause.
         order_by_cols = main_model_config.get_order_by_cols_names()
