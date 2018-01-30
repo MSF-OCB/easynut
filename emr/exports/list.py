@@ -6,6 +6,7 @@ from ..utils import DataDb, is_data_slug
 
 from .base import AbstractExportExcelTemplate
 from .template_functions import AbstractExcelTemplateFunction
+from .utils import obfuscate
 
 
 class ExportExcelList(AbstractExportExcelTemplate):
@@ -28,7 +29,6 @@ class ExportExcelList(AbstractExportExcelTemplate):
                 continue
 
             # Build the SQL statement to get data for this sheet.
-            # @TODO: Data are not converted using raw DB queries.
             sql = DynamicRegistry.build_sql(models_fields)
 
             # Execute the query.
@@ -36,17 +36,33 @@ class ExportExcelList(AbstractExportExcelTemplate):
                 # Loop over data records.
                 row = config["start_row"] - 1  # To start the loops with the increment, easier to read.
                 for data_row in c.fetchall():
+                    # Convert DB values into Python values.
+                    clean_data_row = self._from_db_values(data_row)
+
                     # Loop over columns to populate.
                     row += 1
                     for col, data_slug in self._config[sheet_index]["columns"].iteritems():
                         # Handle template functions or data slug.
                         if self.is_template_function(data_slug):
-                            value = data_slug(data_row)
+                            value = data_slug(clean_data_row)
                         else:
-                            value = data_row[data_slug]
+                            value = clean_data_row[data_slug]
 
                         # Set cell value.
                         self.set_cell_value(sheet.cell(column=col, row=row), value)
+
+    def _from_db_values(self, data_row):
+        """Convert values of a DB record into Python values."""
+        clean_data = {}
+        for data_slug, value in data_row.iteritems():
+            model_id, field_id = DynamicRegistry.split_data_slug(data_slug)
+            model_config = DynamicRegistry.get_model_config(model_id)
+            field_config = model_config.get_field_config(field_id)
+            clean_value = model_config.from_db_value_field(None, field_id, value)
+            if field_config.is_sensitive:
+                clean_value = obfuscate(clean_value)
+            clean_data[data_slug] = clean_value
+        return clean_data
 
     def _init_config(self):
         """
