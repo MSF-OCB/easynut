@@ -344,15 +344,20 @@ class DynamicModelConfig(object):
         clean_data = {}
         for db_col_name, value in data_row.iteritems():
             field_id = self.get_field_id_from_db_col_name(db_col_name)
-
-            # Convert non dynamic field (via ``DynamicModelConfig``).
-            if field_id is None:
-                clean_data[db_col_name] = self.from_db_value_non_dynamic(db_col_name, value)
-            # Convert dynamic field (via ``DynamicFieldConfig``).
-            else:
-                field_config = self.get_field_config(field_id)
-                clean_data[db_col_name] = field_config.from_db_value(value)
+            clean_data[db_col_name] = self.from_db_value_field(db_col_name, field_id, value)
         return clean_data
+
+    def from_db_value_field(self, db_col_name, field_id, value):
+        """Convert a DB value for a given field into its Python value."""
+        # Convert non dynamic field (via ``DynamicModelConfig``).
+        if field_id is None:
+            if db_col_name is None:
+                return None
+            return self.from_db_value_non_dynamic(db_col_name, value)
+
+        # Convert dynamic field (via ``DynamicFieldConfig``).
+        field_config = self.get_field_config(field_id)
+        return field_config.from_db_value(value)
 
     def from_db_value_non_dynamic(self, db_col_name, value):
         """Convert the DB value of a non dynamic field into its Python value."""
@@ -509,6 +514,7 @@ class DynamicRegistry(object):
         """
         Build a SQL query based on the given list of required models and fields.
 
+        DB columns names are aliased with their data slug.
         Args:
             models_fields: Format = ``{model_id: [field_id, ...]}``.
         """
