@@ -8,6 +8,7 @@ from django.conf import settings
 from openpyxl import load_workbook
 from openpyxl.styles import Font, NamedStyle, PatternFill
 from openpyxl.utils import column_index_from_string, coordinate_from_string, get_column_letter
+from ..patches import openpyxl_patch  # NOQA  # Monkey-patch for openpyxl.
 
 from ..models import DynamicRegistry
 from ..utils import insert_filename_pre_extension, now_for_filename, xlsx_download_response_factory
