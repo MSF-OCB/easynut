@@ -190,7 +190,7 @@ class DynamicModel(object):
     def load_data(self, data_row):
         """Initialize model fields value based on a DB row."""
         # Convert DB values to Python values.
-        cleaned_data = self._from_db_values(data_row)
+        cleaned_data = self.model_config.from_db_values(data_row)
 
         # Loop over cleaned data.
         for db_col_name, value in cleaned_data.iteritems():
@@ -212,21 +212,6 @@ class DynamicModel(object):
     def set_field_value(self, field_id, value):
         """Set the value of a field based on its ID."""
         self.fields_value[field_id] = value
-
-    def _from_db_values(self, data_row):
-        """Convert values of a DB record into Python values."""
-        clean_data = {}
-        for db_col_name, value in data_row.iteritems():
-            field_id = self.model_config.get_field_id_from_db_col_name(db_col_name)
-
-            # Convert non dynamic field (via ``DynamicModelConfig``).
-            if field_id is None:
-                clean_data[db_col_name] = self.model_config.from_db_value_non_dynamic(db_col_name, value)
-            # Convert dynamic field (via ``DynamicFieldConfig``).
-            else:
-                field_config = self.get_field_config(field_id)
-                clean_data[db_col_name] = field_config.from_db_value(value)
-        return clean_data
 
 
 # MODELS CONFIG ===============================================================
@@ -353,6 +338,21 @@ class DynamicModelConfig(object):
     def delete(self):
         """Delete this record from DB."""
         raise NotImplemented()  # @TODO
+
+    def from_db_values(self, data_row):
+        """Convert values of a DB record into Python values."""
+        clean_data = {}
+        for db_col_name, value in data_row.iteritems():
+            field_id = self.get_field_id_from_db_col_name(db_col_name)
+
+            # Convert non dynamic field (via ``DynamicModelConfig``).
+            if field_id is None:
+                clean_data[db_col_name] = self.from_db_value_non_dynamic(db_col_name, value)
+            # Convert dynamic field (via ``DynamicFieldConfig``).
+            else:
+                field_config = self.get_field_config(field_id)
+                clean_data[db_col_name] = field_config.from_db_value(value)
+        return clean_data
 
     def from_db_value_non_dynamic(self, db_col_name, value):
         """Convert the DB value of a non dynamic field into its Python value."""
