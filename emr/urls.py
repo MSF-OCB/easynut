@@ -35,4 +35,11 @@ urlpatterns = [
     url(r'^export/data-model/$', views.export_data_model, name='export_data_model'),
     url(r'^export/excel/full/$', views.export_excel_full, name='export_excel_full'),
     url(r'^export/excel/list/$', views.export_excel_list, name='export_excel_list'),
+
+    url(r'^debug/export/excel/list/$', views.test_export_excel_detail, name='test_export_excel_list'),
+    url(
+        r'^debug/(?P<table_id>[0-9]+)/(?P<record_id>[0-9]+)/print/$',
+        views.test_export_excel_detail,
+        name='test_export_excel_detail',
+    ),
 ]

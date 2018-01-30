@@ -2,6 +2,7 @@
 from __future__ import unicode_literals
 import os
 
+from django.conf import settings
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.http import HttpResponseRedirect, HttpResponse, Http404
@@ -395,3 +396,22 @@ def export_excel_detail(request, table_id, record_id):
     # Get a response containing the Excel file.
     response = export.save_to_response()
     return response
+
+
+def test_export_excel_list(request):
+    if not settings.DEBUG:
+        return index(request)
+    export = ExportExcelList(template="export-template-list.test.xlsx")
+    export.populate()
+    export.save(filename="export-list.test.xlsx")
+    return HttpResponse("OK export-list.test.xlsx " + str(now()))
+
+
+def test_export_excel_detail(request, table_id, record_id):
+    if not settings.DEBUG:
+        return index(request)
+    model = DynamicRegistry.get_model(int(table_id), pk=int(record_id))
+    export = ExportExcelDetail(model, template="export-template-detail.test.xlsx")
+    export.populate()
+    export.save(filename="export-detail.test.xlsx")
+    return HttpResponse("OK export-detail.test.xlsx " + str(now()))
