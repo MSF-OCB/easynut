@@ -30,20 +30,53 @@ class ExportExcelDetail(AbstractExportExcelTemplate):
 
         # Loop over sheets to populate.
         for sheet_index, sheet, config in self._sheets_iterator():
+            # Reference dates for "date tables" (cf. list kind).
+            date_tables_ref_dates = {}
+
             # Loop over cells to populate.
             for cell_name, data_slug in config["cells"].iteritems():
                 col, row = self.cell_name_to_col_row(cell_name)
 
-                # Get values for this data slug.
-                values = self.model.get_value_from_data_slug(data_slug)
+                # Initialize "date table", if this cell belongs to one.
+                date_tables_ref_cell_name = config["date_tables_config"].get(cell_name)
+                list_key = "date" if date_tables_ref_cell_name else None
+
+                # Get values for this data slug. As a dict on ``list_key`` for "date tables".
+                values = self.model.get_value_from_data_slug(data_slug, list_key=list_key)
+
+                # Retrieve list config.
+                list_config = config["lists_config"].get(cell_name, self.DEFAULT_LIST_CONFIG)
+                max_values = list_config["max_values"]
+
+                # If this is a "date table" reference cell, keep it's values as reference dates.
+                if cell_name in config["date_tables_config"].values():
+                    date_tables_ref_dates[cell_name] = values[:max_values]
+
+                # Handle list of values.
                 if type(values) in (list, tuple):
-                    list_config = config["lists_config"].get(cell_name, self.DEFAULT_LIST_CONFIG)
-                    max_values = list_config["max_values"]
                     list_col, list_row = col, row
                     for value in values[:max_values]:
                         self.set_cell_value(sheet.cell(column=list_col, row=list_row), value)
                         list_col += list_config["col_inc"]
                         list_row += list_config["row_inc"]
+
+                # Handle values displayed in a "date table".
+                elif type(values) in (dict, OrderedDict):
+                    i = 0
+                    for date, value in values.iteritems():
+                        try:
+                            # Retrieve the index in the reference dates.
+                            index = date_tables_ref_dates[date_tables_ref_cell_name].index(date)
+                            list_col = col + (index * list_config["col_inc"])
+                            list_row = row + (index * list_config["row_inc"])
+                            self.set_cell_value(sheet.cell(column=list_col, row=list_row), value)
+                            i += 1
+                            if i >= max_values:
+                                break
+                        except:  # NOQA
+                            pass
+
+                # Handle normal value.
                 else:
                     self.set_cell_value(sheet.cell(column=col, row=row), values)
 
@@ -104,12 +137,18 @@ class ExportExcelDetail(AbstractExportExcelTemplate):
 
             # Store the config for this cell.
             cell_name = sheet.cell(column=START_COL + 1, row=row).value
+            kind = str(sheet.cell(column=START_COL + 5, row=row).value).lower()
             self._config[sheet_index]["lists_config"][cell_name] = {
                 "col_inc": int(sheet.cell(column=START_COL + 2, row=row).value),
                 "row_inc": int(sheet.cell(column=START_COL + 3, row=row).value),
                 "max_values": int(sheet.cell(column=START_COL + 4, row=row).value),
-                "kind": str(sheet.cell(column=START_COL + 5, row=row).value).lower(),
+                "kind": kind,
             }
+
+            if kind == "datetable":
+                date_tables_ref_cell_name = str(sheet.cell(column=START_COL + 6, row=row).value)
+                self._config[sheet_index]["date_tables_config"][cell_name] = date_tables_ref_cell_name
+
 
     def _init_config_sheets(self):
         """
@@ -151,8 +190,10 @@ class ExportExcelDetail(AbstractExportExcelTemplate):
                 "end_row": end_row,
                 # Format: ``{cell_name: data_slug}``. Populated in ``self._init_config_cells()``.
                 "cells": OrderedDict(),
-                # Format: ``{cell_name: {...}}``. Populated in ``self._init_config_cells()``.
+                # Format: ``{cell_name: {...}}``. Populated in ``self._init_config_lists()``.
                 "lists_config": {},
+                # Format: ``{cell_name: date_tables_ref_cell_name}``. Populated in ``self._init_config_lists()``.
+                "date_tables_config": {},
             }
 
         # Read config for lists of data.

@@ -175,7 +175,7 @@ class DynamicModel(object):
             self.load_related_models(model_id)
         return self.related_models[model_id]
 
-    def get_value_from_data_slug(self, data_slug):
+    def get_value_from_data_slug(self, data_slug, list_key=None):
         """Return the field value based on a data slug, for this model or a related one."""
         model_id, field_id = DynamicRegistry.split_data_slug(data_slug)
         if model_id == self.model_id:
@@ -185,7 +185,11 @@ class DynamicModel(object):
         related_models = self.get_related_models(model_id)
 
         # Return a simple list of values for the given field.
-        return [m.get_field_value(field_id) for m in related_models]
+        if list_key is None:
+            return [m.get_field_value(field_id) for m in related_models]
+
+        # Return the list of values for the given field as an ordered dict using the specified key.
+        return OrderedDict([[getattr(m, list_key), m.get_field_value(field_id)] for m in related_models])
 
     def load_data(self, data_row):
         """Initialize model fields value based on a DB row."""
