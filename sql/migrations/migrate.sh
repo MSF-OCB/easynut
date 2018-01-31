@@ -10,7 +10,8 @@ files=`ls $filter 2>/dev/null`
 for file in $files; do
   filename=`basename $file`
   name="${filename%.*}"
-  if [ "`mysql -u root -p$MYSQL_ROOT_PASSWORD -D easynutdata -B -N -e "SELECT COUNT(*) FROM sql_migrations WHERE name='${name}'" 2>&1`" != "1" ]; then
+  exists=`mysql -u root -p$MYSQL_ROOT_PASSWORD -D easynutdata -B -N -e "SELECT COUNT(*) FROM sql_migrations WHERE name='$name'" 2>/dev/null`
+  if [ "$exists" != "1" ]; then
     echo "Applying $name..."
     mysql -u root -p$MYSQL_ROOT_PASSWORD < "$file"
   fi
