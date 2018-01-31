@@ -5,6 +5,9 @@ import os
 from django.conf import settings
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth.signals import user_logged_in
+from django.core.cache import cache
+from django.dispatch import receiver
 from django.http import HttpResponseRedirect, HttpResponse, Http404
 from django.shortcuts import render
 from django.urls import reverse
@@ -22,11 +25,6 @@ def is_admin_or_redirect(request):
     # User must be in group "Admin".
     if not request.user.groups.filter(id=2).exists():
         return index(request)
-
-from django.contrib.auth.signals import user_logged_in
-from django.dispatch import receiver
-
-from django.core.cache import cache
 
 
 # Display log in page
