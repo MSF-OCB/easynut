@@ -183,7 +183,8 @@ class AbstractExportExcelTemplate(AbstractExportExcel):
     def __init__(self, template=None, filename=None):
         super(AbstractExportExcelTemplate, self).__init__()
         self.template = template
-        self.filename = filename
+        if filename is not None:
+            self.filename = filename
 
         # Config of the loaded template.
         self._config = OrderedDict()
