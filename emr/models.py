@@ -226,6 +226,7 @@ class DynamicFieldConfig(object):
     # Available field types.
     KIND_BOOL = "bool"
     KIND_DATE = "date"
+    KIND_FLOAT = "float"
     KIND_INT = "int"
     KIND_NOTES = "notes"
     KIND_RADIO = "radio"
@@ -265,6 +266,8 @@ class DynamicFieldConfig(object):
             return Cast.bool(value)
         if self.kind == self.KIND_DATE:
             return Cast.date(value)
+        if self.kind == self.KIND_FLOAT:
+            return Cast.float(value)
         if self.kind == self.KIND_INT:
             return Cast.int(value)
         return value

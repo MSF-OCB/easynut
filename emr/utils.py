@@ -186,14 +186,22 @@ class Cast(object):
     def field_kind(kind):
         """Convert field type from Spanish to English."""
         mapping = {
-            "fecha": "date",
             "entero": "int",
-            "texto": "text",
-            "select": "select",
+            "fecha": "date",
+            "flotante": "float",
             "notes": "notes",
             "radio": "radio",
+            "select": "select",
+            "texto": "text",
         }
         return mapping[kind] if kind in mapping else kind
+
+    @staticmethod
+    def float(value):
+        """Convert float values."""
+        if value is None:
+            return value
+        return float(value)
 
     @staticmethod
     def int(value):

@@ -17,6 +17,7 @@ class ExportExcelDetail(AbstractExportExcelTemplate):
         "col_inc": 1,
         "row_inc": 0,
         "max_values": 10,
+        "kind": "",
     }
 
     def __init__(self, model, **kwargs):
