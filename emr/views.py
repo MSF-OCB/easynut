@@ -11,6 +11,7 @@ from django.dispatch import receiver
 from django.http import HttpResponseRedirect, HttpResponse, Http404
 from django.shortcuts import render
 from django.urls import reverse
+from django.utils.timezone import now
 
 from graphos.renderers import flot
 from graphos.sources.simple import SimpleDataSource
