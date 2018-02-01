@@ -31,7 +31,7 @@ class DAO(object):
         return obj
 
     def __init__(self):
-        
+
         # List of the configuration of each form ("table")
         self.tables_config = []
         # List of the forms
@@ -518,7 +518,7 @@ class DAO(object):
         exportDir = os.path.join(settings.BASE_DIR, 'export/')
         for tablec in self.tables_config:
             with open(exportDir+'CSVFiles/'+re.sub('[^\w\-_\. ]', '', tablec['name'])+'.csv', 'wb') as mycsv:
-                wr = csv.writer(mycsv, quoting=csv.QUOTE_ALL)                
+                wr = csv.writer(mycsv, quoting=csv.QUOTE_ALL)
                 columns = []
                 sqlquery= 'SELECT '
                 params = []
@@ -537,10 +537,10 @@ class DAO(object):
                 sqlquery = sqlquery + ' FROM {}'
                 params.append(tablec['sql_table_config_name'])
                 wr.writerow(self.dataclean(columns))
-                c.execute(sqlquery.format(*params)) 
+                c.execute(sqlquery.format(*params))
                 for row in c.fetchall():
                     wr.writerow(self.dataclean(row))
-        filename = 'EasyNutExport'+date.today().strftime('%d%b%Y')                     
+        filename = 'EasyNutExport'+date.today().strftime('%d%b%Y')
         zipPath = exportDir
         toZip = exportDir + 'CSVFiles'
         for f in os.listdir(exportDir):
