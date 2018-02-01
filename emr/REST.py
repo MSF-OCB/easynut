@@ -11,7 +11,7 @@ from .EasyDBObjects import FieldConfig
 class Record(object):
     def __init__(self, table_config, **kwargs):
         # For every field in the table, we inject a property in this instance
-        for field in (['_id'] + map(lambda c: c.field_id, table_config.fields)):
+        for field in (['_id'] + map(lambda c: c.field, table_config.fields)):
             setattr(self, field, kwargs.get(field, None))
 
 
@@ -47,8 +47,8 @@ class RecordSerializer(serializers.Serializer):
         record = Record(id=None, table_config=self.table_config, **validated_data)
         to_add = []
         for field_def in self.table_config.fields:
-            if field_def.field_id in validated_data:
-                to_add.append([field_def.field_id, validated_data[field_def.field_id], field_def.type])
+            if field_def.field in validated_data:
+                to_add.append([field_def.field, validated_data[field_def.field], field_def.type])
         record_id = self.daoobject.insertrecord(self.table_config.id, to_add)
         record._id = record_id
         return record
@@ -57,9 +57,9 @@ class RecordSerializer(serializers.Serializer):
         print(validated_data)
         to_edit = []
         for field_def in self.table_config.fields:
-            if (field_def.field_id in validated_data and
-                    validated_data[field_def.field_id] is not None and
-                    validated_data[field_def.field_id] != ''):
-                to_edit.append([field_def.field_id, validated_data[field_def.field_id], field_def.type])
+            if (field_def.field in validated_data and
+                    validated_data[field_def.field] is not None and
+                    validated_data[field_def.field] != ''):
+                to_edit.append([field_def.field, validated_data[field_def.field], field_def.type])
         self.daoobject.editrecord(self.table_config.id, instance._id, to_edit)
         return Record(self.table_config, **self.daoobject.select_from_record_id(self.table_config.id, instance._id))

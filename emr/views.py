@@ -185,8 +185,8 @@ def save(request):
         if tablec['id'] == table_id:
             for fieldc in tablec['fields']:
                 if fieldc['name'] == 'MSF ID':
-                    patientId = daoobject.getPatientIdFromMsfId(request.POST.get(fieldc['field_id']))
-                fieldstochange.append([fieldc['field_id'], request.POST.get(fieldc['field_id']), fieldc['type']])
+                    patientId = daoobject.getPatientIdFromMsfId(request.POST.get(fieldc['field']))
+                fieldstochange.append([fieldc['field'], request.POST.get(fieldc['field']), fieldc['type']])
             fieldstochange.append(['user', request.user.username, '2'])
     if record_id != "0":
         if daoobject.backEndUserRolesCheck(table_id, 'edit_table'):

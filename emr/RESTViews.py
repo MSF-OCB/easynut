@@ -67,7 +67,7 @@ class RecordList(APIView):
                 where_clause = dict()
                 where_clause['fieldc'] = field
                 where_clause['value'] = query_params[sanitized]
-                where_params[field.field_id] = where_clause
+                where_params[field.field] = where_clause
         return where_params
 
     def post(self, request, table_id):

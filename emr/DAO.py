@@ -63,7 +63,7 @@ class DAO(object):
         for k, v in self.tables_config_lite:
             # Initiate form object and get its respective fields
             tablec = {}
-            tablec['id'] = k
+            tablec['id'] = str(k)
             tablec['name'] = v
             tablec['sql_table_config_name'] = 'tabla_' + str(k)
             tablec['sql_table_field_config_name'] = tablec['sql_table_config_name'] + '_des'
@@ -223,11 +223,11 @@ class DAO(object):
     @staticmethod
     def search_condition(fieldc, value):
         if fieldc['type'] == 1 and value and isinstance(value, (int, long)):
-            return '{} = {}'.format(fieldc['field_id'], value)
+            return '{} = {}'.format(fieldc['field'], value)
         elif fieldc['type'] == 0 and value != 'NULL':
-            return '{} = STR_TO_DATE(\'{}\', "%Y-%m-%d")'.format(fieldc['field_id'], value)
+            return '{} = STR_TO_DATE(\'{}\', "%Y-%m-%d")'.format(fieldc['field'], value)
         else:
-            return '{} like \'%{}%\''.format(fieldc['field_id'], value)
+            return '{} like \'%{}%\''.format(fieldc['field'], value)
 
     # Gest a specific record (form answers) with additional info
     def get_record_with_type(self, table_id, record_id, listFields):
@@ -249,7 +249,7 @@ class DAO(object):
                         if fieldc['name'] == 'MSF ID':
                             patientId = self.getPatientIdFromMsfId(result)
                         recorddetails.append([
-                            fieldc['field_id'],
+                            fieldc['field'],
                             fieldc['type'],
                             fieldc['pos'],
                             fieldc['name'],
@@ -382,7 +382,7 @@ class DAO(object):
                 recordform = [tablec['id'], tablec['name']]
                 for fieldc in tablec['fields']:
                     fields.append([
-                        fieldc['field_id'],
+                        fieldc['field'],
                         fieldc['type'],
                         fieldc['pos'],
                         fieldc['name'],
@@ -464,7 +464,7 @@ class DAO(object):
                     if field['list'] is True:
                         relatedrecords = [tablec['name'], tablec['id']] \
                             + [map(lambda f: f['name'], filter(lambda f: f['list'], tablec['fields']))]
-                        search_query += ','+field['field_id']
+                        search_query += ','+field['field']
                 search_query += ' FROM ' + tablec['sql_table_config_name'] \
                     + ' WHERE campo_2 = "' + entry + '" ORDER BY campo_1 DESC'
         if search_query != '':
@@ -530,7 +530,7 @@ class DAO(object):
                             sqlquery = sqlquery + ' {}'
                         else:
                             sqlquery = sqlquery + ', {}'
-                        params.append(field['field_id'])
+                        params.append(field['field'])
                         columns.append(str(field['name']))
                 columns.append('User')
                 columns.append('Timestamp')
