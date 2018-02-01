@@ -25,6 +25,7 @@ class FieldConfig(object):
     field_types = {
         'fecha': field_type_date,
         'entero': field_type_int,
+        'flotante': field_type_int,  # @TODO Quick fix, need to be handled properly.
         'texto': field_type_str,
         'select': field_type_sel,
         'notes': field_type_not,
