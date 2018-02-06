@@ -44,9 +44,9 @@ class AbstractExportExcel(object):
     MSF_ID_BG_COLOR = "FFDDDD"
     DATE_BG_COLOR = "DDFFDD"
 
-    def __init__(self):
+    def __init__(self, filename=None):
         self.book = None  # The Excel workbook.
-        self.filename = None  # The name of the file.
+        self.filename = filename  # The name of the file.
 
         self.styles = {}  # Named styles for formatting Excel cells.
 
@@ -116,7 +116,8 @@ class AbstractExportExcel(object):
 
     def init_filename(self):
         """Initialize file name to its default value with "now"."""
-        self.filename = insert_filename_pre_extension(self.DEFAULT_FILENAME, now_for_filename())
+        if not self.filename:
+            self.filename = insert_filename_pre_extension(self.DEFAULT_FILENAME, now_for_filename())
 
     def protect_sensitive_data(self, model, field_id):
         """Obfuscate sensitive data."""
@@ -186,11 +187,9 @@ class AbstractExportExcelTemplate(AbstractExportExcel):
 
     DEFAULT_TEMPLATE = None  # Default Excel template to use.
 
-    def __init__(self, template=None, filename=None):
-        super(AbstractExportExcelTemplate, self).__init__()
+    def __init__(self, filename=None, template=None):
+        super(AbstractExportExcelTemplate, self).__init__(filename=filename)
         self.template = template
-        if filename is not None:
-            self.filename = filename
 
         # Config of the loaded template.
         self._config = OrderedDict()
