@@ -76,6 +76,12 @@ class AbstractExportExcel(object):
         self.set_sheet_title(sheet, title)
         return sheet
 
+    def get_file_path(self, filename=None):
+        """Return the path to this export file."""
+        if not filename:
+            filename = self.filename
+        return os.path.join(settings.EXPORTS_ROOT, filename)
+
     def get_sheet(self, index):
         """Return a sheet identified by its index."""
         return self.book.worksheets[index]
@@ -127,7 +133,7 @@ class AbstractExportExcel(object):
             filename = self.filename
 
         # Save the file on the file system.
-        file_path = os.path.join(settings.EXPORTS_ROOT, filename)
+        file_path = self.get_file_path(filename)
         self.book.save(file_path)
 
         # Return the path where the file has been saved.
