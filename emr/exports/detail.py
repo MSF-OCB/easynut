@@ -149,7 +149,6 @@ class ExportExcelDetail(AbstractExportExcelTemplate):
                 date_tables_ref_cell_name = str(sheet.cell(column=START_COL + 6, row=row).value)
                 self._config[sheet_index]["date_tables_config"][cell_name] = date_tables_ref_cell_name
 
-
     def _init_config_sheets(self):
         """
         Read config for the sheets to populate.

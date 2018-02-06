@@ -370,13 +370,7 @@ def export_excel_full(request):
 def export_excel_list(request):
     """Export of all data, returned as an Excel file to download."""
     is_admin_or_redirect(request)
-
     export = ExportExcelList()
-
-    # Retrieve data and populate export.
-    export.populate()
-
-    # Get a response containing the Excel file.
     response = export.save_to_response()
     return response
 
@@ -385,14 +379,8 @@ def export_excel_list(request):
 def export_excel_detail(request, table_id, record_id):
     """Export data for a given patient, returned as an Excel file to download."""
     is_admin_or_redirect(request)
-
     model = DynamicRegistry.get_model(int(table_id), pk=int(record_id))
     export = ExportExcelDetail(model)
-
-    # Retrieve data and populate export.
-    export.populate()
-
-    # Get a response containing the Excel file.
     response = export.save_to_response()
     return response
 

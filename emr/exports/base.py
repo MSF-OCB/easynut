@@ -198,6 +198,8 @@ class AbstractExportExcelTemplate(AbstractExportExcel):
         super(AbstractExportExcelTemplate, self).__init__(filename=filename)
         self.template = template
 
+        self._populated = False
+
         # Config of the loaded template.
         self._config = OrderedDict()
 
@@ -235,6 +237,7 @@ class AbstractExportExcelTemplate(AbstractExportExcel):
         """Populate the template with data."""
         if self.book is None:
             raise Exception("No template loaded.")
+        self._populated = True
         # Must be implemented in concrete classes. Don't raise ``NotImplemented`` so that they can override this.
 
     def _init_config(self):
@@ -246,6 +249,12 @@ class AbstractExportExcelTemplate(AbstractExportExcel):
         - See the concrete class for more specs.
         """
         raise NotImplemented()
+
+    def _save_common(self):
+        """Provide common steps for "save" methods."""
+        super(AbstractExportExcelTemplate, self)._save_common()
+        if not self._populated:
+            self.populate()
 
     def _sheets_iterator(self, for_config=False):
         """Iterate over configured sheets."""
