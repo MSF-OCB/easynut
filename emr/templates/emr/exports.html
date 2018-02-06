@@ -1,0 +1,49 @@
+{% extends "emr/base.html" %}
+{% load staticfiles %}
+
+{% block content %}
+  <section class="hero is-light">
+    <div class="hero-body">
+      <br/>
+      <div class="container">
+        {% if mode == "background" %}
+          <div id="ajax-response">
+            Please wait, export in progress. This may take several minutes.<br>
+            A download link will appear when the file is ready for download.
+          </div>
+          <br>
+        {% endif %}
+        <a id="download-link" href="{% url 'emr:export_download_file' filename %}" class="button is-mei go">Download file</a>
+      </div>
+    </div>
+  </section>
+{% endblock content %}
+
+{% block js %}
+  {{ block.super }}
+  {% if mode == "background" %}
+    <script src="{% static 'emr/js/exports.js' %}"></script>
+    <script>
+      export_ajax_check_file_ready(
+        '{% url "emr:export_ajax_is_file_ready" filename %}', 15, 600,
+        function (response) {
+          $('#download-link').show();
+          $('#ajax-response').html('Your file is ready for download.');
+        },
+        function (execution_time) {
+          $('#download-link').removeAttr('disabled');
+          var delay = execution_time;
+          var unit = 'seconds';
+          if (execution_time > 60) {
+            execution_time = execution_time / 60;
+            unit = 'minutes';
+          }
+          $('#ajax-response').html('ERROR: Execution stopped after ' + execution_time + ' ' + unit + '.');
+        }
+      );
+      $(function () {
+        $('#download-link').hide();
+      });
+    </script>
+  {% endif %}
+{% endblock js %}

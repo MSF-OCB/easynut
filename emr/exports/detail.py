@@ -1,8 +1,10 @@
 # -*- coding: utf-8 -*-
+import os
 from collections import OrderedDict
 
 from django.utils.encoding import force_text
 
+from ..models import DynamicRegistry
 from ..utils import RE_DATA_SLUG_VALIDATION
 
 from .base import AbstractExportExcelTemplate
@@ -20,9 +22,15 @@ class ExportExcelDetail(AbstractExportExcelTemplate):
         "kind": "",
     }
 
-    def __init__(self, model, **kwargs):
+    def __init__(self, model_id, pk, **kwargs):
+        self.model = DynamicRegistry.get_model(model_id, pk=pk)
         super(ExportExcelDetail, self).__init__(**kwargs)
-        self.model = model
+
+    def init_filename(self):
+        """Initialize file name to its default value with "now"."""
+        if not self.filename:
+            filename, ext = os.path.splitext(os.path.basename(self.DEFAULT_FILENAME))
+            self.filename = "{}{}{}".format(filename, "-{}".format(self.model.msf_id), ext)
 
     def populate(self):
         """Populate the template with data."""

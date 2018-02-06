@@ -42,6 +42,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'rest_framework',
     'django_extensions',
+    'background_task',
 ]
 
 MIDDLEWARE = [
@@ -167,5 +168,6 @@ else:
     SESSION_CACHE_ALIAS = "default"
 
 # Exports
+EXPORTS_EXCUTE_MODE = "response"  # Values: See ``emr.exports.AbstractExportExcel``.
 EXPORTS_ROOT = os.path.join(BASE_DIR, "export")  # Where generated reports are saved.
 EXPORTS_TEMPLATES_DIR = os.path.join(BASE_DIR, "emr", "exports", "templates")  # Where export templates are.

@@ -8,18 +8,20 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.signals import user_logged_in
 from django.core.cache import cache
 from django.dispatch import receiver
-from django.http import HttpResponseRedirect, HttpResponse, Http404
+from django.http import HttpResponseRedirect, HttpResponse, Http404, JsonResponse
 from django.shortcuts import render
 from django.urls import reverse
 from django.utils.timezone import now
+
 
 from graphos.renderers import flot
 from graphos.sources.simple import SimpleDataSource
 
 from .DAO import DAO
-from .exports import ExportDataModel, ExportExcelFull, ExportExcelList, ExportExcelDetail
+from .exports import AbstractExportExcel, ExportDataModel, ExportExcelFull, ExportExcelList, ExportExcelDetail
 from .ExternalExport import ExternalExport
 from .models import DynamicRegistry
+from .utils import xlsx_download_response_factory
 
 
 def is_admin_or_redirect(request):
@@ -348,11 +350,30 @@ def getTableConfigandUser(request, daoobject):
     return daoobject
 
 
+# EXPORTS =====================================================================
+
+@login_required
+def export_ajax_is_file_ready(request, filename):
+    file_path = AbstractExportExcel.get_file_path(filename)
+    data = {
+        "ready": os.path.exists(file_path),
+    }
+    return JsonResponse(data)
+
+
+@login_required
+def export_download_file(request, filename):
+    file_path = AbstractExportExcel.get_file_path(filename)
+    return xlsx_download_response_factory(filename, content=open(file_path, "rb").read())
+
+
 @login_required
 def export_data_model(request):
     """Export a list of all tables and fields with their data slug, returned as an Excel file to download."""
     is_admin_or_redirect(request)
-    export = ExportDataModel()
+    # As this one is fast, we don't use ``_export_common_view``.
+    filename = "data-model.xlsx" if settings.DEBUG else None
+    export = ExportDataModel(filename=filename)
     response = export.save_to_response()
     return response
 
@@ -361,29 +382,32 @@ def export_data_model(request):
 def export_excel_full(request):
     """Export of all data, returned as an Excel file to download."""
     is_admin_or_redirect(request)
-    export = ExportExcelFull()
-    response = export.save_to_response()
-    return response
+    return _export_common_view(request, ExportExcelFull, debug_filename="export-full.xlsx")
 
 
 @login_required
 def export_excel_list(request):
     """Export of all data, returned as an Excel file to download."""
     is_admin_or_redirect(request)
-    export = ExportExcelList()
-    response = export.save_to_response()
-    return response
+    return _export_common_view(request, ExportExcelList, debug_filename="export-list.xlsx")
 
 
 @login_required
 def export_excel_detail(request, table_id, record_id):
     """Export data for a given patient, returned as an Excel file to download."""
     is_admin_or_redirect(request)
-    model = DynamicRegistry.get_model(int(table_id), pk=int(record_id))
-    export = ExportExcelDetail(model)
+    # As this one is fast, we don't use ``_export_common_view``.
+    # return _export_common_view(
+    #     request, ExportExcelDetail, int(table_id), int(record_id),
+    #     debug_filename="export-detail-{}-{}.xlsx".format(table_id, record_id)
+    # )
+    filename = "export-detail-{}-{}.xlsx".format(table_id, record_id) if settings.DEBUG else None
+    export = ExportExcelDetail(int(table_id), int(record_id), filename=filename)
     response = export.save_to_response()
     return response
 
+
+# DEBUG =======================================================================
 
 def test_export_excel_list(request):
     if not settings.DEBUG:
@@ -402,3 +426,21 @@ def test_export_excel_detail(request, table_id, record_id):
     export.populate()
     export.save(filename="export-detail.test.xlsx")
     return HttpResponse("OK export-detail.test.xlsx " + str(now()))
+
+
+# HELPERS =====================================================================
+
+def _export_common_view(request, cls, *args, **kwargs):
+    if settings.DEBUG and "debug_filename" in kwargs:
+        kwargs["filename"] = kwargs["debug_filename"]
+        del kwargs["debug_filename"]
+
+    mode, result = cls.execute(*args, **kwargs)
+    if mode == "response":
+        return result
+
+    context = {
+        "mode": mode,
+        "filename": result,
+    }
+    return render(request, "emr/exports.html", context)

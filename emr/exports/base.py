@@ -14,7 +14,7 @@ from ..models import DynamicRegistry
 from ..utils import insert_filename_pre_extension, now_for_filename, xlsx_download_response_factory
 
 from .template_functions import AbstractExcelTemplateFunction
-from .utils import obfuscate
+from .utils import export_background_job, obfuscate
 
 
 # Value allowing to skip a cell while continuing to read config of other columns.
@@ -28,6 +28,8 @@ class AbstractExportExcel(object):
     """Abstract base class for Excel exports."""
 
     DEFAULT_FILENAME = "easynut-export.xlsx"  # Default name of the file.
+
+    AVAILABLE_EXECUTE_MODES = ("background", "file", "response")
 
     # Minimum number of cols to apply formatting to.
     APPLY_STYLE_MIN_NUM_COLS = 30
@@ -52,6 +54,38 @@ class AbstractExportExcel(object):
 
         # Initialize the file name.
         self.init_filename()
+
+    @classmethod
+    def execute(cls, *args, **kwargs):
+        if "execute_mode" in kwargs:
+            execute_mode = kwargs["execute_mode"]
+            del kwargs["execute_mode"]
+        else:
+            execute_mode = getattr(settings, "EXPORTS_EXCUTE_MODE", "response")
+        if execute_mode not in cls.AVAILABLE_EXECUTE_MODES:
+            raise AttributeError("Invalid execute mode '{}'. Available: {}.".format(
+                execute_mode, ", ".join(cls.AVAILABLE_EXECUTE_MODES)
+            ))
+
+        export = cls(*args, **kwargs)
+
+        # Return the filename of the file that will be generated in background.
+        if execute_mode == "background":
+            # Execute as background job forcing the filename.
+            kwargs["filename"] = cls.generate_timed_filename()
+            kwargs["schedule"] = datetime.now()
+            export_background_job(cls.__module__, cls.__name__, *args, **kwargs)
+            result = kwargs["filename"]
+
+        # Return path to file.
+        if execute_mode == "file":
+            result = export.save()
+
+        # Return HTTP response.
+        if execute_mode == "response":
+            result = export.save_to_response()
+
+        return execute_mode, result
 
     @classmethod
     def generate_timed_filename(cls, filename=None):
