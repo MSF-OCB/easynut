@@ -135,6 +135,7 @@ class DataDb(object):
 
         Usage: ``with DataDb.execute(sql) as c:``
         """
+        self._db.ping(True)  # Check whether the server has closed the connection and reconnect if necessary.
         return DbExecute(self._db, sql)
 
 
