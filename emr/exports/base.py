@@ -60,6 +60,11 @@ class AbstractExportExcel(object):
             filename = cls.DEFAULT_FILENAME
         return insert_filename_pre_extension(filename, now_for_filename())
 
+    @staticmethod
+    def get_file_path(filename):
+        """Return the path to given export file."""
+        return os.path.join(settings.EXPORTS_ROOT, filename)
+
     def apply_style(self, style, sheet, max_col, max_row, min_col=1, min_row=1):
         """Apply a style to a range of cells in the given sheet."""
         for col in range(min_col, max_col + 1):
@@ -82,12 +87,6 @@ class AbstractExportExcel(object):
         sheet = self.book.create_sheet()
         self.set_sheet_title(sheet, title)
         return sheet
-
-    def get_file_path(self, filename=None):
-        """Return the path to this export file."""
-        if not filename:
-            filename = self.filename
-        return os.path.join(settings.EXPORTS_ROOT, filename)
 
     def get_sheet(self, index):
         """Return a sheet identified by its index."""
