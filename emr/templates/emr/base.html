@@ -2,9 +2,9 @@
 
 <html>
 
-	<head>	
-	
-	
+	<head>
+
+
 
 		<link rel="icon" type="image/png" sizes="192x192"  href="{% static 'emr/icons/android-icon-192x192.png' %}">
 		<link rel="icon" type="image/png" sizes="32x32" href="{% static 'emr/icons/favicon-32x32.png' %}">
@@ -20,20 +20,20 @@
 	    <meta name="viewport" content="width=device-width, initial-scale=1">
 		<meta name="mobile-web-app-capable" content="yes">
 	    <title>Fori - EasyNut</title>
-	    
+
 		<link rel="stylesheet" type="text/css" href="{% static 'emr/style.css' %}" />
 		<link rel="stylesheet" type="text/css" href="{% static 'emr/styleDoudou.css' %}" />
         <link rel="stylesheet" type="text/css" href="{% static 'emr/datepicker.min.css' %}">
 		<link rel="stylesheet" type="text/css" href="{% static 'emr/jquery-ui.css' %}" />
-		
-		<script type="text/javascript" src="/static/emr/js/jquery-3.2.1.min.js"></script> 
-		<script type="text/javascript" src="/static/emr/js/jquery-ui.js"></script>	
+
+		<script type="text/javascript" src="/static/emr/js/jquery-3.2.1.min.js"></script>
+		<script type="text/javascript" src="/static/emr/js/jquery-ui.js"></script>
         <script type="text/javascript" src="/static/emr/js/datepicker.min.js"></script>
-        <script type="text/javascript" src="/static/emr/js/i18n/datepicker.en.js"></script>		
+        <script type="text/javascript" src="/static/emr/js/i18n/datepicker.en.js"></script>
 	<script type="text/javascript" src="/static/emr/js/flot/jquery.flot.js"></script>
 	<script type="text/javascript" src="/static/emr/js/flot/jquery.flot.time.js"></script>
 	<script type="text/javascript" src="/static/emr/js/flot/jquery.flot.tooltip.js"></script>
-		
+
 
 	</head>
 
@@ -44,22 +44,22 @@
 				});
 				var ua = navigator.userAgent.toLowerCase();
 				var isAndroid = ua.indexOf("android") > -1;
-				
-				if (!isAndroid){	
+
+				if (!isAndroid){
 					$(".datepicker-doudou").datepicker({
 						language: 'en',
-						dateFormat: 'yyyy-mm-dd',			       
+						dateFormat: 'yyyy-mm-dd',
 						todayButton: new Date(),
 						autoClose: true
 					});
 					$(".specialAndroid").hide();
 				}
-				$('.numbersOnly').children(":first").keyup(function () { 
+				$('.numbersOnly').children(":first").keyup(function () {
 				    this.value = this.value.replace(/[^0-9\.]/g,'');
 				});
 			});
-		</script>	    
-	
+		</script>
+
 	<body>
 		<nav class="nav has-shadow is-fixed-top">
 			<div class="container">
@@ -68,10 +68,10 @@
 	  			</a>
 				</div>
 				<div class="nav-right">
-					<a class="nav-item" href="{% url 'emr:logoutbutton' %}" accesskey="3" class="btn">Log out: {{ user.username }}</a>									
-				</div>				
-			</div>	
-		</nav>	
+					<a class="nav-item" href="{% url 'emr:logoutbutton' %}" accesskey="3" class="btn">Log out: {{ user.username }}</a>
+				</div>
+			</div>
+		</nav>
 		<div id="main">
 			<section class="section">
 				<div class="container">
@@ -82,7 +82,7 @@
 			</section>
 		</div>
 		{% block content %}
-		{% endblock %}				
+		{% endblock %}
 		<footer class="footer">
         	<div class="container">
             	<div class="content has-text-centered">
@@ -91,6 +91,6 @@
             		OCB eHealth</p>
           		</div>
         	</div>
-        </footer>		
+        </footer>
 	</body>
 </html>
