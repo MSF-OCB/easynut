@@ -25,7 +25,7 @@
     <script src="{% static 'emr/js/exports.js' %}"></script>
     <script>
       export_ajax_check_file_ready(
-        '{% url "emr:export_ajax_is_file_ready" filename %}', 15, 600,
+        '{% url "emr:export_ajax_is_file_ready" filename %}', 15, 30 * 60,
         function (response) {
           $('#download-link').show();
           $('#ajax-response').html('Your file is ready for download.');
