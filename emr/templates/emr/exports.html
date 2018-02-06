@@ -38,7 +38,13 @@
             execution_time = execution_time / 60;
             unit = 'minutes';
           }
-          $('#ajax-response').html('ERROR: Execution stopped after ' + execution_time + ' ' + unit + '.');
+          $('#ajax-response').html(
+            '<p>The export is still running but we stopped checking after ' + execution_time + ' ' + unit + '.</p>' +
+            '<p><strong>DO NOT RELOAD THIS PAGE</strong> as it would generate a new export that will also take more time.</p>' +
+            '<p>Please keep this page open and try in a few minutes to click the download button here below.</p>' +
+            '<p>If it returns an error, it should be normal. As it will open in a new tab or window, you can close that one and try again later on this page.</p>'
+          );
+          $('#download-link').attr('target', '_blank').show();
         }
       );
       $(function () {
