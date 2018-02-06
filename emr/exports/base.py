@@ -53,6 +53,13 @@ class AbstractExportExcel(object):
         # Initialize the file name.
         self.init_filename()
 
+    @classmethod
+    def generate_timed_filename(cls, filename=None):
+        """Return a filename with "now" inserted as pre-extension."""
+        if not filename:
+            filename = cls.DEFAULT_FILENAME
+        return insert_filename_pre_extension(filename, now_for_filename())
+
     def apply_style(self, style, sheet, max_col, max_row, min_col=1, min_row=1):
         """Apply a style to a range of cells in the given sheet."""
         for col in range(min_col, max_col + 1):
@@ -117,7 +124,7 @@ class AbstractExportExcel(object):
     def init_filename(self):
         """Initialize file name to its default value with "now"."""
         if not self.filename:
-            self.filename = insert_filename_pre_extension(self.DEFAULT_FILENAME, now_for_filename())
+            self.filename = self.generate_timed_filename()
 
     def protect_sensitive_data(self, model, field_id):
         """Obfuscate sensitive data."""
