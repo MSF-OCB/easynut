@@ -143,8 +143,8 @@ class AbstractExportExcel(object):
         file_path = self.get_file_path(filename)
         self.book.save(file_path)
 
-        # Return the path where the file has been saved.
-        return file_path
+        # Return the filename where the file has been saved.
+        return filename
 
     def save_to_response(self):
         """Save the Excel file in an HTTP response."""
